@@ -1,0 +1,33 @@
+/* App-level styles */
+
+.app {
+    min-height: 100vh;
+    background-color: var(--color-bg-primary);
+}
+
+.app-reader-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: var(--space-4);
+    text-align: center;
+    color: var(--color-text-secondary);
+}
+
+.app-reader-placeholder button {
+    padding: var(--space-3) var(--space-6);
+    border: none;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-accent-primary);
+    color: white;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.app-reader-placeholder button:hover {
+    background-color: var(--color-accent-secondary);
+}

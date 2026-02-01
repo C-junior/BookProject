@@ -1,0 +1,69 @@
+/* Card Component Styles */
+
+.card {
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition:
+        box-shadow var(--transition-base),
+        transform var(--transition-base),
+        border-color var(--transition-base);
+}
+
+button.card {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+
+/* Padding variants */
+.card-padding-none {
+    padding: 0;
+}
+
+.card-padding-sm {
+    padding: var(--space-3);
+}
+
+.card-padding-md {
+    padding: var(--space-4);
+}
+
+.card-padding-lg {
+    padding: var(--space-6);
+}
+
+/* Hoverable card */
+.card-hoverable:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-border-strong);
+}
+
+.card-hoverable:active {
+    transform: scale(0.99);
+}
+
+/* Card sections */
+.card-header {
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.card-body {
+    padding: var(--space-4);
+}
+
+.card-footer {
+    padding: var(--space-4);
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-bg-secondary);
+}
+
+/* Reset padding when using sections */
+.card-padding-none .card-header,
+.card-padding-none .card-body,
+.card-padding-none .card-footer {
+    padding: var(--space-4);
+}

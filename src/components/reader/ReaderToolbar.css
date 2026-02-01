@@ -1,0 +1,167 @@
+/* Reader Toolbar Styles */
+
+.reader-toolbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--color-bg-elevated);
+    border-color: var(--color-border);
+    animation: slideDown 0.2s ease;
+}
+
+.reader-toolbar-top {
+    top: 0;
+    border-bottom: 1px solid var(--color-border);
+    animation: slideDown 0.2s ease;
+}
+
+.reader-toolbar-bottom {
+    bottom: 0;
+    border-top: 1px solid var(--color-border);
+    animation: slideUp 0.2s ease;
+}
+
+/* Toolbar button */
+.reader-toolbar-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition:
+        background-color var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.reader-toolbar-button:hover {
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+}
+
+/* Title section */
+.reader-toolbar-title {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    padding: 0 var(--space-4);
+}
+
+.reader-toolbar-book-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.reader-toolbar-chapter {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+/* Actions */
+.reader-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+/* Navigation */
+.reader-toolbar-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.reader-toolbar-nav-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-full);
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition:
+        background-color var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.reader-toolbar-nav-button:hover {
+    background-color: var(--color-accent-muted);
+    color: var(--color-accent-primary);
+}
+
+.reader-toolbar-nav-button:active {
+    transform: scale(0.95);
+}
+
+/* Progress */
+.reader-toolbar-progress {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.reader-toolbar-percentage {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+}
+
+/* Progress bar */
+.reader-progress-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--color-border);
+    z-index: 201;
+}
+
+.reader-progress-fill {
+    height: 100%;
+    background-color: var(--color-accent-primary);
+    transition: width 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .reader-toolbar {
+        padding: var(--space-2) var(--space-3);
+    }
+
+    .reader-toolbar-title {
+        padding: 0 var(--space-2);
+    }
+
+    .reader-toolbar-nav-button {
+        width: 40px;
+        height: 40px;
+    }
+}
