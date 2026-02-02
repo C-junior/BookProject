@@ -2,10 +2,12 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import ePub, { type Rendition, type NavItem } from 'epubjs'
 import { useReaderStore } from '@/stores/readerStore'
 import { useUserStore } from '@/stores/userStore'
-import type { Book, TocItem } from '@/types'
+import type { Book, TocItem, Annotation } from '@/types'
+import { addAnnotation, deleteAnnotation, getAnnotationsByType } from '@/services/storage/db'
 import { ReaderToolbar } from './ReaderToolbar'
 import { SettingsPanel } from './SettingsPanel'
 import { TocPanel } from './TocPanel'
+import { BookmarksPanel } from './BookmarksPanel'
 import { Loader2, AlertCircle } from 'lucide-react'
 import './EpubReader.css'
 
@@ -23,11 +25,14 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     // Loading and error states
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [bookmarks, setBookmarks] = useState<Annotation[]>([])
 
     const {
         currentLocation,
+        percentage,
         showSettings,
         showToc,
+        showBookmarks,
         preferences,
         toc,
         setLocation,
@@ -37,6 +42,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     } = useReaderStore()
 
     const { getCurrentUserId } = useUserStore()
+    const userId = getCurrentUserId()
 
     // Initialize the book
     useEffect(() => {
@@ -261,6 +267,48 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    // Load bookmarks when book opens
+    useEffect(() => {
+        const loadBookmarks = async () => {
+            const annotations = await getAnnotationsByType(book.id, userId, 'bookmark')
+            setBookmarks(annotations)
+        }
+        loadBookmarks()
+    }, [book.id, userId])
+
+    // Add a bookmark at current location
+    const handleAddBookmark = useCallback(async () => {
+        if (!currentLocation) return
+
+        const newBookmark: Annotation = {
+            id: `bookmark-${Date.now()}`,
+            bookId: book.id,
+            userId,
+            type: 'bookmark',
+            cfiRange: currentLocation,
+            text: `Page ${percentage}%`,
+            color: 'yellow',
+            createdAt: new Date(),
+            updatedAt: new Date()
+        }
+
+        await addAnnotation(newBookmark)
+        setBookmarks(prev => [...prev, newBookmark])
+    }, [book.id, userId, currentLocation, percentage])
+
+    // Delete a bookmark
+    const handleDeleteBookmark = useCallback(async (id: string) => {
+        await deleteAnnotation(id)
+        setBookmarks(prev => prev.filter(b => b.id !== id))
+    }, [])
+
+    // Navigate to bookmark location
+    const handleSelectBookmark = useCallback(async (cfi: string) => {
+        if (renditionRef.current && cfi) {
+            await renditionRef.current.display(cfi)
+        }
+    }, [])
+
     return (
         <div
             className="epub-reader"
@@ -305,6 +353,16 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                 <TocPanel
                     toc={toc}
                     onSelect={goToHref}
+                />
+            )}
+
+            {/* Bookmarks Panel */}
+            {showBookmarks && (
+                <BookmarksPanel
+                    bookmarks={bookmarks}
+                    onSelect={handleSelectBookmark}
+                    onDelete={handleDeleteBookmark}
+                    onAddBookmark={handleAddBookmark}
                 />
             )}
 

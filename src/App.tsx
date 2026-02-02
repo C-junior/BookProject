@@ -3,6 +3,7 @@ import { useUserStore } from '@/stores/userStore'
 import { useReaderStore } from '@/stores/readerStore'
 import { LibraryView } from '@/components/library/LibraryView'
 import { EpubReader } from '@/components/reader/EpubReader'
+import { PdfReader } from '@/components/reader/PdfReader'
 import type { Book } from '@/types'
 import './App.css'
 
@@ -31,7 +32,7 @@ function App() {
 
     // Show reader if a book is open
     if (isReading && currentBook) {
-        // For now, only EPUB is fully supported
+        // EPUB Reader
         if (currentBook.format === 'epub') {
             return (
                 <EpubReader
@@ -41,7 +42,17 @@ function App() {
             )
         }
 
-        // Placeholder for other formats (PDF, TXT)
+        // PDF Reader
+        if (currentBook.format === 'pdf') {
+            return (
+                <PdfReader
+                    book={currentBook}
+                    onClose={handleCloseBook}
+                />
+            )
+        }
+
+        // Placeholder for other formats (TXT, MOBI)
         return (
             <div className="app-reader-placeholder">
                 <p>Reader for {currentBook.format.toUpperCase()} format</p>

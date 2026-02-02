@@ -1,0 +1,239 @@
+/* PDF Reader Component Styles */
+
+.pdf-reader {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-bg-primary);
+}
+
+/* Light theme */
+[data-theme="light"] .pdf-reader {
+    --pdf-bg: #e8e8e8;
+    --pdf-page-bg: #ffffff;
+}
+
+/* Dark theme */
+[data-theme="dark"] .pdf-reader {
+    --pdf-bg: #1a1a1a;
+    --pdf-page-bg: #2a2a2a;
+}
+
+/* Sepia theme */
+[data-theme="sepia"] .pdf-reader {
+    --pdf-bg: #e8dcc8;
+    --pdf-page-bg: #f5e6d3;
+}
+
+/* Loading state */
+.pdf-reader-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    background-color: var(--pdf-bg);
+    color: var(--color-text-primary);
+    z-index: 10;
+}
+
+.pdf-reader-spinner {
+    animation: spin 1s linear infinite;
+    color: var(--color-accent-primary);
+}
+
+/* Error state */
+.pdf-reader-error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-8);
+    background-color: var(--pdf-bg);
+    color: var(--color-error);
+    text-align: center;
+    z-index: 10;
+}
+
+.pdf-reader-error button {
+    padding: var(--space-3) var(--space-6);
+    border: none;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-accent-primary);
+    color: white;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.pdf-reader-error button:hover {
+    background-color: var(--color-accent-secondary);
+}
+
+/* Main wrapper */
+.pdf-reader-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: var(--pdf-bg);
+}
+
+/* Zoom controls */
+.pdf-zoom-controls {
+    position: fixed;
+    top: 70px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background-color: var(--color-bg-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    z-index: 50;
+}
+
+.pdf-zoom-controls button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.pdf-zoom-controls button:hover {
+    background-color: var(--color-bg-tertiary);
+}
+
+.pdf-zoom-controls span {
+    min-width: 50px;
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+/* PDF container */
+.pdf-reader-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    padding: var(--space-4);
+}
+
+.pdf-page-canvas {
+    max-width: 100%;
+    height: auto;
+    box-shadow: var(--shadow-lg);
+    background-color: var(--pdf-page-bg);
+}
+
+/* Page indicator */
+.pdf-page-indicator {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-bg-primary);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-md);
+    z-index: 50;
+}
+
+.pdf-page-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.pdf-page-btn:hover:not(:disabled) {
+    background-color: var(--color-bg-tertiary);
+}
+
+.pdf-page-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pdf-page-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+}
+
+.pdf-page-input {
+    width: 50px;
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    text-align: center;
+    font-size: var(--font-size-base);
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.pdf-page-input::-webkit-outer-spin-button,
+.pdf-page-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.pdf-page-input:focus {
+    outline: none;
+    border-color: var(--color-accent-primary);
+}
+
+/* Brightness overlay */
+.pdf-reader-brightness-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: black;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+    .pdf-zoom-controls {
+        top: auto;
+        bottom: 140px;
+        right: 8px;
+    }
+
+    .pdf-page-indicator {
+        bottom: 90px;
+    }
+}

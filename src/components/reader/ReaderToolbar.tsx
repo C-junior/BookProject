@@ -25,7 +25,8 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
         chapterTitle,
         toggleSettings,
         toggleToc,
-        toggleSearch
+        toggleSearch,
+        toggleBookmarks
     } = useReaderStore()
 
     if (!showToolbar) return null
@@ -59,7 +60,8 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
                     </button>
                     <button
                         className="reader-toolbar-button"
-                        aria-label="Add bookmark"
+                        onClick={toggleBookmarks}
+                        aria-label="Bookmarks"
                     >
                         <Bookmark size={20} />
                     </button>

@@ -16,6 +16,7 @@ interface ReaderState {
     showSettings: boolean
     showToc: boolean
     showSearch: boolean
+    showBookmarks: boolean
     showAnnotationMenu: boolean
 
     // Table of contents
@@ -49,6 +50,7 @@ interface ReaderState {
     toggleSettings: () => void
     toggleToc: () => void
     toggleSearch: () => void
+    toggleBookmarks: () => void
     showAnnotationMenuAt: (text: string, cfi: string) => void
     hideAnnotationMenu: () => void
 
@@ -98,6 +100,7 @@ export const useReaderStore = create<ReaderState>()(
             showSettings: false,
             showToc: false,
             showSearch: false,
+            showBookmarks: false,
             showAnnotationMenu: false,
 
             toc: [],
@@ -189,19 +192,29 @@ export const useReaderStore = create<ReaderState>()(
             toggleSettings: () => set(state => ({
                 showSettings: !state.showSettings,
                 showToc: false,
-                showSearch: false
+                showSearch: false,
+                showBookmarks: false
             })),
 
             toggleToc: () => set(state => ({
                 showToc: !state.showToc,
                 showSettings: false,
-                showSearch: false
+                showSearch: false,
+                showBookmarks: false
             })),
 
             toggleSearch: () => set(state => ({
                 showSearch: !state.showSearch,
                 showSettings: false,
-                showToc: false
+                showToc: false,
+                showBookmarks: false
+            })),
+
+            toggleBookmarks: () => set(state => ({
+                showBookmarks: !state.showBookmarks,
+                showSettings: false,
+                showToc: false,
+                showSearch: false
             })),
 
             showAnnotationMenuAt: (text: string, cfi: string) => set({
