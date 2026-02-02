@@ -2,13 +2,14 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import ePub, { type Rendition, type NavItem } from 'epubjs'
 import { useReaderStore } from '@/stores/readerStore'
 import { useUserStore } from '@/stores/userStore'
-import type { Book, TocItem, Annotation, SearchResult } from '@/types'
-import { addAnnotation, deleteAnnotation, getAnnotationsByType } from '@/services/storage/db'
+import type { Book, TocItem, Annotation, SearchResult, HighlightColor } from '@/types'
+import { addAnnotation, deleteAnnotation } from '@/services/storage/db'
 import { ReaderToolbar } from './ReaderToolbar'
 import { SettingsPanel } from './SettingsPanel'
 import { TocPanel } from './TocPanel'
 import { BookmarksPanel } from './BookmarksPanel'
 import { SearchPanel } from './SearchPanel'
+import { HighlightMenu } from './HighlightMenu'
 import { Loader2, AlertCircle } from 'lucide-react'
 import './EpubReader.css'
 
@@ -26,7 +27,6 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     // Loading and error states
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [bookmarks, setBookmarks] = useState<Annotation[]>([])
 
     const {
         currentLocation,
@@ -37,14 +37,29 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         showSearch,
         preferences,
         toc,
+        selectionCfi,
+        selectedText,
         setLocation,
         setToc,
         toggleToolbar,
-        saveCurrentProgress
+        saveCurrentProgress,
+        addAnnotationToState,
+        hideAnnotationMenu,
+        showAnnotationMenuAt,
+        showAnnotationMenu,
+        annotations,
+        removeAnnotationFromState
     } = useReaderStore()
 
     const { getCurrentUserId } = useUserStore()
     const userId = getCurrentUserId()
+
+    // Derived state from store annotations
+    const bookmarks = annotations.filter(a => a.type === 'bookmark')
+    const highlights = annotations.filter(a => a.type === 'highlight')
+
+    const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null)
+    const loadedAnnotationIds = useRef<Set<string>>(new Set())
 
     // Initialize the book
     useEffect(() => {
@@ -109,11 +124,54 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                         location.start.cfi,
                         Math.round(location.start.percentage * 100)
                     )
+                    // Hide menu on page turn
+                    setMenuPosition(null)
+                    hideAnnotationMenu()
                 })
+
+                // Listen for text selection
+                rendition.on('selected', (cfiRange: string, contents: any) => {
+                    // Get selection bounds relative to iframe
+                    const range = contents.range(cfiRange)
+                    const rect = range.getBoundingClientRect()
+
+                    // Get iframe offset to calculate absolute position
+                    const iframe = containerRef.current?.querySelector('iframe')
+                    const iframeRect = iframe?.getBoundingClientRect()
+
+                    if (iframeRect) {
+                        setMenuPosition({
+                            x: iframeRect.left + rect.left + rect.width / 2,
+                            y: iframeRect.top + rect.top
+                        })
+
+                        showAnnotationMenuAt(range.toString(), cfiRange)
+
+                        // Clear native selection to avoid visual clutter with menu
+                        // contents.window.getSelection().removeAllRanges()
+                    }
+                })
+
+                // Load existing annotations (using cast to any to avoid TS errors)
+                const epubAnnotations = (rendition as any).annotations
+
+                // Add existing highlights to rendition
+                if (epubAnnotations) {
+                    // Use store annotations which should be loaded by now (or load them)
+                    // We access them from the store hook in the component scope, but we need the latest value.
+                    // Since this is inside useEffect, we should rely on the prop or fetch them.
+                    // Let's assume they are passed via props or we can get them from db directly if needed, 
+                    // or just use the ones from store which might be empty initially.
+                    // Better to rely on a separate effect for annotations? 
+                    // No, let's try to add them here if available, or useEffect on [annotations] to sync them.
+                }
 
                 // Handle click within the iframe for toolbar toggle
                 rendition.on('click', () => {
                     toggleToolbar()
+                    // Hide menu if clicked elsewhere
+                    setMenuPosition(null)
+                    hideAnnotationMenu()
                 })
 
             } catch (err) {
@@ -188,7 +246,12 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             },
             'a': {
                 'color': `${colors.accent} !important`
-            }
+            },
+            '.highlight-yellow': { 'fill': '#ffeb3b', 'fill-opacity': '0.3', 'mix-blend-mode': 'multiply' },
+            '.highlight-green': { 'fill': '#a5d6a7', 'fill-opacity': '0.3', 'mix-blend-mode': 'multiply' },
+            '.highlight-blue': { 'fill': '#90caf9', 'fill-opacity': '0.3', 'mix-blend-mode': 'multiply' },
+            '.highlight-pink': { 'fill': '#f48fb1', 'fill-opacity': '0.3', 'mix-blend-mode': 'multiply' },
+            '.highlight-orange': { 'fill': '#ffcc80', 'fill-opacity': '0.3', 'mix-blend-mode': 'multiply' }
         })
         rendition.themes.select('custom')
     }, [preferences])
@@ -203,6 +266,61 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             children: item.subitems ? convertNavToToc(item.subitems, level + 1) : undefined
         }))
     }
+
+    // Handle create highlight
+    const handleHighlight = useCallback(async (color: HighlightColor) => {
+        if (!renditionRef.current || !selectionCfi) return
+
+        try {
+            // Create annotation object
+            const highlight: Annotation = {
+                id: `highlight-${Date.now()}`,
+                bookId: book.id,
+                userId,
+                type: 'highlight',
+                cfiRange: selectionCfi,
+                text: selectedText,
+                color,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            }
+
+            // Save to DB
+            await addAnnotation(highlight)
+
+            // Add to state
+            addAnnotationToState(highlight);
+
+            // Apply to rendition
+            (renditionRef.current as any).annotations.add('highlight', selectionCfi, {}, (e: any) => {
+                console.log('Highlight clicked', e)
+            }, `highlight-${color}`)
+
+            // Cleanup
+            hideAnnotationMenu()
+            setMenuPosition(null)
+
+            // Clear selection (this might need to be done on the iframe window)
+            const contents = (renditionRef.current as any).getContents()
+            contents.forEach((content: any) => {
+                content.window.getSelection()?.removeAllRanges()
+            })
+
+        } catch (err) {
+            console.error('Error adding highlight:', err)
+        }
+    }, [book.id, userId, selectionCfi, selectedText, addAnnotationToState, hideAnnotationMenu])
+
+    const handleDismissMenu = useCallback(() => {
+        hideAnnotationMenu()
+        setMenuPosition(null)
+        if (renditionRef.current) {
+            const contents = (renditionRef.current as any).getContents()
+            contents.forEach((content: any) => {
+                content.window.getSelection()?.removeAllRanges()
+            })
+        }
+    }, [hideAnnotationMenu])
 
     // Navigation handlers
     const goNext = useCallback(async () => {
@@ -269,14 +387,29 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    // Load bookmarks when book opens
+
+
+    // Sync highlights with rendition
     useEffect(() => {
-        const loadBookmarks = async () => {
-            const annotations = await getAnnotationsByType(book.id, userId, 'bookmark')
-            setBookmarks(annotations)
-        }
-        loadBookmarks()
-    }, [book.id, userId])
+        if (!renditionRef.current || annotations.length === 0) return
+
+        annotations.forEach(annotation => {
+            if (annotation.type === 'highlight' && annotation.cfiRange && !loadedAnnotationIds.current.has(annotation.id)) {
+                try {
+                    (renditionRef.current as any).annotations.add(
+                        'highlight',
+                        annotation.cfiRange,
+                        {},
+                        null,
+                        `highlight-${annotation.color}`
+                    );
+                    loadedAnnotationIds.current.add(annotation.id)
+                } catch (e) {
+                    console.error('Error adding highlight to rendition', e)
+                }
+            }
+        })
+    }, [annotations])
 
     // Add a bookmark at current location
     const handleAddBookmark = useCallback(async () => {
@@ -295,17 +428,22 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         }
 
         await addAnnotation(newBookmark)
-        setBookmarks(prev => [...prev, newBookmark])
-    }, [book.id, userId, currentLocation, percentage])
+        addAnnotationToState(newBookmark)
+    }, [book.id, userId, currentLocation, percentage, addAnnotationToState])
 
-    // Delete a bookmark
-    const handleDeleteBookmark = useCallback(async (id: string) => {
+    // Delete an annotation (bookmark or highlight)
+    const handleDeleteAnnotation = useCallback(async (id: string) => {
         await deleteAnnotation(id)
-        setBookmarks(prev => prev.filter(b => b.id !== id))
-    }, [])
+        removeAnnotationFromState(id)
 
-    // Navigate to bookmark location
-    const handleSelectBookmark = useCallback(async (cfi: string) => {
+        // Remove from loaded references if it was a highlight
+        if (loadedAnnotationIds.current.has(id)) {
+            loadedAnnotationIds.current.delete(id)
+        }
+    }, [removeAnnotationFromState])
+
+    // Navigate to bookmark/highlight location
+    const handleSelectLocation = useCallback(async (cfi: string) => {
         if (renditionRef.current && cfi) {
             await renditionRef.current.display(cfi)
         }
@@ -412,8 +550,9 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             {showBookmarks && (
                 <BookmarksPanel
                     bookmarks={bookmarks}
-                    onSelect={handleSelectBookmark}
-                    onDelete={handleDeleteBookmark}
+                    highlights={highlights}
+                    onSelect={handleSelectLocation}
+                    onDelete={handleDeleteAnnotation}
                     onAddBookmark={handleAddBookmark}
                 />
             )}
@@ -423,6 +562,15 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                 <SearchPanel
                     onSearch={handleSearch}
                     onNavigate={handleSearchNavigate}
+                />
+            )}
+
+            {/* Highlight Menu */}
+            {menuPosition && showAnnotationMenu && (
+                <HighlightMenu
+                    position={menuPosition}
+                    onHighlight={handleHighlight}
+                    onClose={handleDismissMenu}
                 />
             )}
 

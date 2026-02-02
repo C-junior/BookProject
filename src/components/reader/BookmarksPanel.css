@@ -230,3 +230,55 @@
         width: 100%;
     }
 }
+
+/* Tabs */
+.bookmarks-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 var(--space-5);
+    gap: var(--space-4);
+    background-color: var(--color-bg-secondary);
+}
+
+.bookmarks-tab {
+    padding: var(--space-3) var(--space-1);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.bookmarks-tab:hover {
+    color: var(--color-text-primary);
+}
+
+.bookmarks-tab.active {
+    color: var(--color-accent-primary);
+    border-bottom-color: var(--color-accent-primary);
+}
+
+/* Highlight Items */
+.highlight-item-link {
+    align-items: flex-start;
+}
+
+.highlight-text-preview {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    line-height: 1.5;
+    padding-left: var(--space-2);
+    border-left: 3px solid transparent;
+    /* border-color set inline */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-style: italic;
+    background-color: var(--color-bg-secondary);
+    padding: var(--space-2);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
