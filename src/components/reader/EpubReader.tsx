@@ -2,12 +2,13 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import ePub, { type Rendition, type NavItem } from 'epubjs'
 import { useReaderStore } from '@/stores/readerStore'
 import { useUserStore } from '@/stores/userStore'
-import type { Book, TocItem, Annotation } from '@/types'
+import type { Book, TocItem, Annotation, SearchResult } from '@/types'
 import { addAnnotation, deleteAnnotation, getAnnotationsByType } from '@/services/storage/db'
 import { ReaderToolbar } from './ReaderToolbar'
 import { SettingsPanel } from './SettingsPanel'
 import { TocPanel } from './TocPanel'
 import { BookmarksPanel } from './BookmarksPanel'
+import { SearchPanel } from './SearchPanel'
 import { Loader2, AlertCircle } from 'lucide-react'
 import './EpubReader.css'
 
@@ -33,6 +34,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         showSettings,
         showToc,
         showBookmarks,
+        showSearch,
         preferences,
         toc,
         setLocation,
@@ -309,6 +311,56 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         }
     }, [])
 
+    // Search in book using epub.js
+    const handleSearch = useCallback(async (query: string): Promise<SearchResult[]> => {
+        if (!bookRef.current || !query.trim()) {
+            return []
+        }
+
+        try {
+            const spine = bookRef.current.spine
+            const results: SearchResult[] = []
+
+            // Search through all spine items (chapters)
+            for (let i = 0; i < spine.items.length; i++) {
+                const item = spine.items[i]
+                if (!item) continue
+
+                // Load the document for this spine item (required before find())
+                await item.load(bookRef.current.load.bind(bookRef.current))
+
+                // Get the chapter title from TOC
+                const chapter = toc.find(t => item.href?.includes(t.href))?.label || `Chapter ${i + 1}`
+
+                // Search using epub.js find method
+                const matches = await item.find(query)
+
+                for (const match of matches) {
+                    results.push({
+                        cfi: match.cfi,
+                        excerpt: match.excerpt || '',
+                        chapter
+                    })
+                }
+
+                // Limit results to prevent UI overload
+                if (results.length >= 100) break
+            }
+
+            return results
+        } catch (err) {
+            console.error('Search error:', err)
+            return []
+        }
+    }, [toc])
+
+    // Navigate to search result
+    const handleSearchNavigate = useCallback(async (cfi: string) => {
+        if (renditionRef.current && cfi) {
+            await renditionRef.current.display(cfi)
+        }
+    }, [])
+
     return (
         <div
             className="epub-reader"
@@ -363,6 +415,14 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                     onSelect={handleSelectBookmark}
                     onDelete={handleDeleteBookmark}
                     onAddBookmark={handleAddBookmark}
+                />
+            )}
+
+            {/* Search Panel */}
+            {showSearch && (
+                <SearchPanel
+                    onSearch={handleSearch}
+                    onNavigate={handleSearchNavigate}
                 />
             )}
 
