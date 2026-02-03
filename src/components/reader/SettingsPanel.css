@@ -403,3 +403,60 @@
         padding: var(--space-5);
     }
 }
+
+/* === TOGGLE SWITCH === */
+.settings-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+
+.settings-toggle-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.settings-hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+.settings-toggle {
+    position: relative;
+    width: 52px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-tertiary);
+    cursor: pointer;
+    transition: background var(--transition-base);
+    flex-shrink: 0;
+}
+
+.settings-toggle.active {
+    background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+}
+
+.settings-toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-base);
+}
+
+.settings-toggle.active .settings-toggle-thumb {
+    transform: translateX(20px);
+}
+
+.settings-toggle:focus-visible {
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: 2px;
+}

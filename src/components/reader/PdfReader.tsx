@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import * as pdfjsLib from 'pdfjs-dist'
 import { useReaderStore } from '@/stores/readerStore'
 import { useUserStore } from '@/stores/userStore'
+import { useAutoSaveBookmark } from '@/hooks/useAutoSaveBookmark'
 import type { Book, Annotation } from '@/types'
 import { addAnnotation, deleteAnnotation, getAnnotationsByType } from '@/services/storage/db'
 import { ReaderToolbar } from './ReaderToolbar'
@@ -47,6 +48,13 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
 
     // Calculate percentage
     const percentage = numPages > 0 ? Math.round((currentPage / numPages) * 100) : 0
+
+    // Auto-save reading position as bookmark (if enabled in preferences)
+    useAutoSaveBookmark({
+        bookId: book.id,
+        userId,
+        enabled: preferences.autoSavePosition
+    })
 
     // Initialize PDF
     useEffect(() => {

@@ -24,8 +24,12 @@ export function BookmarksPanel({ bookmarks, highlights = [], onSelect, onDelete,
     // Check if current location is bookmarked
     const isCurrentLocationBookmarked = bookmarks.some(b => b.cfiRange === currentLocation)
 
+    // Separate auto-save bookmark from manual bookmarks
+    const autoSaveBookmark = bookmarks.find(b => b.id.startsWith('autosave-'))
+    const manualBookmarks = bookmarks.filter(b => !b.id.startsWith('autosave-'))
+
     // Sort items by creation date (most recent first)
-    const sortedBookmarks = [...bookmarks].sort(
+    const sortedBookmarks = [...manualBookmarks].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
 
@@ -69,6 +73,22 @@ export function BookmarksPanel({ bookmarks, highlights = [], onSelect, onDelete,
 
                 {activeTab === 'bookmarks' ? (
                     <>
+                        {/* Auto-save bookmark (Continue Reading) */}
+                        {autoSaveBookmark && (
+                            <button
+                                className="bookmarks-autosave-card"
+                                onClick={() => handleSelect(autoSaveBookmark.cfiRange || '')}
+                            >
+                                <div className="bookmarks-autosave-icon">
+                                    <Bookmark size={20} fill="currentColor" />
+                                </div>
+                                <div className="bookmarks-autosave-info">
+                                    <span className="bookmarks-autosave-label">Continue Reading</span>
+                                    <span className="bookmarks-autosave-position">{autoSaveBookmark.text}</span>
+                                </div>
+                            </button>
+                        )}
+
                         {/* Add bookmark button */}
                         <button
                             className={`bookmarks-add-btn ${isCurrentLocationBookmarked ? 'disabled' : ''}`}

@@ -158,6 +158,30 @@ export async function deleteAnnotation(id: string): Promise<void> {
     await db.annotations.delete(id)
 }
 
+/**
+ * Upsert an auto-save bookmark (insert or update by ID)
+ * Used for auto-saving reading position - always overwrites previous
+ */
+export async function upsertAutoSaveBookmark(annotation: Annotation): Promise<void> {
+    const existing = await db.annotations.get(annotation.id)
+    if (existing) {
+        await db.annotations.update(annotation.id, {
+            ...annotation,
+            updatedAt: new Date()
+        })
+    } else {
+        await db.annotations.add(annotation)
+    }
+}
+
+/**
+ * Get the auto-save bookmark for a specific book
+ */
+export async function getAutoSaveBookmark(bookId: string): Promise<Annotation | undefined> {
+    const autoSaveId = `autosave-${bookId}`
+    return db.annotations.get(autoSaveId)
+}
+
 // ============================================
 // User Profile Operations
 // ============================================

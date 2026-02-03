@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import ePub, { type Rendition, type NavItem } from 'epubjs'
 import { useReaderStore } from '@/stores/readerStore'
 import { useUserStore } from '@/stores/userStore'
+import { useAutoSaveBookmark } from '@/hooks/useAutoSaveBookmark'
 import type { Book, TocItem, Annotation, SearchResult, HighlightColor } from '@/types'
 import { addAnnotation, deleteAnnotation } from '@/services/storage/db'
 import { ReaderToolbar } from './ReaderToolbar'
@@ -53,6 +54,13 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
 
     const { getCurrentUserId } = useUserStore()
     const userId = getCurrentUserId()
+
+    // Auto-save reading position as bookmark (if enabled in preferences)
+    useAutoSaveBookmark({
+        bookId: book.id,
+        userId,
+        enabled: preferences.autoSavePosition
+    })
 
     // Derived state from store annotations
     const bookmarks = annotations.filter(a => a.type === 'bookmark')

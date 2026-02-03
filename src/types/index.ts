@@ -117,6 +117,8 @@ export interface ReaderPreferences {
     margins: number // in pixels
     textAlign: 'left' | 'justify'
     brightness: number // 0-100
+    /** Auto-save reading position as bookmark (default: true) */
+    autoSavePosition: boolean
 }
 
 export interface CustomTheme {

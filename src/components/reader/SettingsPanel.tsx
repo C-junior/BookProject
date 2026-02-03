@@ -166,6 +166,24 @@ export function SettingsPanel() {
                         className="settings-slider"
                     />
                 </div>
+
+                {/* Auto-save Position */}
+                <div className="settings-section">
+                    <div className="settings-toggle-row">
+                        <div className="settings-toggle-info">
+                            <label className="settings-label">Auto-save Position</label>
+                            <span className="settings-hint">Resume where you left off</span>
+                        </div>
+                        <button
+                            className={`settings-toggle ${preferences.autoSavePosition ? 'active' : ''}`}
+                            onClick={() => updatePreference('autoSavePosition', !preferences.autoSavePosition)}
+                            role="switch"
+                            aria-checked={preferences.autoSavePosition}
+                        >
+                            <span className="settings-toggle-thumb" />
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     )
