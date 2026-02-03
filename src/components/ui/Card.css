@@ -1,4 +1,4 @@
-/* Card Component Styles */
+/* Card Component Styles - Mobile First */
 
 .card {
     background-color: var(--color-bg-elevated);
@@ -16,6 +16,8 @@ button.card {
     text-align: left;
     cursor: pointer;
     font: inherit;
+    border: 1px solid var(--color-border);
+    min-height: var(--touch-target-comfortable);
 }
 
 /* Padding variants */
@@ -35,18 +37,20 @@ button.card {
     padding: var(--space-6);
 }
 
-/* Hoverable card */
-.card-hoverable:hover {
-    box-shadow: var(--shadow-lg);
-    border-color: var(--color-border-strong);
+/* Hoverable card - Touch optimized */
+.card-hoverable {
+    cursor: pointer;
 }
 
 .card-hoverable:active {
-    transform: scale(0.99);
+    transform: scale(0.98);
 }
 
 /* Card sections */
 .card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
     padding: var(--space-4);
     border-bottom: 1px solid var(--color-border);
 }
@@ -56,6 +60,10 @@ button.card {
 }
 
 .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
     padding: var(--space-4);
     border-top: 1px solid var(--color-border);
     background-color: var(--color-bg-secondary);
@@ -66,4 +74,35 @@ button.card {
 .card-padding-none .card-body,
 .card-padding-none .card-footer {
     padding: var(--space-4);
+}
+
+/* Elevated card variant */
+.card-elevated {
+    box-shadow: var(--shadow-md);
+    border-color: transparent;
+}
+
+/* Accent border card */
+.card-accent {
+    border-color: var(--color-border-accent);
+}
+
+/* Glass card */
+.card-glass {
+    background: var(--color-bg-glass);
+    backdrop-filter: var(--glass-blur) var(--glass-saturate);
+    -webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
+}
+
+/* === TABLET+ HOVER EFFECTS === */
+@media (hover: hover) and (pointer: fine) {
+    .card-hoverable:hover {
+        box-shadow: var(--shadow-lg);
+        border-color: var(--color-border-accent);
+        transform: translateY(-2px);
+    }
+
+    .card-hoverable:active {
+        transform: translateY(0) scale(0.99);
+    }
 }

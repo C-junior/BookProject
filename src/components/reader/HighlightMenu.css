@@ -1,18 +1,21 @@
-/* Highlight Menu Styles */
+/* Highlight Menu Styles - Mobile First */
 
 .highlight-menu {
     position: fixed;
     z-index: 1000;
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-2);
-    background-color: var(--color-bg-primary);
-    border-radius: var(--radius-lg);
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background-color: var(--color-bg-glass);
+    backdrop-filter: var(--glass-blur) var(--glass-saturate);
+    -webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
-    animation: fadeIn var(--transition-fast) ease-out;
+    animation: popIn var(--transition-base) ease-out;
     transform: translate(-50%, -100%);
-    margin-top: -10px;
+    margin-top: -12px;
 }
 
 /* Arrow indicator */
@@ -24,31 +27,66 @@
     transform: translateX(-50%);
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
-    border-top: 8px solid var(--color-bg-primary);
+    border-top: 8px solid var(--color-bg-elevated);
 }
 
+/* Color picker - Touch optimized */
 .highlight-colors {
     display: flex;
     gap: var(--space-2);
+    padding: var(--space-1);
 }
 
 .highlight-color-btn {
-    width: 24px;
-    height: 24px;
-    border: 2px solid transparent;
-    border-radius: 50%;
+    width: var(--touch-target-min);
+    height: var(--touch-target-min);
+    border: 3px solid transparent;
+    border-radius: var(--radius-full);
     cursor: pointer;
-    transition: transform var(--transition-fast);
+    transition:
+        transform var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .highlight-color-btn:hover {
-    transform: scale(1.2);
-    border-color: var(--color-border);
+    transform: scale(1.1);
 }
 
+.highlight-color-btn:active {
+    transform: scale(0.95);
+}
+
+.highlight-color-btn.selected {
+    border-color: var(--color-text-primary);
+    box-shadow: 0 0 0 2px var(--color-bg-elevated);
+}
+
+/* Preset highlight colors */
+.highlight-color-yellow {
+    background-color: #fef08a;
+}
+
+.highlight-color-green {
+    background-color: #86efac;
+}
+
+.highlight-color-blue {
+    background-color: #93c5fd;
+}
+
+.highlight-color-pink {
+    background-color: #f9a8d4;
+}
+
+.highlight-color-orange {
+    background-color: #fed7aa;
+}
+
+/* Actions */
 .highlight-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     gap: var(--space-2);
     padding-top: var(--space-2);
     border-top: 1px solid var(--color-border);
@@ -58,14 +96,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: var(--touch-target-min);
+    height: var(--touch-target-min);
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     background: transparent;
     color: var(--color-text-secondary);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition:
+        background-color var(--transition-fast),
+        color var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .highlight-action-btn:hover {
@@ -73,15 +114,11 @@
     color: var(--color-text-primary);
 }
 
-/* Animation */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -90%);
-    }
+.highlight-action-btn:active {
+    transform: scale(0.95);
+}
 
-    to {
-        opacity: 1;
-        transform: translate(-50%, -100%);
-    }
+.highlight-action-btn.danger:hover {
+    background-color: rgba(220, 38, 38, 0.1);
+    color: var(--color-error);
 }

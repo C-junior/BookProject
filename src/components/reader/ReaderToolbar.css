@@ -1,47 +1,51 @@
-/* Reader Toolbar Styles */
+/* Reader Toolbar Styles - Mobile First */
 
 .reader-toolbar {
     position: fixed;
     left: 0;
     right: 0;
-    z-index: 200;
+    z-index: var(--z-sticky);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-3) var(--space-4);
-    background-color: var(--color-bg-elevated);
+    padding: var(--space-2) var(--space-3);
+    background-color: var(--color-bg-glass);
+    backdrop-filter: var(--glass-blur) var(--glass-saturate);
+    -webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
     border-color: var(--color-border);
-    animation: slideDown 0.2s ease;
 }
 
 .reader-toolbar-top {
     top: 0;
+    padding-top: calc(var(--space-2) + var(--safe-area-top));
     border-bottom: 1px solid var(--color-border);
-    animation: slideDown 0.2s ease;
+    animation: slideDown var(--transition-base) ease;
 }
 
 .reader-toolbar-bottom {
     bottom: 0;
+    padding-bottom: calc(var(--space-2) + var(--safe-area-bottom));
     border-top: 1px solid var(--color-border);
-    animation: slideUp 0.2s ease;
+    animation: slideUp var(--transition-base) ease;
 }
 
-/* Toolbar button */
+/* === TOOLBAR BUTTONS - Touch Optimized === */
 .reader-toolbar-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: var(--touch-target-min);
+    height: var(--touch-target-min);
     padding: 0;
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-full);
     background: transparent;
     color: var(--color-text-secondary);
     cursor: pointer;
     transition:
         background-color var(--transition-fast),
-        color var(--transition-fast);
+        color var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .reader-toolbar-button:hover {
@@ -49,7 +53,16 @@
     color: var(--color-text-primary);
 }
 
-/* Title section */
+.reader-toolbar-button:active {
+    transform: scale(0.95);
+}
+
+.reader-toolbar-button.active {
+    color: var(--color-accent-primary);
+    background-color: var(--color-accent-muted);
+}
+
+/* === TITLE SECTION === */
 .reader-toolbar-title {
     flex: 1;
     display: flex;
@@ -57,7 +70,7 @@
     align-items: center;
     gap: 2px;
     min-width: 0;
-    padding: 0 var(--space-4);
+    padding: 0 var(--space-2);
 }
 
 .reader-toolbar-book-title {
@@ -79,26 +92,29 @@
     max-width: 100%;
 }
 
-/* Actions */
+/* === ACTIONS === */
 .reader-toolbar-actions {
     display: flex;
     align-items: center;
     gap: var(--space-1);
 }
 
-/* Navigation */
+/* === BOTTOM TOOLBAR NAVIGATION === */
 .reader-toolbar-nav {
     display: flex;
     align-items: center;
-    gap: var(--space-4);
+    justify-content: center;
+    gap: var(--space-6);
+    width: 100%;
 }
 
+/* Large touch-friendly nav buttons */
 .reader-toolbar-nav-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
+    width: var(--touch-target-comfortable);
+    height: var(--touch-target-comfortable);
     padding: 0;
     border: none;
     border-radius: var(--radius-full);
@@ -107,7 +123,8 @@
     cursor: pointer;
     transition:
         background-color var(--transition-fast),
-        transform var(--transition-fast);
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .reader-toolbar-nav-button:hover {
@@ -116,24 +133,35 @@
 }
 
 .reader-toolbar-nav-button:active {
-    transform: scale(0.95);
+    transform: scale(0.92);
 }
 
-/* Progress */
+.reader-toolbar-nav-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* === PROGRESS DISPLAY === */
 .reader-toolbar-progress {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2px;
+    min-width: 60px;
 }
 
 .reader-toolbar-percentage {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
-    color: var(--color-text-primary);
+    color: var(--color-accent-primary);
 }
 
-/* Progress bar */
+.reader-toolbar-pages {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+/* === PROGRESS BAR === */
 .reader-progress-bar {
     position: fixed;
     bottom: 0;
@@ -141,27 +169,87 @@
     right: 0;
     height: 3px;
     background-color: var(--color-border);
-    z-index: 201;
+    z-index: calc(var(--z-sticky) + 1);
 }
 
 .reader-progress-fill {
     height: 100%;
-    background-color: var(--color-accent-primary);
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, var(--color-accent-primary) 0%, var(--color-warm) 100%);
+    transition: width var(--transition-slow) ease;
 }
 
-/* Responsive */
-@media (max-width: 480px) {
+/* === SLIDER FOR NAVIGATION === */
+.reader-toolbar-slider {
+    flex: 1;
+    height: 6px;
+    margin: 0 var(--space-4);
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-full);
+    outline: none;
+}
+
+.reader-toolbar-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: var(--color-accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: transform var(--transition-fast);
+}
+
+.reader-toolbar-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.reader-toolbar-slider::-webkit-slider-thumb:active {
+    transform: scale(0.95);
+}
+
+.reader-toolbar-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: var(--color-accent-primary);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+}
+
+/* === TABLET+ === */
+@media (min-width: 640px) {
     .reader-toolbar {
-        padding: var(--space-2) var(--space-3);
+        padding: var(--space-3) var(--space-4);
+    }
+
+    .reader-toolbar-top {
+        padding-top: var(--space-3);
+    }
+
+    .reader-toolbar-bottom {
+        padding-bottom: var(--space-3);
     }
 
     .reader-toolbar-title {
-        padding: 0 var(--space-2);
+        padding: 0 var(--space-4);
     }
 
-    .reader-toolbar-nav-button {
-        width: 40px;
-        height: 40px;
+    .reader-toolbar-nav {
+        gap: var(--space-8);
+    }
+}
+
+/* Hover devices - show enhanced hover states */
+@media (hover: hover) and (pointer: fine) {
+    .reader-toolbar-button:hover {
+        background-color: var(--color-accent-muted);
+    }
+
+    .reader-toolbar-nav-button:hover {
+        box-shadow: var(--shadow-md);
     }
 }

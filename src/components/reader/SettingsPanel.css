@@ -1,27 +1,42 @@
-/* Settings Panel Styles */
+/* Settings Panel Styles - Mobile First */
 
 .settings-panel {
     position: fixed;
-    bottom: 60px;
+    bottom: 0;
     left: 0;
     right: 0;
-    z-index: 300;
-    max-height: 60vh;
+    z-index: var(--z-modal);
+    max-height: 75vh;
     background-color: var(--color-bg-elevated);
     border-top: 1px solid var(--color-border);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
     box-shadow: var(--shadow-xl);
-    animation: slideUp 0.2s ease;
+    animation: slideUpSheet var(--transition-slow) ease;
     overflow: hidden;
 }
 
-.settings-panel-content {
-    max-height: 60vh;
-    overflow-y: auto;
-    padding: var(--space-4) var(--space-6) var(--space-6);
+/* Drag handle */
+.settings-panel::before {
+    content: '';
+    position: absolute;
+    top: var(--space-2);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 5px;
+    background-color: var(--color-border-strong);
+    border-radius: var(--radius-full);
+    z-index: 1;
 }
 
-/* Header */
+.settings-panel-content {
+    max-height: 75vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-6) var(--space-4) calc(var(--space-6) + var(--safe-area-bottom));
+}
+
+/* === HEADER === */
 .settings-header {
     display: flex;
     align-items: center;
@@ -42,32 +57,38 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: var(--touch-target-min);
+    height: var(--touch-target-min);
     padding: 0;
     border: none;
-    border-radius: var(--radius-md);
-    background: transparent;
-    color: var(--color-text-tertiary);
+    border-radius: var(--radius-full);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
     cursor: pointer;
-    transition: background-color var(--transition-fast);
+    transition:
+        background-color var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .settings-close:hover {
-    background-color: var(--color-bg-tertiary);
+    background-color: var(--color-bg-secondary);
     color: var(--color-text-primary);
 }
 
-/* Section */
+.settings-close:active {
+    transform: scale(0.95);
+}
+
+/* === SECTIONS === */
 .settings-section {
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-6);
 }
 
 .settings-section:last-child {
     margin-bottom: 0;
 }
 
-/* Labels */
+/* === LABELS === */
 .settings-label {
     display: flex;
     align-items: center;
@@ -75,14 +96,18 @@
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     color: var(--color-text-secondary);
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+
+.settings-label svg {
+    color: var(--color-accent-primary);
 }
 
 .settings-label-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
 }
 
 .settings-value {
@@ -91,7 +116,7 @@
     color: var(--color-accent-primary);
 }
 
-/* Theme buttons */
+/* === THEME BUTTONS - Touch Optimized === */
 .settings-theme-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -104,27 +129,37 @@
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-3);
+    min-height: 80px;
     border: 2px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     background: transparent;
     cursor: pointer;
-    transition: border-color var(--transition-fast);
+    transition:
+        border-color var(--transition-fast),
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .settings-theme-button:hover {
     border-color: var(--color-border-strong);
 }
 
+.settings-theme-button:active {
+    transform: scale(0.97);
+}
+
 .settings-theme-button.active {
     border-color: var(--color-accent-primary);
+    box-shadow: 0 0 0 3px var(--color-accent-muted);
 }
 
 .settings-theme-preview {
-    width: 48px;
-    height: 32px;
+    width: 56px;
+    height: 36px;
     background-color: var(--theme-color);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
 }
 
 .settings-theme-label {
@@ -133,7 +168,7 @@
     color: var(--color-text-secondary);
 }
 
-/* Font buttons */
+/* === FONT BUTTONS === */
 .settings-font-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -141,20 +176,26 @@
 }
 
 .settings-font-button {
+    min-height: var(--touch-target-min);
     padding: var(--space-2) var(--space-3);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     background: transparent;
     font-size: var(--font-size-sm);
     color: var(--color-text-primary);
     cursor: pointer;
     transition:
         border-color var(--transition-fast),
-        background-color var(--transition-fast);
+        background-color var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .settings-font-button:hover {
     background-color: var(--color-bg-secondary);
+}
+
+.settings-font-button:active {
+    transform: scale(0.98);
 }
 
 .settings-font-button.active {
@@ -163,10 +204,10 @@
     color: var(--color-accent-primary);
 }
 
-/* Slider */
+/* === SLIDER - Touch Optimized === */
 .settings-slider {
     width: 100%;
-    height: 6px;
+    height: 8px;
     -webkit-appearance: none;
     appearance: none;
     background: var(--color-bg-tertiary);
@@ -177,11 +218,12 @@
 .settings-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 20px;
-    height: 20px;
-    background: var(--color-accent-primary);
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-secondary) 100%);
     border-radius: 50%;
     cursor: pointer;
+    box-shadow: var(--shadow-md);
     transition: transform var(--transition-fast);
 }
 
@@ -189,13 +231,35 @@
     transform: scale(1.1);
 }
 
+.settings-slider::-webkit-slider-thumb:active {
+    transform: scale(0.95);
+}
+
 .settings-slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    background: var(--color-accent-primary);
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-secondary) 100%);
     border: none;
     border-radius: 50%;
     cursor: pointer;
+    box-shadow: var(--shadow-md);
+}
+
+/* Slider with track fill */
+.settings-slider-track {
+    position: relative;
+    height: 8px;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-full);
+}
+
+.settings-slider-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-accent-primary) 0%, var(--color-accent-secondary) 100%);
+    border-radius: var(--radius-full);
 }
 
 .settings-slider-row {
@@ -207,9 +271,11 @@
 .settings-slider-label {
     color: var(--color-text-tertiary);
     font-weight: var(--font-weight-bold);
+    min-width: 28px;
+    text-align: center;
 }
 
-/* Align buttons */
+/* === ALIGN BUTTONS === */
 .settings-align-buttons {
     display: flex;
     gap: var(--space-2);
@@ -219,21 +285,26 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 40px;
+    width: var(--touch-target-comfortable);
+    height: var(--touch-target-min);
     padding: 0;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     background: transparent;
     color: var(--color-text-secondary);
     cursor: pointer;
     transition:
         border-color var(--transition-fast),
-        background-color var(--transition-fast);
+        background-color var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .settings-align-button:hover {
     background-color: var(--color-bg-secondary);
+}
+
+.settings-align-button:active {
+    transform: scale(0.97);
 }
 
 .settings-align-button.active {
@@ -242,13 +313,93 @@
     color: var(--color-accent-primary);
 }
 
-/* Responsive */
-@media (max-width: 480px) {
+/* === TOGGLE SWITCH === */
+.settings-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: var(--touch-target-min);
+    padding: var(--space-2) 0;
+}
+
+.settings-toggle-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+}
+
+.settings-toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    background-color: var(--color-bg-tertiary);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.settings-toggle-switch.active {
+    background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-secondary) 100%);
+}
+
+.settings-toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    background-color: white;
+    border-radius: 50%;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-fast);
+}
+
+.settings-toggle-switch.active::after {
+    transform: translateX(24px);
+}
+
+/* === TABLET+ === */
+@media (min-width: 640px) {
+    .settings-panel {
+        max-height: 65vh;
+        max-width: 480px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    }
+
     .settings-panel-content {
-        padding: var(--space-4);
+        max-height: 65vh;
+        padding: var(--space-6);
     }
 
     .settings-font-grid {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* Hide drag handle on larger screens */
+    .settings-panel::before {
+        display: none;
+    }
+}
+
+/* === DESKTOP === */
+@media (min-width: 768px) {
+    .settings-panel {
+        position: fixed;
+        bottom: auto;
+        right: var(--space-4);
+        top: calc(var(--header-height) + var(--space-4));
+        left: auto;
+        transform: none;
+        max-width: 360px;
+        max-height: calc(100vh - var(--header-height) - var(--space-8));
+        border-radius: var(--radius-2xl);
+        animation: slideInRight var(--transition-base) ease;
+    }
+
+    .settings-panel-content {
+        max-height: calc(100vh - var(--header-height) - var(--space-8));
+        padding: var(--space-5);
     }
 }
