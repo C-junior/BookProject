@@ -22,6 +22,7 @@ interface EpubReaderProps {
 
 export function EpubReader({ book, onClose }: EpubReaderProps) {
     const containerRef = useRef<HTMLDivElement>(null)
+    const swipeOverlayRef = useRef<HTMLDivElement>(null)
     const renditionRef = useRef<Rendition | null>(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const bookRef = useRef<any>(null)
@@ -345,11 +346,13 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     }, [])
 
     // Swipe gesture navigation for touch devices
+    // Uses an overlay ref instead of containerRef because epub.js iframe blocks touch events
     useSwipeNavigation({
-        ref: containerRef,
+        ref: swipeOverlayRef,
         onSwipeLeft: goNext,
         onSwipeRight: goPrev,
-        disabled: showSettings || showToc || showBookmarks || showSearch
+        onTap: toggleToolbar,
+        disabled: showSettings || showToc || showBookmarks || showSearch || isLoading || !!error
     })
 
     const goToHref = useCallback(async (href: string) => {
@@ -551,6 +554,14 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                 ref={containerRef}
                 className={`epub-reader-container ${isLoading || error ? 'hidden' : ''}`}
             />
+
+            {/* Swipe gesture overlay - captures touch events that iframe blocks */}
+            {!isLoading && !error && (
+                <div
+                    ref={swipeOverlayRef}
+                    className="epub-reader-swipe-overlay"
+                />
+            )}
 
             {/* Settings Panel */}
             {showSettings && <SettingsPanel />}

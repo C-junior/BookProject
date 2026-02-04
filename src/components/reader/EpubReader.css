@@ -53,6 +53,27 @@
     border: none !important;
 }
 
+/* === SWIPE GESTURE OVERLAY === */
+/* Transparent overlay to capture swipe gestures that iframe blocks */
+/* pointer-events: none allows clicks to pass through to iframe content */
+/* but touch events are still captured on this element via the ref */
+.epub-reader-swipe-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    background: transparent;
+    touch-action: pan-x pan-y;
+    /* Allow clicks/taps to pass through to content below */
+    pointer-events: none;
+}
+
+/* Re-enable pointer events for touch devices to capture swipes */
+@media (hover: none) and (pointer: coarse) {
+    .epub-reader-swipe-overlay {
+        pointer-events: auto;
+    }
+}
+
 /* === LOADING STATE === */
 .epub-reader-loading {
     position: absolute;

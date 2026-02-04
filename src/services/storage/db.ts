@@ -163,15 +163,11 @@ export async function deleteAnnotation(id: string): Promise<void> {
  * Used for auto-saving reading position - always overwrites previous
  */
 export async function upsertAutoSaveBookmark(annotation: Annotation): Promise<void> {
-    const existing = await db.annotations.get(annotation.id)
-    if (existing) {
-        await db.annotations.update(annotation.id, {
-            ...annotation,
-            updatedAt: new Date()
-        })
-    } else {
-        await db.annotations.add(annotation)
-    }
+    // Use put() for atomic upsert - avoids race condition between get() and add()
+    await db.annotations.put({
+        ...annotation,
+        updatedAt: new Date()
+    })
 }
 
 /**

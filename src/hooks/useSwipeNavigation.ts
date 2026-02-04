@@ -9,6 +9,8 @@ interface SwipeOptions {
     onSwipeLeft: () => void
     /** Called when user swipes right (previous page) */
     onSwipeRight: () => void
+    /** Called when user taps (no significant movement) */
+    onTap?: () => void
     /** Disable swipe detection */
     disabled?: boolean
 }
@@ -17,15 +19,17 @@ interface SwipeOptions {
  * Hook for detecting horizontal swipe gestures on touch devices.
  * Swipe left → onSwipeLeft (next page)
  * Swipe right → onSwipeRight (previous page)
+ * Tap → onTap (toggle toolbar)
  */
 export function useSwipeNavigation({
     ref,
     onSwipeLeft,
     onSwipeRight,
+    onTap,
     threshold = 50,
     disabled = false
 }: SwipeOptions): void {
-    const touchStart = useRef<{ x: number; y: number } | null>(null)
+    const touchStart = useRef<{ x: number; y: number; time: number } | null>(null)
 
     useEffect(() => {
         const element = ref.current
@@ -34,7 +38,11 @@ export function useSwipeNavigation({
         const handleTouchStart = (e: TouchEvent) => {
             const touch = e.touches[0]
             if (touch) {
-                touchStart.current = { x: touch.clientX, y: touch.clientY }
+                touchStart.current = {
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    time: Date.now()
+                }
             }
         }
 
@@ -49,15 +57,18 @@ export function useSwipeNavigation({
 
             const deltaX = touchStart.current.x - touch.clientX
             const deltaY = Math.abs(touchStart.current.y - touch.clientY)
+            const elapsed = Date.now() - touchStart.current.time
 
-            // Only trigger if horizontal movement exceeds threshold
-            // and is significantly more horizontal than vertical
-            if (Math.abs(deltaX) > threshold && Math.abs(deltaX) > deltaY * 0.7) {
+            // Check if this was a tap (minimal movement, quick touch)
+            const isTap = Math.abs(deltaX) < 15 && deltaY < 15 && elapsed < 300
+
+            if (isTap) {
+                onTap?.()
+            } else if (Math.abs(deltaX) > threshold && Math.abs(deltaX) > deltaY * 0.7) {
+                // Horizontal swipe detected
                 if (deltaX > 0) {
-                    // Swiped left → go to next page
                     onSwipeLeft()
                 } else {
-                    // Swiped right → go to previous page
                     onSwipeRight()
                 }
             }
@@ -78,5 +89,6 @@ export function useSwipeNavigation({
             element.removeEventListener('touchend', handleTouchEnd)
             element.removeEventListener('touchcancel', handleTouchCancel)
         }
-    }, [ref, onSwipeLeft, onSwipeRight, threshold, disabled])
+    }, [ref, onSwipeLeft, onSwipeRight, onTap, threshold, disabled])
 }
+
