@@ -26,7 +26,8 @@ const defaultPreferences: ReaderPreferences = {
     lineHeight: 1.6,
     margins: 40,
     textAlign: 'left',
-    brightness: 100
+    brightness: 100,
+    autoSavePosition: true
 }
 
 export const useUserStore = create<UserState>()(
