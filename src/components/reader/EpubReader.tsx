@@ -69,6 +69,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     const highlights = annotations.filter(a => a.type === 'highlight')
 
     const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null)
+    const [swipeOffset, setSwipeOffset] = useState(0)
     const loadedAnnotationIds = useRef<Set<string>>(new Set())
 
     // Initialize the book
@@ -347,11 +348,24 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
 
     // Swipe gesture navigation for touch devices
     // Uses an overlay ref instead of containerRef because epub.js iframe blocks touch events
+    const handleSwipeMove = useCallback((deltaX: number) => {
+        // Clamp the offset to prevent excessive movement
+        const maxOffset = 100
+        const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, -deltaX))
+        setSwipeOffset(clampedOffset)
+    }, [])
+
+    const handleSwipeEnd = useCallback(() => {
+        setSwipeOffset(0)
+    }, [])
+
     useSwipeNavigation({
         ref: swipeOverlayRef,
         onSwipeLeft: goNext,
         onSwipeRight: goPrev,
         onTap: toggleToolbar,
+        onSwipeMove: handleSwipeMove,
+        onSwipeEnd: handleSwipeEnd,
         disabled: showSettings || showToc || showBookmarks || showSearch || isLoading || !!error
     })
 
@@ -552,7 +566,11 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             {/* Reading area */}
             <div
                 ref={containerRef}
-                className={`epub-reader-container ${isLoading || error ? 'hidden' : ''}`}
+                className={`epub-reader-container ${isLoading || error ? 'hidden' : ''} ${swipeOffset !== 0 ? 'swiping' : ''}`}
+                style={{
+                    transform: swipeOffset !== 0 ? `translateX(${swipeOffset}px)` : undefined,
+                    transition: swipeOffset === 0 ? 'transform 0.3s ease-out' : 'none'
+                }}
             />
 
             {/* Swipe gesture overlay - captures touch events that iframe blocks */}

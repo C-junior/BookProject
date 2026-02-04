@@ -53,6 +53,11 @@
     border: none !important;
 }
 
+/* Swipe animation state */
+.epub-reader-container.swiping {
+    will-change: transform;
+}
+
 /* === SWIPE GESTURE OVERLAY === */
 /* Transparent overlay to capture swipe gestures that iframe blocks */
 /* pointer-events: none allows clicks to pass through to iframe content */
