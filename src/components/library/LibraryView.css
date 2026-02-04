@@ -23,31 +23,50 @@
 .library-header-top {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    gap: var(--space-4);
     margin-bottom: var(--space-4);
+}
+
+.library-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.library-logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 8px var(--color-accent-glow));
 }
 
 .library-greeting {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
+    gap: 0;
 }
 
 .library-title {
-    font-size: var(--font-size-2xl);
+    font-family: var(--font-display);
+    font-size: var(--font-size-3xl);
     font-weight: var(--font-weight-bold);
     color: var(--color-text-primary);
     margin: 0;
-    background: linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-accent-primary) 100%);
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-warm) 60%, var(--color-accent-primary) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .library-subtitle {
+    font-family: var(--font-reading-sans);
     font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
+    color: var(--color-text-tertiary);
     margin: 0;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }
 
 /* Add book button in header */

@@ -57,49 +57,57 @@ h6 {
 
 /* ---------- Theme Variables (Mobile-First) ---------- */
 :root {
-  /* === NEW PREMIUM COLOR PALETTE === */
+  /* === NEW PREMIUM COLOR PALETTE - CODEX THEME === */
 
-  /* Light Theme - Warm, Inviting */
-  --color-bg-primary: #fafaf9;
-  --color-bg-secondary: #f5f5f4;
-  --color-bg-tertiary: #e7e5e4;
-  --color-bg-elevated: #ffffff;
-  --color-bg-glass: rgba(255, 255, 255, 0.85);
+  /* Dark Navy Theme Base */
+  --color-bg-primary: #1a1a2e;
+  /* Deepest Navy */
+  --color-bg-secondary: #16213e;
+  /* Lighter Navy for cards/sidebars */
+  --color-bg-tertiary: #0f3460;
+  /* Accent Navy */
+  --color-bg-elevated: #16213e;
+  /* Elevated surfaces */
+  --color-bg-glass: rgba(26, 26, 46, 0.85);
 
-  --color-text-primary: #1c1917;
-  --color-text-secondary: #57534e;
-  --color-text-tertiary: #a8a29e;
-  --color-text-inverse: #ffffff;
+  --color-text-primary: #e0e0e0;
+  --color-text-secondary: #a0a0a0;
+  --color-text-tertiary: #6b7280;
+  --color-text-inverse: #1a1a2e;
 
-  /* Deep Teal accent - trustworthy, calm, premium */
-  --color-accent-primary: #0d9488;
-  --color-accent-secondary: #14b8a6;
-  --color-accent-tertiary: #5eead4;
-  --color-accent-muted: rgba(13, 148, 136, 0.12);
-  --color-accent-glow: rgba(13, 148, 136, 0.25);
+  /* Teal & Gold Accents */
+  --color-accent-primary: #4db6ac;
+  /* Teal for primary actions */
+  --color-accent-secondary: #26a69a;
+  --color-accent-tertiary: #80cbc4;
+  --color-accent-muted: rgba(77, 182, 172, 0.15);
+  --color-accent-glow: rgba(77, 182, 172, 0.4);
 
-  /* Warm amber for highlights */
-  --color-warm: #f59e0b;
-  --color-warm-muted: rgba(245, 158, 11, 0.15);
+  /* Gold Highlights (Codex Gold) */
+  --color-warm: #d4af37;
+  /* Gold */
+  --color-warm-muted: rgba(212, 175, 55, 0.15);
+  --color-warm-glow: rgba(212, 175, 55, 0.3);
 
   /* Semantic Colors */
   --color-success: #059669;
-  --color-warning: #d97706;
-  --color-error: #dc2626;
-  --color-info: #0891b2;
+  --color-warning: #d4af37;
+  /* Using Gold for warning to match theme */
+  --color-error: #ef5350;
+  --color-info: #29b6f6;
 
-  --color-border: rgba(28, 25, 23, 0.08);
-  --color-border-strong: rgba(28, 25, 23, 0.15);
-  --color-border-accent: rgba(13, 148, 136, 0.3);
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-strong: rgba(255, 255, 255, 0.2);
+  --color-border-accent: rgba(77, 182, 172, 0.3);
 
-  /* === SHADOWS - Enhanced Depth === */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.06);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
+  /* === SHADOWS - Enhanced Depth for Dark Theme === */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.7);
   --shadow-glow: 0 0 20px var(--color-accent-glow);
-  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-gold: 0 0 15px var(--color-warm-glow);
 
   /* === TYPOGRAPHY - Fluid Scale === */
   --font-size-xs: clamp(0.6875rem, 0.65rem + 0.2vw, 0.75rem);
@@ -116,9 +124,11 @@ h6 {
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
-  /* Reading Fonts */
-  --font-reading-serif: 'Literata', Georgia, 'Times New Roman', serif;
-  --font-reading-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Fonts */
+  --font-display: 'Cinzel', serif;
+  /* New Title Font */
+  --font-body: 'Inter', sans-serif;
+  --font-reading-serif: 'Literata', Georgia, serif;
   --font-reading-classic: 'Merriweather', Georgia, serif;
 
   /* === SPACING - 8pt Grid, Mobile Optimized === */
@@ -281,6 +291,7 @@ body {
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -288,6 +299,7 @@ body {
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

@@ -84,11 +84,14 @@ export function LibraryView({ onOpenBook }: LibraryViewProps) {
             {/* Header */}
             <header className="library-header">
                 <div className="library-header-top">
-                    <div className="library-greeting">
-                        <h1 className="library-title">Your Library</h1>
-                        <p className="library-subtitle">
-                            {currentUser ? `Welcome back, ${currentUser.name}` : 'Welcome to PageTurner'}
-                        </p>
+                    <div className="library-brand">
+                        <img src="/codex_logo.png" alt="Codex Logo" className="library-logo" />
+                        <div className="library-greeting">
+                            <h1 className="library-title">Codex</h1>
+                            <p className="library-subtitle">
+                                {currentUser ? `Welcome back, ${currentUser.name}` : 'Your Digital Library'}
+                            </p>
+                        </div>
                     </div>
                     <Button
                         variant="primary"
