@@ -3,6 +3,7 @@ import ePub, { type Rendition, type NavItem } from 'epubjs'
 import { useReaderStore } from '@/stores/readerStore'
 import { useUserStore } from '@/stores/userStore'
 import { useAutoSaveBookmark } from '@/hooks/useAutoSaveBookmark'
+import { useSwipeNavigation } from '@/hooks/useSwipeNavigation'
 import type { Book, TocItem, Annotation, SearchResult, HighlightColor } from '@/types'
 import { addAnnotation, deleteAnnotation } from '@/services/storage/db'
 import { ReaderToolbar } from './ReaderToolbar'
@@ -342,6 +343,14 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             await renditionRef.current.prev()
         }
     }, [])
+
+    // Swipe gesture navigation for touch devices
+    useSwipeNavigation({
+        ref: containerRef,
+        onSwipeLeft: goNext,
+        onSwipeRight: goPrev,
+        disabled: showSettings || showToc || showBookmarks || showSearch
+    })
 
     const goToHref = useCallback(async (href: string) => {
         if (renditionRef.current) {

@@ -2,6 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -11,8 +15,8 @@ export default defineConfig({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'fonts/**/*'],
             manifest: {
-                name: 'PageTurner',
-                short_name: 'PageTurner',
+                name: 'Codex',
+                short_name: 'Codex',
                 description: 'The friendliest e-book reader',
                 theme_color: '#1a1a2e',
                 background_color: '#1a1a2e',
