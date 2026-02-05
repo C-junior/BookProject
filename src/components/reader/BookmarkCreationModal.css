@@ -1,0 +1,230 @@
+/* Bookmark Creation Modal Styles */
+
+/* Bookmark Color Variables */
+:root {
+    --bookmark-color-gold: #d4a574;
+    --bookmark-color-teal: #4db6ac;
+    --bookmark-color-coral: #ff7f7f;
+    --bookmark-color-lavender: #b39ddb;
+    --bookmark-color-mint: #80cbc4;
+    --bookmark-color-rose: #f48fb1;
+    --bookmark-color-sky: #81d4fa;
+    --bookmark-color-amber: #ffca28;
+}
+
+.bookmark-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal, 1000);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: fadeIn var(--transition-base) ease-out;
+}
+
+.bookmark-modal {
+    width: 100%;
+    max-width: 360px;
+    background-color: var(--color-bg-elevated);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-xl);
+    animation: scaleIn var(--transition-base) ease-out;
+    overflow: hidden;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.bookmark-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.bookmark-modal-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+}
+
+.bookmark-modal-title svg {
+    color: var(--color-accent-primary);
+}
+
+.bookmark-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: var(--radius-full);
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.bookmark-modal-close:hover {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+}
+
+.bookmark-modal-content {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.bookmark-modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.bookmark-modal-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.bookmark-modal-input {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    font-family: inherit;
+    transition: all var(--transition-fast);
+}
+
+.bookmark-modal-input::placeholder {
+    color: var(--color-text-tertiary);
+}
+
+.bookmark-modal-input:focus {
+    outline: none;
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 0 0 3px var(--color-accent-muted);
+}
+
+/* Color Palette */
+.bookmark-color-palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.bookmark-color-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid transparent;
+    border-radius: var(--radius-full);
+    background-color: var(--bookmark-btn-color);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.bookmark-color-btn:hover {
+    transform: scale(1.1);
+}
+
+.bookmark-color-btn.selected {
+    border-color: var(--color-text-primary);
+    box-shadow: 0 0 0 2px var(--color-bg-elevated), 0 0 0 4px var(--bookmark-btn-color);
+}
+
+.bookmark-color-btn.selected::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Actions */
+.bookmark-modal-actions {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-bg-secondary);
+}
+
+.bookmark-modal-btn {
+    flex: 1;
+    padding: var(--space-3) var(--space-4);
+    min-height: var(--touch-target-min);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.bookmark-modal-btn-cancel {
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+}
+
+.bookmark-modal-btn-cancel:hover {
+    background-color: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+}
+
+.bookmark-modal-btn-save {
+    background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-secondary) 100%);
+    color: white;
+}
+
+.bookmark-modal-btn-save:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.bookmark-modal-btn-save:active {
+    transform: scale(0.98);
+}
+
+/* Mobile adjustments */
+@media (max-width: 400px) {
+    .bookmark-modal {
+        max-width: 100%;
+        margin: var(--space-4);
+    }
+
+    .bookmark-color-btn {
+        width: 36px;
+        height: 36px;
+    }
+}

@@ -4,12 +4,13 @@ import { useReaderStore } from '@/stores/readerStore'
 import { useUserStore } from '@/stores/userStore'
 import { useAutoSaveBookmark } from '@/hooks/useAutoSaveBookmark'
 import { useSwipeNavigation } from '@/hooks/useSwipeNavigation'
-import type { Book, TocItem, Annotation, SearchResult, HighlightColor } from '@/types'
-import { addAnnotation, deleteAnnotation } from '@/services/storage/db'
+import type { Book, TocItem, Annotation, SearchResult, HighlightColor, BookmarkColor } from '@/types'
+import { addAnnotation, deleteAnnotation, updateAnnotation } from '@/services/storage/db'
 import { ReaderToolbar } from './ReaderToolbar'
 import { SettingsPanel } from './SettingsPanel'
 import { TocPanel } from './TocPanel'
 import { BookmarksPanel } from './BookmarksPanel'
+import { BookmarkCreationModal } from './BookmarkCreationModal'
 import { SearchPanel } from './SearchPanel'
 import { HighlightMenu } from './HighlightMenu'
 import { Loader2, AlertCircle } from 'lucide-react'
@@ -70,6 +71,8 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
 
     const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null)
     const [swipeOffset, setSwipeOffset] = useState(0)
+    const [showBookmarkModal, setShowBookmarkModal] = useState(false)
+    const [editingBookmark, setEditingBookmark] = useState<Annotation | null>(null)
     const loadedAnnotationIds = useRef<Set<string>>(new Set())
 
     // Initialize the book
@@ -445,25 +448,61 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         })
     }, [annotations])
 
-    // Add a bookmark at current location
-    const handleAddBookmark = useCallback(async () => {
+    // Open bookmark modal for creating
+    const handleOpenBookmarkModal = useCallback(() => {
         if (!currentLocation) return
+        setEditingBookmark(null)
+        setShowBookmarkModal(true)
+    }, [currentLocation])
 
-        const newBookmark: Annotation = {
-            id: `bookmark-${Date.now()}`,
-            bookId: book.id,
-            userId,
-            type: 'bookmark',
-            cfiRange: currentLocation,
-            text: `Page ${percentage}%`,
-            color: 'yellow',
-            createdAt: new Date(),
-            updatedAt: new Date()
+    // Open bookmark modal for editing
+    const handleEditBookmark = useCallback((bookmark: Annotation) => {
+        setEditingBookmark(bookmark)
+        setShowBookmarkModal(true)
+    }, [])
+
+    // Create or update bookmark with name and color
+    const handleSaveBookmark = useCallback(async (label: string, color: BookmarkColor) => {
+        if (editingBookmark) {
+            // Update existing bookmark
+            await updateAnnotation(editingBookmark.id, { label, color })
+            // Update in state
+            removeAnnotationFromState(editingBookmark.id)
+            addAnnotationToState({
+                ...editingBookmark,
+                label,
+                color,
+                updatedAt: new Date()
+            })
+        } else {
+            // Create new bookmark
+            if (!currentLocation) return
+
+            const newBookmark: Annotation = {
+                id: `bookmark-${Date.now()}`,
+                bookId: book.id,
+                userId,
+                type: 'bookmark',
+                cfiRange: currentLocation,
+                text: `Page ${percentage}%`,
+                color,
+                label,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            }
+
+            await addAnnotation(newBookmark)
+            addAnnotationToState(newBookmark)
         }
 
-        await addAnnotation(newBookmark)
-        addAnnotationToState(newBookmark)
-    }, [book.id, userId, currentLocation, percentage, addAnnotationToState])
+        setShowBookmarkModal(false)
+        setEditingBookmark(null)
+    }, [book.id, userId, currentLocation, percentage, addAnnotationToState, removeAnnotationFromState, editingBookmark])
+
+    const handleCancelBookmarkModal = useCallback(() => {
+        setShowBookmarkModal(false)
+        setEditingBookmark(null)
+    }, [])
 
     // Delete an annotation (bookmark or highlight)
     const handleDeleteAnnotation = useCallback(async (id: string) => {
@@ -599,7 +638,8 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                     highlights={highlights}
                     onSelect={handleSelectLocation}
                     onDelete={handleDeleteAnnotation}
-                    onAddBookmark={handleAddBookmark}
+                    onAddBookmark={handleOpenBookmarkModal}
+                    onEditBookmark={handleEditBookmark}
                 />
             )}
 
@@ -617,6 +657,18 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                     position={menuPosition}
                     onHighlight={handleHighlight}
                     onClose={handleDismissMenu}
+                />
+            )}
+
+            {/* Bookmark Creation/Edit Modal */}
+            {showBookmarkModal && (
+                <BookmarkCreationModal
+                    defaultLabel={`Page ${percentage}%`}
+                    initialLabel={editingBookmark?.label || ''}
+                    initialColor={editingBookmark?.color as BookmarkColor || 'gold'}
+                    isEditing={!!editingBookmark}
+                    onSave={handleSaveBookmark}
+                    onCancel={handleCancelBookmarkModal}
                 />
             )}
 

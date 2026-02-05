@@ -1,5 +1,23 @@
 /* Bookmarks Panel Styles - Mobile First */
 
+/* Bookmark Color Variables */
+:root {
+    --bookmark-color-gold: #d4a574;
+    --bookmark-color-teal: #4db6ac;
+    --bookmark-color-coral: #ff7f7f;
+    --bookmark-color-lavender: #b39ddb;
+    --bookmark-color-mint: #80cbc4;
+    --bookmark-color-rose: #f48fb1;
+    --bookmark-color-sky: #81d4fa;
+    --bookmark-color-amber: #ffca28;
+    /* Fallback for highlight colors used as bookmark colors */
+    --bookmark-color-yellow: #ffeb3b;
+    --bookmark-color-green: #a5d6a7;
+    --bookmark-color-blue: #90caf9;
+    --bookmark-color-pink: #f48fb1;
+    --bookmark-color-orange: #ffcc80;
+}
+
 .bookmarks-panel {
     position: fixed;
     inset: 0;
@@ -204,6 +222,34 @@
     overflow: hidden;
 }
 
+.bookmark-header-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.bookmark-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.bookmark-label {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bookmark-position {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+}
+
 .bookmark-text {
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-medium);
@@ -231,6 +277,12 @@
     color: var(--color-warm);
 }
 
+.bookmark-actions {
+    display: flex;
+    flex-shrink: 0;
+}
+
+.bookmark-edit,
 .bookmark-delete {
     display: flex;
     align-items: center;
@@ -241,6 +293,11 @@
     color: var(--color-text-tertiary);
     cursor: pointer;
     transition: all var(--transition-fast);
+}
+
+.bookmark-edit:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--color-accent-primary);
 }
 
 .bookmark-delete:hover {

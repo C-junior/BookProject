@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Annotation } from '@/types'
 import { useReaderStore } from '@/stores/readerStore'
-import { X, Bookmark, Trash2, Highlighter } from 'lucide-react'
+import { X, Bookmark, Trash2, Highlighter, Pencil, Plus } from 'lucide-react'
 import './BookmarksPanel.css'
 
 interface BookmarksPanelProps {
@@ -10,19 +10,17 @@ interface BookmarksPanelProps {
     onSelect: (cfi: string) => void
     onDelete: (id: string) => void
     onAddBookmark: () => void
+    onEditBookmark?: (bookmark: Annotation) => void
 }
 
-export function BookmarksPanel({ bookmarks, highlights = [], onSelect, onDelete, onAddBookmark }: BookmarksPanelProps) {
-    const { toggleBookmarks, currentLocation, percentage } = useReaderStore()
+export function BookmarksPanel({ bookmarks, highlights = [], onSelect, onDelete, onAddBookmark, onEditBookmark }: BookmarksPanelProps) {
+    const { toggleBookmarks, percentage } = useReaderStore()
     const [activeTab, setActiveTab] = useState<'bookmarks' | 'highlights'>('bookmarks')
 
     const handleSelect = (cfi: string) => {
         onSelect(cfi)
         toggleBookmarks()
     }
-
-    // Check if current location is bookmarked
-    const isCurrentLocationBookmarked = bookmarks.some(b => b.cfiRange === currentLocation)
 
     // Separate auto-save bookmark from manual bookmarks
     const autoSaveBookmark = bookmarks.find(b => b.id.startsWith('autosave-'))
@@ -89,14 +87,13 @@ export function BookmarksPanel({ bookmarks, highlights = [], onSelect, onDelete,
                             </button>
                         )}
 
-                        {/* Add bookmark button */}
+                        {/* Add bookmark button - always enabled */}
                         <button
-                            className={`bookmarks-add-btn ${isCurrentLocationBookmarked ? 'disabled' : ''}`}
+                            className="bookmarks-add-btn"
                             onClick={onAddBookmark}
-                            disabled={isCurrentLocationBookmarked}
                         >
-                            <Bookmark size={18} />
-                            {isCurrentLocationBookmarked ? 'Page Bookmarked' : 'Bookmark This Page'}
+                            <Plus size={18} />
+                            Add New Bookmark
                             <span className="bookmarks-add-position">{percentage}%</span>
                         </button>
 
@@ -117,9 +114,18 @@ export function BookmarksPanel({ bookmarks, highlights = [], onSelect, onDelete,
                                                 onClick={() => handleSelect(bookmark.cfiRange || '')}
                                             >
                                                 <div className="bookmark-info">
-                                                    <span className="bookmark-text">
-                                                        {bookmark.text || 'Bookmark'}
-                                                    </span>
+                                                    <div className="bookmark-header-row">
+                                                        <span
+                                                            className="bookmark-color-dot"
+                                                            style={{ backgroundColor: `var(--bookmark-color-${bookmark.color})` }}
+                                                        />
+                                                        <span className="bookmark-label">
+                                                            {bookmark.label || bookmark.text || 'Bookmark'}
+                                                        </span>
+                                                    </div>
+                                                    {bookmark.label && (
+                                                        <span className="bookmark-position">{bookmark.text}</span>
+                                                    )}
                                                     {bookmark.note && (
                                                         <span className="bookmark-note">{bookmark.note}</span>
                                                     )}
@@ -134,16 +140,30 @@ export function BookmarksPanel({ bookmarks, highlights = [], onSelect, onDelete,
                                                 </div>
                                                 <Bookmark size={16} className="bookmark-icon" fill="currentColor" />
                                             </button>
-                                            <button
-                                                className="bookmark-delete"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    onDelete(bookmark.id)
-                                                }}
-                                                aria-label="Delete bookmark"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <div className="bookmark-actions">
+                                                {onEditBookmark && (
+                                                    <button
+                                                        className="bookmark-edit"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onEditBookmark(bookmark)
+                                                        }}
+                                                        aria-label="Edit bookmark"
+                                                    >
+                                                        <Pencil size={16} />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    className="bookmark-delete"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        onDelete(bookmark.id)
+                                                    }}
+                                                    aria-label="Delete bookmark"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         </li>
                                     ))}
                                 </ul>

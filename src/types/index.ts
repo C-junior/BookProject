@@ -77,6 +77,8 @@ export type AnnotationType = 'highlight' | 'note' | 'bookmark'
 
 export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'orange'
 
+export type BookmarkColor = 'gold' | 'teal' | 'coral' | 'lavender' | 'mint' | 'rose' | 'sky' | 'amber'
+
 export interface Annotation {
     id: string
     bookId: string
@@ -90,8 +92,10 @@ export interface Annotation {
     text: string
     /** User note */
     note?: string
-    /** Highlight color */
-    color: HighlightColor
+    /** Highlight color or bookmark color */
+    color: HighlightColor | BookmarkColor
+    /** User-defined label for bookmarks */
+    label?: string
     createdAt: Date
     updatedAt: Date
 }
