@@ -97,10 +97,6 @@ export default defineConfig({
         }
     },
     server: {
-        headers: {
-            // Allow Firebase popup authentication
-            'Cross-Origin-Embedder-Policy': 'unsafe-none',
-            'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
-        }
+        // Headers removed to allow browser defaults and avoid conflicts with tracking prevention
     }
 })
