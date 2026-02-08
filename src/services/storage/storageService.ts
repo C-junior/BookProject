@@ -1,18 +1,13 @@
 /**
- * Firebase Storage Service
- * Upload and download book files to/from Firebase Storage
+ * Storage Service using Supabase Storage
+ * Upload and download book files
  */
 
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-import { getApps } from 'firebase/app'
-
-// Get existing Firebase app or create new one
-const app = getApps()[0]
-const storage = getStorage(app)
+import { supabase, BOOKS_BUCKET } from '@/services/supabase'
 
 /**
- * Upload a book file to Firebase Storage
- * @returns Download URL for the uploaded file
+ * Upload a book file to Supabase Storage
+ * @returns Public URL for the uploaded file
  */
 export async function uploadBookFile(
     userId: string,
@@ -21,45 +16,63 @@ export async function uploadBookFile(
     format: string,
     onProgress?: (progress: number) => void
 ): Promise<string> {
-    const filePath = `users/${userId}/books/${bookId}/book.${format}`
-    const storageRef = ref(storage, filePath)
+    const filePath = `${userId}/${bookId}/book.${format}`
 
-    // Upload the file
-    await uploadBytes(storageRef, fileBlob, {
-        contentType: getContentType(format)
-    })
+    // Upload to Supabase Storage
+    const { error } = await supabase.storage
+        .from(BOOKS_BUCKET)
+        .upload(filePath, fileBlob, {
+            contentType: getContentType(format),
+            upsert: true
+        })
 
-    // Get download URL
-    const downloadUrl = await getDownloadURL(storageRef)
+    if (error) {
+        throw new Error(`Upload failed: ${error.message}`)
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+        .from(BOOKS_BUCKET)
+        .getPublicUrl(filePath)
 
     if (onProgress) {
         onProgress(100)
     }
 
-    return downloadUrl
+    return urlData.publicUrl
 }
 
 /**
- * Upload a cover image to Firebase Storage
- * @returns Download URL for the cover
+ * Upload a cover image to Supabase Storage
+ * @returns Public URL for the cover
  */
 export async function uploadCoverImage(
     userId: string,
     bookId: string,
     coverBlob: Blob
 ): Promise<string> {
-    const filePath = `users/${userId}/books/${bookId}/cover.jpg`
-    const storageRef = ref(storage, filePath)
+    const filePath = `${userId}/${bookId}/cover.jpg`
 
-    await uploadBytes(storageRef, coverBlob, {
-        contentType: 'image/jpeg'
-    })
+    const { error } = await supabase.storage
+        .from(BOOKS_BUCKET)
+        .upload(filePath, coverBlob, {
+            contentType: 'image/jpeg',
+            upsert: true
+        })
 
-    return await getDownloadURL(storageRef)
+    if (error) {
+        throw new Error(`Cover upload failed: ${error.message}`)
+    }
+
+    const { data: urlData } = supabase.storage
+        .from(BOOKS_BUCKET)
+        .getPublicUrl(filePath)
+
+    return urlData.publicUrl
 }
 
 /**
- * Download a book file from Firebase Storage
+ * Download a book file from Supabase Storage
  * @returns The file as a Blob
  */
 export async function downloadBookFile(
@@ -122,29 +135,18 @@ export async function downloadCoverImage(coverUrl: string): Promise<Blob> {
 }
 
 /**
- * Delete a book's files from Firebase Storage
+ * Delete a book's files from Supabase Storage
  */
 export async function deleteBookFiles(userId: string, bookId: string): Promise<void> {
-    try {
-        const bookRef = ref(storage, `users/${userId}/books/${bookId}/book.epub`)
-        await deleteObject(bookRef)
-    } catch {
-        // File might not exist, ignore
-    }
+    const filesToDelete = [
+        `${userId}/${bookId}/book.epub`,
+        `${userId}/${bookId}/book.pdf`,
+        `${userId}/${bookId}/cover.jpg`
+    ]
 
-    try {
-        const bookRefPdf = ref(storage, `users/${userId}/books/${bookId}/book.pdf`)
-        await deleteObject(bookRefPdf)
-    } catch {
-        // File might not exist, ignore
-    }
-
-    try {
-        const coverRef = ref(storage, `users/${userId}/books/${bookId}/cover.jpg`)
-        await deleteObject(coverRef)
-    } catch {
-        // Cover might not exist, ignore
-    }
+    await supabase.storage
+        .from(BOOKS_BUCKET)
+        .remove(filesToDelete)
 }
 
 /**
