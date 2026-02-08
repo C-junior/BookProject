@@ -5,6 +5,7 @@ import { LibraryView } from '@/components/library/LibraryView'
 import { EpubReader } from '@/components/reader/EpubReader'
 import { PdfReader } from '@/components/reader/PdfReader'
 import { LoginScreen } from '@/components/auth/LoginScreen'
+import { syncOnLogin, syncOnLogout } from '@/services/sync/syncService'
 import type { Book } from '@/types'
 import './App.css'
 
@@ -37,11 +38,18 @@ function App() {
         closeBook()
     }
 
-    const handleAuthenticated = () => {
+    const handleAuthenticated = async () => {
         setIsAuthenticated(true)
+        // Trigger cloud sync on login
+        try {
+            await syncOnLogin()
+        } catch (err) {
+            console.error('Sync on login failed:', err)
+        }
     }
 
     const handleLogout = () => {
+        syncOnLogout()
         setIsAuthenticated(false)
     }
 

@@ -1,0 +1,108 @@
+.sync-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sync-indicator:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sync-indicator:disabled {
+    cursor: default;
+    opacity: 0.7;
+}
+
+/* Icon states */
+.sync-icon {
+    transition: all 0.3s ease;
+}
+
+.sync-icon.synced {
+    color: var(--accent-primary, #14b8a6);
+}
+
+.sync-icon.syncing {
+    color: var(--text-secondary, #94a3b8);
+    animation: spin 1s linear infinite;
+}
+
+.sync-icon.offline {
+    color: var(--text-muted, #64748b);
+}
+
+.sync-icon.error {
+    color: var(--color-danger, #ef4444);
+}
+
+.sync-icon.pending {
+    color: var(--accent-secondary, #d4af37);
+}
+
+/* Spinning animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Pending changes badge */
+.sync-pending {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pending-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 4px;
+    background: var(--accent-secondary, #d4af37);
+    color: var(--bg-primary, #0a1628);
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Offline indicator glow */
+.sync-indicator.offline {
+    position: relative;
+}
+
+.sync-indicator.offline::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}

@@ -123,6 +123,8 @@ export interface ReaderPreferences {
     brightness: number // 0-100
     /** Auto-save reading position as bookmark (default: true) */
     autoSavePosition: boolean
+    /** Has user completed onboarding tour (default: false) */
+    hasCompletedOnboarding?: boolean
 }
 
 export interface CustomTheme {

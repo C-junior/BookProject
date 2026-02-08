@@ -8,6 +8,8 @@ import { CollectionPicker } from './CollectionPicker'
 import { Button } from '@/components/ui/Button'
 import { DropZone } from '@/components/ui/DropZone'
 import { Modal } from '@/components/ui/Modal'
+import { SyncIndicator } from '@/components/ui/SyncIndicator'
+import { OnboardingTour } from '@/components/onboarding/OnboardingTour'
 import {
     Search,
     Grid3X3,
@@ -64,6 +66,19 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     // Collections and progress state
     const [collections, setCollections] = useState<Collection[]>([])
     const [progressMap, setProgressMap] = useState<Record<string, number>>({})
+
+    // Onboarding state
+    const [showOnboarding, setShowOnboarding] = useState(false)
+
+    // Check if user is first-time (needs onboarding)
+    useEffect(() => {
+        const hasCompletedOnboarding = currentUser?.preferences?.hasCompletedOnboarding
+        if (!hasCompletedOnboarding && currentUser) {
+            // Small delay to let library render first
+            const timer = setTimeout(() => setShowOnboarding(true), 500)
+            return () => clearTimeout(timer)
+        }
+    }, [currentUser])
 
     useEffect(() => {
         loadBooks()
@@ -182,6 +197,23 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
         }
     }
 
+    // Onboarding handlers
+    const handleOnboardingComplete = async () => {
+        setShowOnboarding(false)
+        // Save preference to mark onboarding as completed
+        try {
+            await useUserStore.getState().updateCurrentUserPreferences({
+                hasCompletedOnboarding: true
+            })
+        } catch (err) {
+            console.error('Failed to save onboarding preference:', err)
+        }
+    }
+
+    const handleOnboardingSkip = () => {
+        handleOnboardingComplete() // Same behavior - mark as completed
+    }
+
     const filteredBooks = getFilteredBooks()
 
     return (
@@ -213,6 +245,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                         >
                             Add Book
                         </Button>
+                        <SyncIndicator />
                         <button
                             className="library-logout-btn"
                             onClick={handleLogout}
@@ -397,6 +430,14 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                     collections={collections}
                     onSelect={handleSelectCollection}
                     onClose={() => setBookToAddToCollection(null)}
+                />
+            )}
+
+            {/* Onboarding Tour */}
+            {showOnboarding && (
+                <OnboardingTour
+                    onComplete={handleOnboardingComplete}
+                    onSkip={handleOnboardingSkip}
                 />
             )}
         </div>
