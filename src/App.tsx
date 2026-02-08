@@ -41,6 +41,10 @@ function App() {
         setIsAuthenticated(true)
     }
 
+    const handleLogout = () => {
+        setIsAuthenticated(false)
+    }
+
     // Wait for initialization
     if (!isInitialized) {
         return (
@@ -92,7 +96,7 @@ function App() {
 
     return (
         <div className="app">
-            <LibraryView onOpenBook={handleOpenBook} />
+            <LibraryView onOpenBook={handleOpenBook} onLogout={handleLogout} />
         </div>
     )
 }

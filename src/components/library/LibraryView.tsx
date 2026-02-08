@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useLibraryStore } from '@/stores/libraryStore'
 import { useUserStore } from '@/stores/userStore'
-import type { Book } from '@/types'
+import type { Book, Collection } from '@/types'
 import { BookCard } from './BookCard'
+import { CollectionsManager } from './CollectionsManager'
+import { CollectionPicker } from './CollectionPicker'
 import { Button } from '@/components/ui/Button'
 import { DropZone } from '@/components/ui/DropZone'
 import { Modal } from '@/components/ui/Modal'
@@ -13,16 +15,27 @@ import {
     SortAsc,
     Plus,
     BookOpen,
-    Loader2
+    Loader2,
+    LogOut,
+    FolderOpen
 } from 'lucide-react'
 import { parseBookFile } from '@/services/parsers'
+import { signOut } from '@/services/firebase'
+import {
+    getAllCollections,
+    createCollection,
+    deleteCollection as removeCollection,
+    getProgress,
+    updateBook
+} from '@/services/storage/db'
 import './LibraryView.css'
 
 interface LibraryViewProps {
     onOpenBook: (book: Book) => void
+    onLogout?: () => void
 }
 
-export function LibraryView({ onOpenBook }: LibraryViewProps) {
+export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     const {
         books,
         isLoading,
@@ -41,14 +54,53 @@ export function LibraryView({ onOpenBook }: LibraryViewProps) {
 
     const { currentUser } = useUserStore()
 
-    const [showImportModal, setShowImportModal] = React.useState(false)
-    const [importLoading, setImportLoading] = React.useState(false)
-    const [importError, setImportError] = React.useState<string | null>(null)
-    const [deleteConfirm, setDeleteConfirm] = React.useState<Book | null>(null)
+    const [showImportModal, setShowImportModal] = useState(false)
+    const [showCollectionsManager, setShowCollectionsManager] = useState(false)
+    const [importLoading, setImportLoading] = useState(false)
+    const [importError, setImportError] = useState<string | null>(null)
+    const [deleteConfirm, setDeleteConfirm] = useState<Book | null>(null)
+    const [bookToAddToCollection, setBookToAddToCollection] = useState<Book | null>(null)
+
+    // Collections and progress state
+    const [collections, setCollections] = useState<Collection[]>([])
+    const [progressMap, setProgressMap] = useState<Record<string, number>>({})
 
     useEffect(() => {
         loadBooks()
+        loadCollectionsList()
     }, [loadBooks])
+
+    // Load progress when books change
+    useEffect(() => {
+        loadProgressData()
+    }, [books, currentUser])
+
+    // Load collections from IndexedDB
+    const loadCollectionsList = async () => {
+        try {
+            const cols = await getAllCollections()
+            setCollections(cols)
+        } catch (err) {
+            console.error('Failed to load collections:', err)
+        }
+    }
+
+    // Load reading progress from IndexedDB for all books
+    const loadProgressData = async () => {
+        if (!currentUser || books.length === 0) return
+        try {
+            const map: Record<string, number> = {}
+            for (const book of books) {
+                const progress = await getProgress(book.id, currentUser.id)
+                if (progress) {
+                    map[book.id] = Math.round(progress.percentage)
+                }
+            }
+            setProgressMap(map)
+        } catch (err) {
+            console.error('Failed to load progress:', err)
+        }
+    }
 
     const handleFilesSelected = async (files: FileList) => {
         setImportLoading(true)
@@ -77,6 +129,59 @@ export function LibraryView({ onOpenBook }: LibraryViewProps) {
         }
     }
 
+    const handleLogout = async () => {
+        try {
+            await signOut()
+            onLogout?.()
+        } catch (err) {
+            console.error('Failed to sign out:', err)
+        }
+    }
+
+    const handleCreateCollection = async (name: string, color: string) => {
+        try {
+            const id = `col_${Date.now()}_${Math.random().toString(36).slice(2)}`
+            await createCollection({ id, name, color, createdAt: new Date() })
+            await loadCollectionsList()
+        } catch (err) {
+            console.error('Failed to create collection:', err)
+        }
+    }
+
+    const handleDeleteCollection = async (id: string) => {
+        try {
+            await removeCollection(id)
+            await loadCollectionsList()
+        } catch (err) {
+            console.error('Failed to delete collection:', err)
+        }
+    }
+
+    const handleAddToCollection = (book: Book) => {
+        // Open the collection picker with this book
+        setBookToAddToCollection(book)
+    }
+
+    const handleSelectCollection = async (collectionId: string) => {
+        if (!bookToAddToCollection) return
+
+        try {
+            // Get current collection IDs
+            const currentIds = bookToAddToCollection.collectionIds || []
+
+            // Add the new collection ID if not already present
+            if (!currentIds.includes(collectionId)) {
+                const newCollectionIds = [...currentIds, collectionId]
+                await updateBook(bookToAddToCollection.id, { collectionIds: newCollectionIds })
+
+                // Reload books to reflect the change
+                await loadBooks()
+            }
+        } catch (err) {
+            console.error('Failed to add book to collection:', err)
+        }
+    }
+
     const filteredBooks = getFilteredBooks()
 
     return (
@@ -93,13 +198,29 @@ export function LibraryView({ onOpenBook }: LibraryViewProps) {
                             </p>
                         </div>
                     </div>
-                    <Button
-                        variant="primary"
-                        leftIcon={<Plus size={18} />}
-                        onClick={() => setShowImportModal(true)}
-                    >
-                        Add Book
-                    </Button>
+                    <div className="library-header-actions">
+                        <Button
+                            variant="secondary"
+                            leftIcon={<FolderOpen size={18} />}
+                            onClick={() => setShowCollectionsManager(true)}
+                        >
+                            Collections
+                        </Button>
+                        <Button
+                            variant="primary"
+                            leftIcon={<Plus size={18} />}
+                            onClick={() => setShowImportModal(true)}
+                        >
+                            Add Book
+                        </Button>
+                        <button
+                            className="library-logout-btn"
+                            onClick={handleLogout}
+                            title="Sign Out"
+                        >
+                            <LogOut size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Search and filters */}
@@ -191,8 +312,11 @@ export function LibraryView({ onOpenBook }: LibraryViewProps) {
                             <BookCard
                                 key={book.id}
                                 book={book}
+                                progress={progressMap[book.id]}
+                                collections={collections}
                                 onOpen={onOpenBook}
                                 onDelete={setDeleteConfirm}
+                                onAddToCollection={handleAddToCollection}
                             />
                         ))}
                     </div>
@@ -255,8 +379,29 @@ export function LibraryView({ onOpenBook }: LibraryViewProps) {
                     </div>
                 </div>
             </Modal>
+
+            {/* Collections Manager Modal */}
+            {showCollectionsManager && (
+                <CollectionsManager
+                    collections={collections}
+                    onCreateCollection={handleCreateCollection}
+                    onDeleteCollection={handleDeleteCollection}
+                    onClose={() => setShowCollectionsManager(false)}
+                />
+            )}
+
+            {/* Collection Picker Modal */}
+            {bookToAddToCollection && (
+                <CollectionPicker
+                    book={bookToAddToCollection}
+                    collections={collections}
+                    onSelect={handleSelectCollection}
+                    onClose={() => setBookToAddToCollection(null)}
+                />
+            )}
         </div>
     )
 }
 
 export default LibraryView
+

@@ -13,6 +13,7 @@ import { BookmarksPanel } from './BookmarksPanel'
 import { BookmarkCreationModal } from './BookmarkCreationModal'
 import { SearchPanel } from './SearchPanel'
 import { HighlightMenu } from './HighlightMenu'
+import { DictionaryModal } from './DictionaryModal'
 import { Loader2, AlertCircle } from 'lucide-react'
 import './EpubReader.css'
 
@@ -73,6 +74,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     const [swipeOffset, setSwipeOffset] = useState(0)
     const [showBookmarkModal, setShowBookmarkModal] = useState(false)
     const [editingBookmark, setEditingBookmark] = useState<Annotation | null>(null)
+    const [dictionaryWord, setDictionaryWord] = useState<string | null>(null)
     const loadedAnnotationIds = useRef<Set<string>>(new Set())
 
     // Initialize the book
@@ -506,14 +508,29 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
 
     // Delete an annotation (bookmark or highlight)
     const handleDeleteAnnotation = useCallback(async (id: string) => {
+        // Find the annotation to get its cfi
+        const annotation = annotations.find(a => a.id === id)
+
+        // Remove visual highlight from rendition if it's a highlight
+        if (annotation?.type === 'highlight' && annotation.cfiRange && renditionRef.current) {
+            try {
+                (renditionRef.current as any).annotations.remove(annotation.cfiRange, 'highlight')
+            } catch (err) {
+                console.error('Error removing highlight from rendition:', err)
+            }
+        }
+
+        // Remove from DB
         await deleteAnnotation(id)
+
+        // Remove from state
         removeAnnotationFromState(id)
 
         // Remove from loaded references if it was a highlight
         if (loadedAnnotationIds.current.has(id)) {
             loadedAnnotationIds.current.delete(id)
         }
-    }, [removeAnnotationFromState])
+    }, [annotations, removeAnnotationFromState])
 
     // Navigate to bookmark/highlight location
     const handleSelectLocation = useCallback(async (cfi: string) => {
@@ -656,7 +673,9 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                 <HighlightMenu
                     position={menuPosition}
                     onHighlight={handleHighlight}
+                    onDefine={(text) => setDictionaryWord(text)}
                     onClose={handleDismissMenu}
+                    selectedText={selectedText || ''}
                 />
             )}
 
@@ -669,6 +688,14 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                     isEditing={!!editingBookmark}
                     onSave={handleSaveBookmark}
                     onCancel={handleCancelBookmarkModal}
+                />
+            )}
+
+            {/* Dictionary Modal */}
+            {dictionaryWord && (
+                <DictionaryModal
+                    word={dictionaryWord}
+                    onClose={() => setDictionaryWord(null)}
                 />
             )}
 
