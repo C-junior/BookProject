@@ -222,7 +222,7 @@ async function syncProgress(userId: string): Promise<void> {
 }
 
 /**
- * Sync book metadata (NOT file blobs)
+ * Sync book metadata (with storage URLs for cloud-only books)
  */
 async function syncBookMetadata(userId: string): Promise<void> {
     const localBooks = await db.books.toArray()
@@ -235,20 +235,53 @@ async function syncBookMetadata(userId: string): Promise<void> {
         cloudBooks.set(doc.id, doc.data() as Partial<Book>)
     })
 
-    // Push local book metadata to cloud (only metadata, not file)
+    // Push local book metadata to cloud (including storage URLs)
     for (const local of localBooks) {
-        if (!cloudBooks.has(local.id)) {
+        const existingCloud = cloudBooks.get(local.id)
+
+        // Update if not in cloud or if we have storage URLs the cloud doesn't have
+        if (!existingCloud || (local.storageUrl && !existingCloud.storageUrl)) {
             await setDoc(doc(firestore, 'users', userId, 'books', local.id), {
                 id: local.id,
                 title: local.title,
                 author: local.author,
                 format: local.format,
+                fileSize: local.fileSize,
                 addedAt: local.addedAt,
                 lastReadAt: local.lastReadAt || null,
                 collectionIds: local.collectionIds || [],
-                coverUrl: local.coverUrl || null
-                // Note: fileBlob is NOT synced (too large)
+                coverUrl: local.coverUrl || null,
+                storageUrl: local.storageUrl || null,
+                coverStorageUrl: local.coverStorageUrl || null,
+                metadata: local.metadata
             })
+        }
+    }
+
+    // Pull cloud books to local (as cloud-only if file not present locally)
+    for (const [id, cloud] of cloudBooks) {
+        const localBook = localBooks.find(b => b.id === id)
+
+        if (!localBook && cloud.storageUrl) {
+            // Create cloud-only book entry
+            await db.books.add({
+                id: cloud.id!,
+                title: cloud.title!,
+                author: cloud.author!,
+                format: cloud.format!,
+                fileSize: cloud.fileSize || 0,
+                metadata: cloud.metadata || { title: cloud.title!, author: cloud.author! },
+                addedAt: cloud.addedAt instanceof Date ? cloud.addedAt : new Date(),
+                lastReadAt: cloud.lastReadAt instanceof Date ? cloud.lastReadAt : undefined,
+                collectionIds: cloud.collectionIds || [],
+                coverUrl: cloud.coverUrl,
+                storageUrl: cloud.storageUrl,
+                coverStorageUrl: cloud.coverStorageUrl,
+                isCloudOnly: true
+                // Note: fileBlob is NOT set - this is a cloud-only book
+            } as Book)
+
+            console.log(`Synced cloud-only book: ${cloud.title}`)
         }
     }
 }

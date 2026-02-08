@@ -71,7 +71,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                 setIsLoading(true)
                 setError(null)
 
-                const arrayBuffer = await book.fileBlob.arrayBuffer()
+                const arrayBuffer = await book.fileBlob!.arrayBuffer()
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
 
                 if (!isMounted) return

@@ -92,6 +92,11 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                 setIsLoading(true)
                 setError(null)
 
+                // Check if book has file blob (cloud-only books may not have it)
+                if (!book.fileBlob) {
+                    throw new Error('Book file not available. Please download the book first.')
+                }
+
                 console.log('Initializing EPUB:', book.title)
 
                 const arrayBuffer = await book.fileBlob.arrayBuffer()

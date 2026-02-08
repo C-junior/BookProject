@@ -27,12 +27,18 @@ export interface Book {
     format: BookFormat
     coverUrl?: string
     coverBlob?: Blob
-    fileBlob: Blob
+    fileBlob?: Blob  // Optional - may not exist for cloud-only books
     fileSize: number
     metadata: BookMetadata
     addedAt: Date
     lastReadAt?: Date
     collectionIds?: string[]
+    /** Firebase Storage download URL for book file */
+    storageUrl?: string
+    /** Firebase Storage download URL for cover image */
+    coverStorageUrl?: string
+    /** True if book is synced from cloud but file not downloaded locally */
+    isCloudOnly?: boolean
 }
 
 export interface Collection {

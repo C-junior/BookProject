@@ -22,7 +22,8 @@ import {
     FolderOpen
 } from 'lucide-react'
 import { parseBookFile } from '@/services/parsers'
-import { signOut } from '@/services/firebase'
+import { signOut, auth } from '@/services/firebase'
+import { uploadBookFile, uploadCoverImage } from '@/services/storage/storageService'
 import {
     getAllCollections,
     createCollection,
@@ -124,6 +125,37 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
         try {
             for (const file of Array.from(files)) {
                 const book = await parseBookFile(file)
+
+                // Upload to Firebase Storage if user is authenticated
+                const userId = auth.currentUser?.uid
+                if (userId && book.fileBlob) {
+                    try {
+                        // Upload book file
+                        const storageUrl = await uploadBookFile(
+                            userId,
+                            book.id,
+                            book.fileBlob,
+                            book.format
+                        )
+                        book.storageUrl = storageUrl
+
+                        // Upload cover if available
+                        if (book.coverBlob) {
+                            const coverStorageUrl = await uploadCoverImage(
+                                userId,
+                                book.id,
+                                book.coverBlob
+                            )
+                            book.coverStorageUrl = coverStorageUrl
+                        }
+
+                        console.log(`Uploaded book to Storage: ${book.title}`)
+                    } catch (uploadErr) {
+                        console.error('Failed to upload to Storage:', uploadErr)
+                        // Continue without storage - book will still work locally
+                    }
+                }
+
                 await addNewBook(book)
             }
             setShowImportModal(false)

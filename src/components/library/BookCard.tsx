@@ -1,6 +1,8 @@
 import React from 'react'
 import type { Book, Collection } from '@/types'
-import { BookOpen, MoreVertical, Trash2, FolderPlus } from 'lucide-react'
+import { BookOpen, MoreVertical, Trash2, FolderPlus, Cloud, Download, Loader2 } from 'lucide-react'
+import { downloadBookFile, downloadCoverImage } from '@/services/storage/storageService'
+import { updateBook } from '@/services/storage/db'
 import './BookCard.css'
 
 interface BookCardProps {
@@ -10,11 +12,16 @@ interface BookCardProps {
     onOpen: (book: Book) => void
     onDelete: (book: Book) => void
     onAddToCollection?: (book: Book) => void
+    onBookUpdated?: () => void // Callback when book is downloaded
 }
 
-export function BookCard({ book, progress, collections, onOpen, onDelete, onAddToCollection }: BookCardProps) {
+export function BookCard({ book, progress, collections, onOpen, onDelete, onAddToCollection, onBookUpdated }: BookCardProps) {
     const [showMenu, setShowMenu] = React.useState(false)
+    const [isDownloading, setIsDownloading] = React.useState(false)
+    const [downloadProgress, setDownloadProgress] = React.useState(0)
     const menuRef = React.useRef<HTMLDivElement>(null)
+
+    const isCloudOnly = book.isCloudOnly && !book.fileBlob
 
     // Close menu when clicking outside
     React.useEffect(() => {
@@ -39,6 +46,55 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
         return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
     }
 
+    const handleClick = async () => {
+        if (isCloudOnly) {
+            await handleDownload()
+        } else {
+            onOpen(book)
+        }
+    }
+
+    const handleDownload = async () => {
+        if (!book.storageUrl || isDownloading) return
+
+        setIsDownloading(true)
+        setDownloadProgress(0)
+
+        try {
+            // Download the book file
+            const fileBlob = await downloadBookFile(book.storageUrl, setDownloadProgress)
+
+            // Download cover if available
+            let coverBlob: Blob | undefined
+            if (book.coverStorageUrl) {
+                try {
+                    coverBlob = await downloadCoverImage(book.coverStorageUrl)
+                } catch {
+                    // Cover download failed, continue without it
+                }
+            }
+
+            // Update the book in IndexedDB with the downloaded file
+            await updateBook(book.id, {
+                fileBlob,
+                coverBlob,
+                isCloudOnly: false
+            })
+
+            // Notify parent to refresh
+            onBookUpdated?.()
+
+            // Open the book after download
+            onOpen({ ...book, fileBlob, isCloudOnly: false })
+        } catch (err) {
+            console.error('Failed to download book:', err)
+            alert('Failed to download book. Please try again.')
+        } finally {
+            setIsDownloading(false)
+            setDownloadProgress(0)
+        }
+    }
+
     const handleMenuClick = (e: React.MouseEvent) => {
         e.stopPropagation()
         setShowMenu(!showMenu)
@@ -59,13 +115,16 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
     // Get book's assigned collections
     const bookCollections = collections?.filter(c => book.collectionIds?.includes(c.id)) || []
 
+    // Use storage URL for cover if local cover not available
+    const coverUrl = book.coverUrl || book.coverStorageUrl
+
     return (
-        <article className="book-card" onClick={() => onOpen(book)}>
+        <article className={`book-card ${isCloudOnly ? 'book-card-cloud' : ''}`} onClick={handleClick}>
             {/* Cover */}
             <div className="book-card-cover">
-                {book.coverUrl ? (
+                {coverUrl ? (
                     <img
-                        src={book.coverUrl}
+                        src={coverUrl}
                         alt={`Cover of ${book.title}`}
                         className="book-card-cover-image"
                     />
@@ -75,6 +134,21 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
                         <span className="book-card-cover-format">
                             {book.format.toUpperCase()}
                         </span>
+                    </div>
+                )}
+
+                {/* Cloud indicator */}
+                {isCloudOnly && !isDownloading && (
+                    <div className="book-card-cloud-badge" title="Download from cloud">
+                        <Cloud size={16} />
+                    </div>
+                )}
+
+                {/* Download progress overlay */}
+                {isDownloading && (
+                    <div className="book-card-download-overlay">
+                        <Loader2 size={24} className="book-card-spinner" />
+                        <span className="book-card-download-text">{downloadProgress}%</span>
                     </div>
                 )}
 
@@ -96,7 +170,7 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
                 )}
 
                 {/* Progress bar (if reading started) */}
-                {typeof progress === 'number' && progress > 0 && (
+                {typeof progress === 'number' && progress > 0 && !isCloudOnly && (
                     <div className="book-card-progress-container">
                         <div
                             className="book-card-progress-bar"
@@ -117,7 +191,13 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
                 </p>
                 <div className="book-card-meta">
                     <span className="book-card-format">{book.format.toUpperCase()}</span>
-                    <span className="book-card-size">{formatFileSize(book.fileSize)}</span>
+                    {isCloudOnly ? (
+                        <span className="book-card-cloud-label">
+                            <Download size={12} /> Cloud
+                        </span>
+                    ) : (
+                        <span className="book-card-size">{formatFileSize(book.fileSize)}</span>
+                    )}
                 </div>
             </div>
 
@@ -134,6 +214,15 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
 
                 {showMenu && (
                     <div className="book-card-dropdown">
+                        {isCloudOnly && (
+                            <button
+                                className="book-card-dropdown-item"
+                                onClick={(e) => { e.stopPropagation(); handleDownload() }}
+                            >
+                                <Download size={16} />
+                                <span>Download</span>
+                            </button>
+                        )}
                         {onAddToCollection && (
                             <button
                                 className="book-card-dropdown-item"
@@ -158,4 +247,5 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
 }
 
 export default BookCard
+
 
