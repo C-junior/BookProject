@@ -95,5 +95,12 @@ export default defineConfig({
                 }
             }
         }
+    },
+    server: {
+        headers: {
+            // Allow Firebase popup authentication
+            'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+            'Cross-Origin-Embedder-Policy': 'credentialless'
+        }
     }
 })

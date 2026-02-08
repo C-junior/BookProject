@@ -515,12 +515,17 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         if (annotation?.type === 'highlight' && annotation.cfiRange && renditionRef.current) {
             try {
                 (renditionRef.current as any).annotations.remove(annotation.cfiRange, 'highlight')
+
+                // Force re-render of current page to clear visual residue
+                if (currentLocation) {
+                    await renditionRef.current.display(currentLocation)
+                }
             } catch (err) {
                 console.error('Error removing highlight from rendition:', err)
             }
         }
 
-        // Remove from DB
+        // Remove from DB (this also syncs to Firebase)
         await deleteAnnotation(id)
 
         // Remove from state
@@ -530,7 +535,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         if (loadedAnnotationIds.current.has(id)) {
             loadedAnnotationIds.current.delete(id)
         }
-    }, [annotations, removeAnnotationFromState])
+    }, [annotations, currentLocation, removeAnnotationFromState])
 
     // Navigate to bookmark/highlight location
     const handleSelectLocation = useCallback(async (cfi: string) => {

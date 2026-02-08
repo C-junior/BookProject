@@ -1,5 +1,10 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { Book, ReadingProgress, Annotation, UserProfile, Collection, ReadingSession } from '@/types'
+import {
+    syncAnnotation as firebaseSyncAnnotation,
+    deleteAnnotation as firebaseDeleteAnnotation,
+    auth
+} from '@/services/firebase'
 
 /**
  * PageTurner Database Schema
@@ -126,6 +131,25 @@ export async function getRecentlyRead(userId: string, limit = 10): Promise<Book[
 
 export async function addAnnotation(annotation: Annotation): Promise<void> {
     await db.annotations.add(annotation)
+
+    // Sync to Firebase if user is authenticated
+    const userId = auth.currentUser?.uid
+    if (userId) {
+        try {
+            await firebaseSyncAnnotation(userId, {
+                id: annotation.id,
+                bookId: annotation.bookId,
+                type: annotation.type,
+                cfiRange: annotation.cfiRange,
+                text: annotation.text || '',
+                note: annotation.note,
+                color: annotation.color || 'yellow',
+                label: annotation.label
+            })
+        } catch (err) {
+            console.error('Firebase sync failed for annotation:', err)
+        }
+    }
 }
 
 export async function getAnnotations(bookId: string, userId: string): Promise<Annotation[]> {
@@ -156,6 +180,16 @@ export async function updateAnnotation(id: string, updates: Partial<Annotation>)
 
 export async function deleteAnnotation(id: string): Promise<void> {
     await db.annotations.delete(id)
+
+    // Delete from Firebase if user is authenticated
+    const userId = auth.currentUser?.uid
+    if (userId) {
+        try {
+            await firebaseDeleteAnnotation(userId, id)
+        } catch (err) {
+            console.error('Firebase delete failed for annotation:', err)
+        }
+    }
 }
 
 /**
