@@ -1,12 +1,14 @@
 import { useRef, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, BookOpen } from 'lucide-react'
 import type { HighlightColor } from '@/types'
 import './HighlightMenu.css'
 
 interface HighlightMenuProps {
     onHighlight: (color: HighlightColor) => void
+    onDefine?: (text: string) => void
     onClose: () => void
     position: { x: number; y: number } | null
+    selectedText?: string
 }
 
 const COLORS: { value: HighlightColor; label: string; color: string }[] = [
@@ -17,7 +19,7 @@ const COLORS: { value: HighlightColor; label: string; color: string }[] = [
     { value: 'orange', label: 'Orange', color: '#ffcc80' }
 ]
 
-export function HighlightMenu({ onHighlight, onClose, position }: HighlightMenuProps) {
+export function HighlightMenu({ onHighlight, onDefine, onClose, position, selectedText }: HighlightMenuProps) {
     const menuRef = useRef<HTMLDivElement>(null)
 
     // Close on click outside
@@ -56,21 +58,22 @@ export function HighlightMenu({ onHighlight, onClose, position }: HighlightMenuP
             </div>
 
             <div className="highlight-actions">
+                {/* Dictionary lookup button */}
+                {onDefine && selectedText && (
+                    <button
+                        className="highlight-action-btn highlight-action-define"
+                        onClick={() => onDefine(selectedText)}
+                        aria-label="Look up definition"
+                        title="Define"
+                    >
+                        <BookOpen size={16} />
+                    </button>
+                )}
                 <button className="highlight-action-btn" onClick={onClose} aria-label="Cancel">
                     <X size={16} />
                 </button>
             </div>
-
-            {/* Note and Copy features can be added in future iterations
-            <div className="highlight-actions">
-                <button className="highlight-action-btn" aria-label="Add Note">
-                    <MessageSquare size={16} />
-                </button>
-                <button className="highlight-action-btn" aria-label="Copy Text">
-                    <Copy size={16} />
-                </button>
-            </div>
-            */}
         </div>
     )
 }
+

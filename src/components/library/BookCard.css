@@ -88,6 +88,69 @@
     animation: pulse 2s infinite;
 }
 
+/* Progress bar container - new enhanced version */
+.book-card-progress-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+    display: flex;
+    align-items: flex-end;
+    padding: 0 var(--space-2) var(--space-2);
+}
+
+.book-card-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background: linear-gradient(90deg,
+            var(--color-accent-primary) 0%,
+            var(--color-warm) 100%);
+    border-radius: 0 2px 0 0;
+    transition: width 0.3s ease-out;
+}
+
+.book-card-progress-text {
+    position: relative;
+    z-index: 1;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    margin-left: auto;
+}
+
+/* Collection badges */
+.book-card-badges {
+    position: absolute;
+    top: var(--space-2);
+    left: var(--space-2);
+    display: flex;
+    gap: 4px;
+    z-index: 5;
+}
+
+.book-card-badge {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+}
+
+.book-card-badge-more {
+    font-size: 10px;
+    font-weight: 600;
+    color: white;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    padding: 1px 5px;
+    border-radius: 6px;
+}
+
 /* === INFO === */
 .book-card-info {
     display: flex;

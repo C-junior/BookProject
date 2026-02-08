@@ -1,19 +1,26 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useUserStore } from '@/stores/userStore'
 import { useReaderStore } from '@/stores/readerStore'
 import { LibraryView } from '@/components/library/LibraryView'
 import { EpubReader } from '@/components/reader/EpubReader'
 import { PdfReader } from '@/components/reader/PdfReader'
+import { LoginScreen } from '@/components/auth/LoginScreen'
 import type { Book } from '@/types'
 import './App.css'
 
 function App() {
     const { loadUsers, currentUser } = useUserStore()
     const { isReading, currentBook, openBook, closeBook, preferences } = useReaderStore()
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [isInitialized, setIsInitialized] = useState(false)
 
     // Initialize app
     useEffect(() => {
-        loadUsers()
+        const init = async () => {
+            await loadUsers()
+            setIsInitialized(true)
+        }
+        init()
     }, [loadUsers])
 
     // Apply theme from preferences
@@ -28,6 +35,24 @@ function App() {
 
     const handleCloseBook = () => {
         closeBook()
+    }
+
+    const handleAuthenticated = () => {
+        setIsAuthenticated(true)
+    }
+
+    // Wait for initialization
+    if (!isInitialized) {
+        return (
+            <div className="app-loading">
+                <div className="app-loading-spinner" />
+            </div>
+        )
+    }
+
+    // Show login screen if not authenticated
+    if (!isAuthenticated) {
+        return <LoginScreen onAuthenticated={handleAuthenticated} />
     }
 
     // Show reader if a book is open
@@ -73,3 +98,4 @@ function App() {
 }
 
 export default App
+

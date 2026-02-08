@@ -1,15 +1,18 @@
 import React from 'react'
-import type { Book } from '@/types'
-import { BookOpen, MoreVertical, Trash2 } from 'lucide-react'
+import type { Book, Collection } from '@/types'
+import { BookOpen, MoreVertical, Trash2, FolderPlus } from 'lucide-react'
 import './BookCard.css'
 
 interface BookCardProps {
     book: Book
+    progress?: number // 0-100 percentage
+    collections?: Collection[]
     onOpen: (book: Book) => void
     onDelete: (book: Book) => void
+    onAddToCollection?: (book: Book) => void
 }
 
-export function BookCard({ book, onOpen, onDelete }: BookCardProps) {
+export function BookCard({ book, progress, collections, onOpen, onDelete, onAddToCollection }: BookCardProps) {
     const [showMenu, setShowMenu] = React.useState(false)
     const menuRef = React.useRef<HTMLDivElement>(null)
 
@@ -47,6 +50,15 @@ export function BookCard({ book, onOpen, onDelete }: BookCardProps) {
         onDelete(book)
     }
 
+    const handleAddToCollection = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        setShowMenu(false)
+        onAddToCollection?.(book)
+    }
+
+    // Get book's assigned collections
+    const bookCollections = collections?.filter(c => book.collectionIds?.includes(c.id)) || []
+
     return (
         <article className="book-card" onClick={() => onOpen(book)}>
             {/* Cover */}
@@ -66,10 +78,31 @@ export function BookCard({ book, onOpen, onDelete }: BookCardProps) {
                     </div>
                 )}
 
-                {/* Progress indicator if started reading */}
-                {book.lastReadAt && (
-                    <div className="book-card-progress" aria-label="Reading progress">
-                        <div className="book-card-progress-dot" />
+                {/* Collection badges */}
+                {bookCollections.length > 0 && (
+                    <div className="book-card-badges">
+                        {bookCollections.slice(0, 2).map(col => (
+                            <span
+                                key={col.id}
+                                className="book-card-badge"
+                                style={{ backgroundColor: col.color }}
+                                title={col.name}
+                            />
+                        ))}
+                        {bookCollections.length > 2 && (
+                            <span className="book-card-badge-more">+{bookCollections.length - 2}</span>
+                        )}
+                    </div>
+                )}
+
+                {/* Progress bar (if reading started) */}
+                {typeof progress === 'number' && progress > 0 && (
+                    <div className="book-card-progress-container">
+                        <div
+                            className="book-card-progress-bar"
+                            style={{ width: `${progress}%` }}
+                        />
+                        <span className="book-card-progress-text">{progress}%</span>
                     </div>
                 )}
             </div>
@@ -101,6 +134,15 @@ export function BookCard({ book, onOpen, onDelete }: BookCardProps) {
 
                 {showMenu && (
                     <div className="book-card-dropdown">
+                        {onAddToCollection && (
+                            <button
+                                className="book-card-dropdown-item"
+                                onClick={handleAddToCollection}
+                            >
+                                <FolderPlus size={16} />
+                                <span>Add to Collection</span>
+                            </button>
+                        )}
                         <button
                             className="book-card-dropdown-item book-card-dropdown-item-danger"
                             onClick={handleDelete}
@@ -116,3 +158,4 @@ export function BookCard({ book, onOpen, onDelete }: BookCardProps) {
 }
 
 export default BookCard
+
