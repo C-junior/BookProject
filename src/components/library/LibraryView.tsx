@@ -149,9 +149,10 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                             book.coverStorageUrl = coverStorageUrl
                         }
 
-                        console.log(`Uploaded book to Storage: ${book.title}`)
+                        console.log(`Uploaded book to Storage: ${book.title}`, book.storageUrl)
                     } catch (uploadErr) {
-                        console.error('Failed to upload to Storage:', uploadErr)
+                        console.error('Failed to upload to Supabase Storage:', uploadErr)
+                        console.error('Upload error details:', JSON.stringify(uploadErr, null, 2))
                         // Continue without storage - book will still work locally
                     }
                 }
