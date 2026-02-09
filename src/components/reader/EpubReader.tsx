@@ -58,6 +58,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     } = useReaderStore()
 
     const userId = auth.currentUser?.uid || useUserStore.getState().getCurrentUserId()
+    const isVerticalScrollMode = preferences.readingMode === 'vertical-scroll'
 
     // Auto-save reading position as bookmark (if enabled in preferences)
     useAutoSaveBookmark({
@@ -112,8 +113,8 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                     width: '100%',
                     height: '100%',
                     spread: 'none',
-                    flow: 'paginated',
-                    manager: 'continuous'
+                    flow: isVerticalScrollMode ? 'scrolled-doc' : 'paginated',
+                    manager: isVerticalScrollMode ? 'continuous' : 'default'
                 })
                 renditionRef.current = rendition
 
@@ -217,7 +218,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [book.id]) // Only re-init when book changes
+    }, [book.id, isVerticalScrollMode]) // Re-init when book or reading mode changes
 
     // Apply reader preferences when they change
     useEffect(() => {
@@ -376,7 +377,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         onTap: toggleToolbar,
         onSwipeMove: handleSwipeMove,
         onSwipeEnd: handleSwipeEnd,
-        disabled: showSettings || showToc || showBookmarks || showSearch || isLoading || !!error
+        disabled: showSettings || showToc || showBookmarks || showSearch || isLoading || !!error || isVerticalScrollMode
     })
 
     const goToHref = useCallback(async (href: string) => {

@@ -79,6 +79,7 @@ interface ReaderState {
 
 const defaultPreferences: ReaderPreferences = {
     theme: 'light',
+    readingMode: 'paginated',
     fontFamily: 'Literata',
     fontSize: 18,
     lineHeight: 1.6,

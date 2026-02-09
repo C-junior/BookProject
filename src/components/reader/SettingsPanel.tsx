@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { useReaderStore } from '@/stores/readerStore'
-import { X, Sun, Moon, BookOpen, Type, AlignLeft, AlignJustify } from 'lucide-react'
+import { X, Sun, Moon, BookOpen, ScrollText, Type, AlignLeft, AlignJustify } from 'lucide-react'
 import './SettingsPanel.css'
 
 const FONT_FAMILIES = [
@@ -51,6 +51,29 @@ export function SettingsPanel() {
                                 <span className="settings-theme-label">{theme.label}</span>
                             </button>
                         ))}
+                    </div>
+                </div>
+
+                {/* Reading Mode (EPUB) */}
+                <div className="settings-section">
+                    <label className="settings-label">Reading Mode (EPUB)</label>
+                    <div className="settings-align-buttons">
+                        <button
+                            className={`settings-align-button ${preferences.readingMode !== 'vertical-scroll' ? 'active' : ''}`}
+                            onClick={() => updatePreference('readingMode', 'paginated')}
+                            aria-label="Paginated mode"
+                            title="Paginated"
+                        >
+                            <BookOpen size={20} />
+                        </button>
+                        <button
+                            className={`settings-align-button ${preferences.readingMode === 'vertical-scroll' ? 'active' : ''}`}
+                            onClick={() => updatePreference('readingMode', 'vertical-scroll')}
+                            aria-label="Vertical scroll mode"
+                            title="Vertical Scroll"
+                        >
+                            <ScrollText size={20} />
+                        </button>
                     </div>
                 </div>
 

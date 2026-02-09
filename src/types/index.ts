@@ -122,6 +122,7 @@ export interface UserProfile {
 
 export interface ReaderPreferences {
     theme: 'light' | 'dark' | 'sepia' | 'custom'
+    readingMode: 'paginated' | 'vertical-scroll'
     customTheme?: CustomTheme
     fontFamily: string
     fontSize: number // in pixels
