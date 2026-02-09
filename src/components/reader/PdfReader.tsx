@@ -5,6 +5,7 @@ import { useUserStore } from '@/stores/userStore'
 import { useAutoSaveBookmark } from '@/hooks/useAutoSaveBookmark'
 import type { Book, Annotation } from '@/types'
 import { addAnnotation, deleteAnnotation, getAnnotationsByType } from '@/services/storage/db'
+import { auth } from '@/services/firebase'
 import { ReaderToolbar } from './ReaderToolbar'
 import { SettingsPanel } from './SettingsPanel'
 import { BookmarksPanel } from './BookmarksPanel'
@@ -43,8 +44,8 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         saveCurrentProgress
     } = useReaderStore()
 
-    const { getCurrentUserId } = useUserStore()
-    const userId = getCurrentUserId()
+    const userId = auth.currentUser?.uid || useUserStore.getState().getCurrentUserId()
+    const pageStorageKey = `pdf-page-${userId}-${book.id}`
 
     // Calculate percentage
     const percentage = numPages > 0 ? Math.round((currentPage / numPages) * 100) : 0
@@ -80,7 +81,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                 setNumPages(pdf.numPages)
 
                 // Load saved page or start at page 1
-                const savedPage = parseInt(localStorage.getItem(`pdf-page-${book.id}`) || '1')
+                const savedPage = parseInt(localStorage.getItem(pageStorageKey) || '1')
                 setCurrentPage(Math.min(savedPage, pdf.numPages))
 
                 setIsLoading(false)
@@ -101,7 +102,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                 pdfDocRef.current.destroy()
             }
         }
-    }, [book.id, book.fileBlob])
+    }, [book.id, book.fileBlob, pageStorageKey])
 
     // Render current page
     useEffect(() => {
@@ -144,9 +145,9 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
     useEffect(() => {
         if (numPages > 0) {
             setLocation(currentPage.toString(), percentage)
-            localStorage.setItem(`pdf-page-${book.id}`, currentPage.toString())
+            localStorage.setItem(pageStorageKey, currentPage.toString())
         }
-    }, [currentPage, numPages, percentage, book.id, setLocation])
+    }, [currentPage, numPages, percentage, pageStorageKey, setLocation])
 
     // Load bookmarks
     useEffect(() => {
@@ -160,11 +161,11 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
     // Auto-save progress
     useEffect(() => {
         const saveInterval = setInterval(() => {
-            saveCurrentProgress(getCurrentUserId())
+            saveCurrentProgress(userId)
         }, 30000)
 
         return () => clearInterval(saveInterval)
-    }, [saveCurrentProgress, getCurrentUserId])
+    }, [saveCurrentProgress, userId])
 
     // Navigation
     const goToPage = useCallback((page: number) => {

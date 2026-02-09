@@ -6,6 +6,7 @@ import { EpubReader } from '@/components/reader/EpubReader'
 import { PdfReader } from '@/components/reader/PdfReader'
 import { LoginScreen } from '@/components/auth/LoginScreen'
 import { syncOnLogin, syncOnLogout } from '@/services/sync/syncService'
+import { auth } from '@/services/firebase'
 import type { Book } from '@/types'
 import './App.css'
 
@@ -30,7 +31,7 @@ function App() {
     }, [preferences.theme])
 
     const handleOpenBook = async (book: Book) => {
-        const userId = currentUser?.id || 'default-user'
+        const userId = auth.currentUser?.uid || currentUser?.id || 'default-user'
         await openBook(book, userId)
     }
 

@@ -56,6 +56,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     } = useLibraryStore()
 
     const { currentUser } = useUserStore()
+    const activeUserId = auth.currentUser?.uid || currentUser?.id || 'default-user'
 
     const [showImportModal, setShowImportModal] = useState(false)
     const [showCollectionsManager, setShowCollectionsManager] = useState(false)
@@ -82,20 +83,37 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     }, [currentUser])
 
     useEffect(() => {
-        loadBooks()
-        loadCollectionsList()
-    }, [loadBooks])
+        loadBooks(activeUserId)
+        loadCollectionsList(activeUserId)
+    }, [loadBooks, activeUserId])
 
     // Load progress when books change
     useEffect(() => {
         loadProgressData()
-    }, [books, currentUser])
+    }, [books, activeUserId])
 
     // Load collections from IndexedDB
-    const loadCollectionsList = async () => {
+    const loadCollectionsList = async (userId: string) => {
         try {
-            const cols = await getAllCollections()
-            setCollections(cols)
+            const cols = await getAllCollections(userId)
+            const unique = new Map<string, Collection>()
+            const duplicateIds: string[] = []
+            for (const col of cols) {
+                const key = col.name.trim().toLowerCase()
+                if (!unique.has(key)) {
+                    unique.set(key, col)
+                } else {
+                    duplicateIds.push(col.id)
+                }
+            }
+
+            // Cleanup historical duplicates for this user (case-insensitive)
+            if (duplicateIds.length > 0) {
+                for (const id of duplicateIds) {
+                    await removeCollection(id)
+                }
+            }
+            setCollections(Array.from(unique.values()))
         } catch (err) {
             console.error('Failed to load collections:', err)
         }
@@ -103,11 +121,14 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
 
     // Load reading progress from IndexedDB for all books
     const loadProgressData = async () => {
-        if (!currentUser || books.length === 0) return
+        if (!activeUserId || books.length === 0) {
+            setProgressMap({})
+            return
+        }
         try {
             const map: Record<string, number> = {}
             for (const book of books) {
-                const progress = await getProgress(book.id, currentUser.id)
+                const progress = await getProgress(book.id, activeUserId)
                 if (progress) {
                     map[book.id] = Math.round(progress.percentage)
                 }
@@ -125,6 +146,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
         try {
             for (const file of Array.from(files)) {
                 const book = await parseBookFile(file)
+                book.userId = activeUserId
 
                 // Upload to Firebase Storage if user is authenticated
                 const userId = auth.currentUser?.uid
@@ -188,9 +210,16 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
 
     const handleCreateCollection = async (name: string, color: string) => {
         try {
+            const normalizedName = name.trim().toLowerCase()
+            const exists = collections.some(col => col.name.trim().toLowerCase() === normalizedName)
+            if (exists) {
+                console.warn(`Collection "${name}" already exists for this user`)
+                return
+            }
+
             const id = `col_${Date.now()}_${Math.random().toString(36).slice(2)}`
-            await createCollection({ id, name, color, createdAt: new Date() })
-            await loadCollectionsList()
+            await createCollection({ id, userId: activeUserId, name, color, createdAt: new Date() })
+            await loadCollectionsList(activeUserId)
         } catch (err) {
             console.error('Failed to create collection:', err)
         }
@@ -199,7 +228,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     const handleDeleteCollection = async (id: string) => {
         try {
             await removeCollection(id)
-            await loadCollectionsList()
+            await loadCollectionsList(activeUserId)
         } catch (err) {
             console.error('Failed to delete collection:', err)
         }
@@ -223,7 +252,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                 await updateBook(bookToAddToCollection.id, { collectionIds: newCollectionIds })
 
                 // Reload books to reflect the change
-                await loadBooks()
+                await loadBooks(activeUserId)
             }
         } catch (err) {
             console.error('Failed to add book to collection:', err)
@@ -347,7 +376,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                 ) : error ? (
                     <div className="library-error">
                         <p>{error}</p>
-                        <Button variant="secondary" onClick={loadBooks}>
+                        <Button variant="secondary" onClick={() => loadBooks(activeUserId)}>
                             Try Again
                         </Button>
                     </div>

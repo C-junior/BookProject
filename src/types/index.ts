@@ -22,6 +22,7 @@ export interface BookMetadata {
 
 export interface Book {
     id: string
+    userId?: string
     title: string
     author: string
     format: BookFormat
@@ -43,6 +44,7 @@ export interface Book {
 
 export interface Collection {
     id: string
+    userId?: string
     name: string
     color: string
     createdAt: Date

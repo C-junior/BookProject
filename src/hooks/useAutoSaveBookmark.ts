@@ -30,7 +30,7 @@ export function useAutoSaveBookmark({
         // Don't save if position hasn't changed
         if (currentLocation === lastSavedLocationRef.current) return
 
-        const autoSaveId = `autosave-${bookId}`
+        const autoSaveId = `autosave-${userId}-${bookId}`
 
         const autoSaveBookmark: Annotation = {
             id: autoSaveId,

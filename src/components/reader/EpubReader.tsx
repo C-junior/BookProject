@@ -6,6 +6,7 @@ import { useAutoSaveBookmark } from '@/hooks/useAutoSaveBookmark'
 import { useSwipeNavigation } from '@/hooks/useSwipeNavigation'
 import type { Book, TocItem, Annotation, SearchResult, HighlightColor, BookmarkColor } from '@/types'
 import { addAnnotation, deleteAnnotation, updateAnnotation } from '@/services/storage/db'
+import { auth } from '@/services/firebase'
 import { ReaderToolbar } from './ReaderToolbar'
 import { SettingsPanel } from './SettingsPanel'
 import { TocPanel } from './TocPanel'
@@ -56,8 +57,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         removeAnnotationFromState
     } = useReaderStore()
 
-    const { getCurrentUserId } = useUserStore()
-    const userId = getCurrentUserId()
+    const userId = auth.currentUser?.uid || useUserStore.getState().getCurrentUserId()
 
     // Auto-save reading position as bookmark (if enabled in preferences)
     useAutoSaveBookmark({
@@ -417,16 +417,16 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     // Auto-save progress periodically
     useEffect(() => {
         const saveInterval = setInterval(() => {
-            saveCurrentProgress(getCurrentUserId())
+            saveCurrentProgress(userId)
         }, 30000) // Save every 30 seconds
 
         return () => clearInterval(saveInterval)
-    }, [saveCurrentProgress, getCurrentUserId])
+    }, [saveCurrentProgress, userId])
 
     // Save on unmount
     useEffect(() => {
         return () => {
-            saveCurrentProgress(getCurrentUserId())
+            saveCurrentProgress(userId)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])

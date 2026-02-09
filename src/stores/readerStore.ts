@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Book, ReaderPreferences, TocItem, SearchResult, Annotation } from '@/types'
 import { saveProgress, getProgress, getAnnotations } from '@/services/storage/db'
+import { debouncedSync } from '@/services/sync/syncService'
 
 interface ReaderState {
     // Current book state
@@ -180,6 +181,9 @@ export const useReaderStore = create<ReaderState>()(
                     chapterTitle,
                     lastUpdated: new Date()
                 })
+
+                // Keep cloud state fresh without spamming writes on every small movement
+                debouncedSync()
             },
 
             // UI toggles

@@ -13,6 +13,7 @@ import {
     setDoc,
     serverTimestamp,
     onSnapshot,
+    Timestamp,
     type Unsubscribe
 } from 'firebase/firestore'
 import type { Annotation, Collection, ReadingProgress, Book } from '@/types'
@@ -86,18 +87,21 @@ export function debouncedSync(): void {
  */
 async function syncAnnotations(userId: string): Promise<void> {
     // Get local annotations
-    const localAnnotations = await db.annotations.toArray()
+    const localAnnotations = await db.annotations.where('userId').equals(userId).toArray()
 
     // Get cloud annotations
     const annoCol = collection(firestore, 'users', userId, 'annotations')
     const cloudSnap = await getDocs(annoCol)
-    const cloudAnnotations = new Map<string, Annotation & { updatedAt?: Date }>()
+    const cloudAnnotations = new Map<string, Annotation>()
 
-    cloudSnap.forEach(doc => {
-        const data = doc.data()
-        cloudAnnotations.set(doc.id, {
+    cloudSnap.forEach(snapshotDoc => {
+        const data = snapshotDoc.data()
+        cloudAnnotations.set(snapshotDoc.id, {
             ...data,
-            id: doc.id
+            id: snapshotDoc.id,
+            userId,
+            createdAt: toDate(data.createdAt),
+            updatedAt: toDate(data.updatedAt, data.createdAt)
         } as Annotation)
     })
 
@@ -126,10 +130,11 @@ async function syncAnnotations(userId: string): Promise<void> {
         const localExists = localAnnotations.some(a => a.id === id)
 
         if (!localExists) {
-            await db.annotations.add({
+            await db.annotations.put({
                 ...cloud,
-                createdAt: cloud.createdAt instanceof Date ? cloud.createdAt : new Date(),
-                updatedAt: new Date()
+                userId,
+                createdAt: toDate(cloud.createdAt),
+                updatedAt: toDate(cloud.updatedAt, cloud.createdAt)
             } as Annotation)
         }
     }
@@ -139,14 +144,20 @@ async function syncAnnotations(userId: string): Promise<void> {
  * Sync collections
  */
 async function syncCollections(userId: string): Promise<void> {
-    const localCollections = await db.collections.toArray()
+    const localCollections = await db.collections.where('userId').equals(userId).toArray()
 
     const colCol = collection(firestore, 'users', userId, 'collections')
     const cloudSnap = await getDocs(colCol)
     const cloudCollections = new Map<string, Collection>()
 
-    cloudSnap.forEach(doc => {
-        cloudCollections.set(doc.id, { ...doc.data(), id: doc.id } as Collection)
+    cloudSnap.forEach(snapshotDoc => {
+        const data = snapshotDoc.data()
+        cloudCollections.set(snapshotDoc.id, {
+            ...data,
+            id: snapshotDoc.id,
+            userId,
+            createdAt: toDate(data.createdAt)
+        } as Collection)
     })
 
     // Push local to cloud
@@ -154,6 +165,7 @@ async function syncCollections(userId: string): Promise<void> {
         if (!cloudCollections.has(local.id)) {
             await setDoc(doc(firestore, 'users', userId, 'collections', local.id), {
                 id: local.id,
+                userId,
                 name: local.name,
                 color: local.color,
                 createdAt: serverTimestamp()
@@ -166,9 +178,10 @@ async function syncCollections(userId: string): Promise<void> {
         const localExists = localCollections.some(c => c.id === id)
 
         if (!localExists) {
-            await db.collections.add({
+            await db.collections.put({
                 ...cloud,
-                createdAt: cloud.createdAt instanceof Date ? cloud.createdAt : new Date()
+                userId,
+                createdAt: toDate(cloud.createdAt)
             } as Collection)
         }
     }
@@ -178,24 +191,31 @@ async function syncCollections(userId: string): Promise<void> {
  * Sync reading progress
  */
 async function syncProgress(userId: string): Promise<void> {
-    const localProgress = await db.progress.toArray()
+    const localProgress = await db.progress.where('userId').equals(userId).toArray()
 
     const progCol = collection(firestore, 'users', userId, 'progress')
     const cloudSnap = await getDocs(progCol)
     const cloudProgress = new Map<string, ReadingProgress & { id?: number }>()
 
-    cloudSnap.forEach(doc => {
-        cloudProgress.set(doc.id, doc.data() as ReadingProgress)
+    cloudSnap.forEach(snapshotDoc => {
+        const data = snapshotDoc.data() as ReadingProgress
+        cloudProgress.set(snapshotDoc.id, {
+            ...data,
+            userId,
+            lastUpdated: toDate(data.lastUpdated)
+        })
     })
 
-    // Push local to cloud (higher percentage wins)
+    // Push local to cloud when local is newer
     for (const local of localProgress) {
         const cloud = cloudProgress.get(local.bookId)
+        const localUpdatedAt = toDate(local.lastUpdated)
+        const cloudUpdatedAt = cloud ? toDate(cloud.lastUpdated) : undefined
 
-        if (!cloud || local.percentage > (cloud.percentage || 0)) {
+        if (!cloud || isNewer(localUpdatedAt, cloudUpdatedAt)) {
             await setDoc(doc(firestore, 'users', userId, 'progress', local.bookId), {
                 bookId: local.bookId,
-                userId: local.userId,
+                userId,
                 location: local.location,
                 percentage: local.percentage,
                 chapterTitle: local.chapterTitle || null,
@@ -204,18 +224,35 @@ async function syncProgress(userId: string): Promise<void> {
         }
     }
 
-    // Pull cloud to local (if higher percentage)
+    // Pull cloud to local when cloud is newer
     for (const [bookId, cloud] of cloudProgress) {
-        const local = localProgress.find(p => p.bookId === bookId)
+        const local = localProgress.find(p => p.bookId === bookId && p.userId === userId)
+        const localUpdatedAt = local ? toDate(local.lastUpdated) : undefined
+        const cloudUpdatedAt = toDate(cloud.lastUpdated)
 
-        if (!local || (cloud.percentage || 0) > local.percentage) {
-            await db.progress.put({
+        if (!local || isNewer(cloudUpdatedAt, localUpdatedAt)) {
+            const existing = await db.progress
+                .where('[bookId+userId]')
+                .equals([bookId, userId])
+                .first()
+
+            if (existing) {
+                await db.progress.update(existing.id, {
+                    location: cloud.location,
+                    percentage: cloud.percentage,
+                    chapterTitle: cloud.chapterTitle,
+                    lastUpdated: cloudUpdatedAt
+                })
+                continue
+            }
+
+            await db.progress.add({
                 bookId: cloud.bookId,
-                userId: cloud.userId,
+                userId,
                 location: cloud.location,
                 percentage: cloud.percentage,
                 chapterTitle: cloud.chapterTitle,
-                lastUpdated: new Date()
+                lastUpdated: cloudUpdatedAt
             } as ReadingProgress & { id: number })
         }
     }
@@ -225,14 +262,20 @@ async function syncProgress(userId: string): Promise<void> {
  * Sync book metadata (with storage URLs for cloud-only books)
  */
 async function syncBookMetadata(userId: string): Promise<void> {
-    const localBooks = await db.books.toArray()
+    const localBooks = await db.books.where('userId').equals(userId).toArray()
 
     const booksCol = collection(firestore, 'users', userId, 'books')
     const cloudSnap = await getDocs(booksCol)
     const cloudBooks = new Map<string, Partial<Book>>()
 
-    cloudSnap.forEach(doc => {
-        cloudBooks.set(doc.id, doc.data() as Partial<Book>)
+    cloudSnap.forEach(snapshotDoc => {
+        const data = snapshotDoc.data() as Partial<Book>
+        cloudBooks.set(snapshotDoc.id, {
+            ...data,
+            userId,
+            addedAt: toDate(data.addedAt),
+            lastReadAt: data.lastReadAt ? toDate(data.lastReadAt) : undefined
+        })
     })
 
     // Push local book metadata to cloud (including storage URLs)
@@ -243,6 +286,7 @@ async function syncBookMetadata(userId: string): Promise<void> {
         if (!existingCloud || (local.storageUrl && !existingCloud.storageUrl)) {
             await setDoc(doc(firestore, 'users', userId, 'books', local.id), {
                 id: local.id,
+                userId,
                 title: local.title,
                 author: local.author,
                 format: local.format,
@@ -266,13 +310,14 @@ async function syncBookMetadata(userId: string): Promise<void> {
             // Create cloud-only book entry
             await db.books.add({
                 id: cloud.id!,
+                userId,
                 title: cloud.title!,
                 author: cloud.author!,
                 format: cloud.format!,
                 fileSize: cloud.fileSize || 0,
                 metadata: cloud.metadata || { title: cloud.title!, author: cloud.author! },
-                addedAt: cloud.addedAt instanceof Date ? cloud.addedAt : new Date(),
-                lastReadAt: cloud.lastReadAt instanceof Date ? cloud.lastReadAt : undefined,
+                addedAt: toDate(cloud.addedAt),
+                lastReadAt: cloud.lastReadAt ? toDate(cloud.lastReadAt) : undefined,
                 collectionIds: cloud.collectionIds || [],
                 coverUrl: cloud.coverUrl,
                 storageUrl: cloud.storageUrl,
@@ -299,16 +344,74 @@ export function startRealtimeSync(): void {
         for (const change of snapshot.docChanges()) {
             if (change.type === 'added' || change.type === 'modified') {
                 const data = change.doc.data() as Annotation
-                const exists = await db.annotations.get(data.id)
-                if (!exists) {
-                    await db.annotations.add({
-                        ...data,
-                        createdAt: data.createdAt instanceof Date ? data.createdAt : new Date(),
-                        updatedAt: new Date()
-                    })
-                }
+                await db.annotations.put({
+                    ...data,
+                    id: change.doc.id,
+                    userId,
+                    createdAt: toDate(data.createdAt),
+                    updatedAt: toDate(data.updatedAt, data.createdAt)
+                } as Annotation)
             } else if (change.type === 'removed') {
                 await db.annotations.delete(change.doc.id)
+            }
+        }
+    })
+
+    // Listen for collection changes
+    const collectionsCol = collection(firestore, 'users', userId, 'collections')
+    collectionsUnsubscribe = onSnapshot(collectionsCol, async (snapshot) => {
+        for (const change of snapshot.docChanges()) {
+            if (change.type === 'removed') {
+                await db.collections.delete(change.doc.id)
+                continue
+            }
+
+            const data = change.doc.data() as Collection
+            await db.collections.put({
+                ...data,
+                id: change.doc.id,
+                userId,
+                createdAt: toDate(data.createdAt)
+            })
+        }
+    })
+
+    // Listen for progress changes
+    const progressCol = collection(firestore, 'users', userId, 'progress')
+    progressUnsubscribe = onSnapshot(progressCol, async (snapshot) => {
+        for (const change of snapshot.docChanges()) {
+            const progress = change.doc.data() as ReadingProgress
+            const bookId = progress.bookId || change.doc.id
+
+            if (change.type === 'removed') {
+                await db.progress
+                    .where('[bookId+userId]')
+                    .equals([bookId, userId])
+                    .delete()
+                continue
+            }
+
+            const existing = await db.progress
+                .where('[bookId+userId]')
+                .equals([bookId, userId])
+                .first()
+
+            if (existing) {
+                await db.progress.update(existing.id, {
+                    location: progress.location,
+                    percentage: progress.percentage,
+                    chapterTitle: progress.chapterTitle,
+                    lastUpdated: toDate(progress.lastUpdated)
+                })
+            } else {
+                await db.progress.add({
+                    bookId,
+                    userId,
+                    location: progress.location,
+                    percentage: progress.percentage,
+                    chapterTitle: progress.chapterTitle,
+                    lastUpdated: toDate(progress.lastUpdated)
+                } as ReadingProgress & { id: number })
             }
         }
     })
@@ -353,4 +456,18 @@ function isNewer(a?: Date, b?: Date): boolean {
     if (!a) return false
     if (!b) return true
     return new Date(a).getTime() > new Date(b).getTime()
+}
+
+function toDate(value: unknown, fallback: unknown = undefined): Date {
+    if (value instanceof Date) return value
+    if (value instanceof Timestamp) return value.toDate()
+    if (value && typeof value === 'object' && typeof (value as { toDate?: unknown }).toDate === 'function') {
+        return ((value as { toDate: () => Date }).toDate())
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+        const date = new Date(value)
+        if (!Number.isNaN(date.getTime())) return date
+    }
+    if (fallback !== undefined) return toDate(fallback)
+    return new Date()
 }

@@ -40,6 +40,16 @@ class PageTurnerDatabase extends Dexie {
             collections: 'id, name, createdAt',
             sessions: '++id, bookId, userId, startTime, [bookId+userId]'
         })
+
+        // User-scoped indexes for multi-account isolation on shared devices
+        this.version(2).stores({
+            books: 'id, userId, title, author, format, addedAt, lastReadAt, *collectionIds, [userId+addedAt]',
+            progress: '++id, [bookId+userId], bookId, userId, lastUpdated',
+            annotations: 'id, bookId, userId, type, createdAt, [bookId+userId]',
+            users: 'id, name, createdAt',
+            collections: 'id, userId, name, createdAt, [userId+name]',
+            sessions: '++id, bookId, userId, startTime, [bookId+userId]'
+        })
     }
 }
 
@@ -58,8 +68,21 @@ export async function getBook(id: string): Promise<Book | undefined> {
     return db.books.get(id)
 }
 
-export async function getAllBooks(): Promise<Book[]> {
-    return db.books.orderBy('addedAt').reverse().toArray()
+export async function getAllBooks(userId: string): Promise<Book[]> {
+    let books = await db.books
+        .where('userId')
+        .equals(userId)
+        .toArray()
+
+    if (books.length === 0) {
+        const legacyBooks = await db.books.filter(book => !book.userId).toArray()
+        if (legacyBooks.length > 0) {
+            await Promise.all(legacyBooks.map(book => db.books.update(book.id, { userId })))
+            books = await db.books.where('userId').equals(userId).toArray()
+        }
+    }
+
+    return books.sort((a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime())
 }
 
 export async function updateBook(id: string, updates: Partial<Book>): Promise<void> {
@@ -74,8 +97,12 @@ export async function deleteBook(id: string): Promise<void> {
     })
 }
 
-export async function getBooksByCollection(collectionId: string): Promise<Book[]> {
-    return db.books.where('collectionIds').equals(collectionId).toArray()
+export async function getBooksByCollection(collectionId: string, userId: string): Promise<Book[]> {
+    return db.books
+        .where('collectionIds')
+        .equals(collectionId)
+        .filter(book => book.userId === userId)
+        .toArray()
 }
 
 // ============================================
@@ -207,8 +234,8 @@ export async function upsertAutoSaveBookmark(annotation: Annotation): Promise<vo
 /**
  * Get the auto-save bookmark for a specific book
  */
-export async function getAutoSaveBookmark(bookId: string): Promise<Annotation | undefined> {
-    const autoSaveId = `autosave-${bookId}`
+export async function getAutoSaveBookmark(bookId: string, userId: string): Promise<Annotation | undefined> {
+    const autoSaveId = `autosave-${userId}-${bookId}`
     return db.annotations.get(autoSaveId)
 }
 
@@ -256,8 +283,21 @@ export async function createCollection(collection: Collection): Promise<void> {
     await db.collections.add(collection)
 }
 
-export async function getAllCollections(): Promise<Collection[]> {
-    return db.collections.orderBy('name').toArray()
+export async function getAllCollections(userId: string): Promise<Collection[]> {
+    let collections = await db.collections
+        .where('userId')
+        .equals(userId)
+        .sortBy('name')
+
+    if (collections.length === 0) {
+        const legacyCollections = await db.collections.filter(col => !col.userId).toArray()
+        if (legacyCollections.length > 0) {
+            await Promise.all(legacyCollections.map(col => db.collections.update(col.id, { userId })))
+            collections = await db.collections.where('userId').equals(userId).sortBy('name')
+        }
+    }
+
+    return collections
 }
 
 export async function updateCollection(id: string, updates: Partial<Collection>): Promise<void> {

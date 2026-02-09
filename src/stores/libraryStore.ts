@@ -15,7 +15,7 @@ interface LibraryState {
     selectedCollection: string | null
 
     // Actions
-    loadBooks: () => Promise<void>
+    loadBooks: (userId: string) => Promise<void>
     addNewBook: (book: Book) => Promise<void>
     removeBook: (id: string) => Promise<void>
     updateBookData: (id: string, updates: Partial<Book>) => Promise<void>
@@ -41,10 +41,10 @@ export const useLibraryStore = create<LibraryState>()(
             selectedCollection: null,
 
             // Load books from IndexedDB
-            loadBooks: async () => {
+            loadBooks: async (userId: string) => {
                 set({ isLoading: true, error: null })
                 try {
-                    const books = await getAllBooks()
+                    const books = await getAllBooks(userId)
                     set({ books, isLoading: false })
                 } catch (error) {
                     set({
