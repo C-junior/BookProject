@@ -77,6 +77,28 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     const [editingBookmark, setEditingBookmark] = useState<Annotation | null>(null)
     const [dictionaryWord, setDictionaryWord] = useState<string | null>(null)
     const loadedAnnotationIds = useRef<Set<string>>(new Set())
+    const locationsGeneratedRef = useRef(false)
+
+    const getProgressPercentageFromCfi = useCallback((cfi: string): number | null => {
+        const locationsApi = (bookRef.current as any)?.locations
+        if (!locationsApi || !cfi) return null
+
+        const totalLocations = typeof locationsApi.length === 'function'
+            ? locationsApi.length()
+            : 0
+
+        if (!totalLocations || totalLocations < 2 || typeof locationsApi.locationFromCfi !== 'function') {
+            return null
+        }
+
+        const locationIndex = locationsApi.locationFromCfi(cfi)
+        if (typeof locationIndex !== 'number' || !Number.isFinite(locationIndex) || locationIndex < 0) {
+            return null
+        }
+
+        const percentage = Math.round((locationIndex / (totalLocations - 1)) * 100)
+        return Math.max(0, Math.min(100, percentage))
+    }, [])
 
     // Initialize the book
     useEffect(() => {
@@ -107,6 +129,23 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                 if (!isMounted) return
 
                 bookRef.current = epubBook
+
+                // Generate location map so progress percentage works reliably in both
+                // paginated and vertical-scroll modes.
+                try {
+                    const locationsApi = (epubBook as any).locations
+                    const hasLocations = typeof locationsApi?.length === 'function'
+                        ? locationsApi.length() > 0
+                        : false
+
+                    if (!hasLocations && typeof locationsApi?.generate === 'function') {
+                        await locationsApi.generate(1600)
+                    }
+                    locationsGeneratedRef.current = true
+                } catch (locationErr) {
+                    console.warn('Could not generate EPUB locations for progress tracking:', locationErr)
+                    locationsGeneratedRef.current = false
+                }
 
                 // Render to container
                 const rendition = epubBook.renderTo(containerRef.current!, {
@@ -142,9 +181,21 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
 
                 // Listen for location changes
                 rendition.on('relocated', (location: { start: { cfi: string; percentage: number; displayed?: { page?: number } } }) => {
+                    const cfi = location.start.cfi
+                    const cfiBasedPercentage = locationsGeneratedRef.current
+                        ? getProgressPercentageFromCfi(cfi)
+                        : null
+
+                    const startPercentage = location.start.percentage
+                    const fallbackPercentage = Number.isFinite(startPercentage)
+                        ? Math.max(0, Math.min(100, Math.round(startPercentage * 100)))
+                        : 0
+
+                    const normalizedPercentage = cfiBasedPercentage ?? fallbackPercentage
+
                     setLocation(
-                        location.start.cfi,
-                        Math.round(location.start.percentage * 100)
+                        cfi,
+                        normalizedPercentage
                     )
                     // Hide menu on page turn
                     setMenuPosition(null)
@@ -218,7 +269,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [book.id, isVerticalScrollMode]) // Re-init when book or reading mode changes
+    }, [book.id, isVerticalScrollMode, getProgressPercentageFromCfi]) // Re-init when book or reading mode changes
 
     // Apply reader preferences when they change
     useEffect(() => {
