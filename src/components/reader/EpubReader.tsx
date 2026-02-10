@@ -633,7 +633,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             {/* Reading area */}
             <div
                 ref={containerRef}
-                className={`epub-reader-container ${isLoading || error ? 'hidden' : ''} ${swipeOffset !== 0 ? 'swiping' : ''}`}
+                className={`epub-reader-container ${isVerticalScrollMode ? 'vertical-scroll' : ''} ${isLoading || error ? 'hidden' : ''} ${swipeOffset !== 0 ? 'swiping' : ''}`}
                 style={{
                     transform: swipeOffset !== 0 ? `translateX(${swipeOffset}px)` : undefined,
                     transition: swipeOffset === 0 ? 'transform 0.3s ease-out' : 'none'
@@ -641,7 +641,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             />
 
             {/* Swipe gesture overlay - captures touch events that iframe blocks */}
-            {!isLoading && !error && (
+            {!isLoading && !error && !isVerticalScrollMode && (
                 <div
                     ref={swipeOverlayRef}
                     className="epub-reader-swipe-overlay"

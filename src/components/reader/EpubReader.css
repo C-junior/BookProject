@@ -48,6 +48,11 @@
     pointer-events: none;
 }
 
+.epub-reader-container.vertical-scroll {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 /* Ensure epub.js iframe takes full space */
 .epub-reader-container iframe {
     border: none !important;
