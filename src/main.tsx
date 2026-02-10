@@ -10,15 +10,16 @@ createRoot(document.getElementById('root')!).render(
     </StrictMode>,
 )
 
-// Register service worker with user-prompted update
+// Register service worker with user-prompted update via custom toast
 const updateSW = registerSW({
     onNeedRefresh() {
-        // Show a non-blocking confirmation when a new version is available
-        if (confirm('New version available! Reload to update?')) {
-            updateSW(true)
-        }
+        // Dispatch custom event — App.tsx listens for it and shows a non-blocking toast
+        window.dispatchEvent(new CustomEvent('sw-update-available'))
     },
     onOfflineReady() {
         console.log('Codex is ready for offline use')
     }
 })
+
+    // Expose updateSW globally so the toast component can trigger it
+    ; (window as any).__codex_updateSW = () => updateSW(true)

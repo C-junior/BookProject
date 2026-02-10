@@ -1,0 +1,92 @@
+.update-toast {
+    position: fixed;
+    bottom: calc(var(--space-6) + var(--safe-area-bottom));
+    left: var(--space-4);
+    right: var(--space-4);
+    max-width: 420px;
+    margin: 0 auto;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-accent);
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    animation: slideUp 0.3s var(--transition-base);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.update-toast--dismissing {
+    animation: slideDownSheet 0.3s ease forwards;
+    pointer-events: none;
+}
+
+.update-toast__content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.update-toast__icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.update-toast__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.update-toast__text strong {
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+}
+
+.update-toast__text span {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.update-toast__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+}
+
+.update-toast__btn {
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    border: none;
+    min-height: var(--touch-target-min);
+    transition: all var(--transition-fast);
+}
+
+.update-toast__btn--later {
+    background: transparent;
+    color: var(--color-text-secondary);
+}
+
+.update-toast__btn--later:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-tertiary);
+}
+
+.update-toast__btn--update {
+    background: var(--color-accent-primary);
+    color: var(--color-text-inverse);
+}
+
+.update-toast__btn--update:hover {
+    background: var(--color-accent-secondary);
+}
+
+.update-toast__btn--update:active {
+    transform: scale(0.97);
+}

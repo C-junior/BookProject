@@ -3,22 +3,35 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.png" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#1a1a2e" />
   <meta name="description"
     content="Codex - The friendliest e-book reader. Read EPUB, PDF, and more with customizable fonts, themes, and annotations." />
 
-  <!-- PWA -->
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="manifest" href="/manifest.webmanifest" />
+  <!-- PWA meta tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Codex">
+  <meta name="apple-mobile-web-app-title" content="Codex">
+  <meta name="msapplication-TileColor" content="#1a1a2e">
 
-  <!-- Preload fonts -->
+  <!-- Preload critical font only - others loaded async -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&family=Merriweather:wght@400;700&display=swap"
-    rel="stylesheet" />
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Defer non-critical fonts -->
+  <link rel="preload" as="style" id="deferred-fonts"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&family=Merriweather:wght@400;700&display=swap" />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&family=Merriweather:wght@400;700&display=swap"
+      rel="stylesheet" />
+  </noscript>
 
   <title>Codex</title>
 </head>
@@ -26,6 +39,15 @@
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
+
+  <!-- Load deferred fonts after page load -->
+  <script>
+    var deferredFonts = document.getElementById('deferred-fonts');
+    if (deferredFonts) {
+      deferredFonts.onload = function () { this.rel = 'stylesheet'; };
+      deferredFonts.rel = 'stylesheet';
+    }
+  </script>
 </body>
 
 </html>

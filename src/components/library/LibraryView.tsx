@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { LibrarySkeleton } from './LibrarySkeleton'
 import { useLibraryStore } from '@/stores/libraryStore'
 import { useUserStore } from '@/stores/userStore'
 import type { Book, Collection } from '@/types'
@@ -369,10 +370,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             {/* Content */}
             <main className="library-content">
                 {isLoading ? (
-                    <div className="library-loading">
-                        <Loader2 size={32} className="library-spinner" />
-                        <p>Loading your books...</p>
-                    </div>
+                    <LibrarySkeleton />
                 ) : error ? (
                     <div className="library-error">
                         <p>{error}</p>

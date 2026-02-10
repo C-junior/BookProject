@@ -50,22 +50,30 @@ export async function syncAll(): Promise<void> {
     setSyncing(true)
 
     try {
-        await Promise.all([
-            syncAnnotations(userId),
-            syncCollections(userId),
-            syncProgress(userId),
-            syncBookMetadata(userId)
-        ])
+        const categories = [
+            { name: 'annotations' as const, fn: () => syncAnnotations(userId) },
+            { name: 'collections' as const, fn: () => syncCollections(userId) },
+            { name: 'progress' as const, fn: () => syncProgress(userId) },
+            { name: 'bookMetadata' as const, fn: () => syncBookMetadata(userId) }
+        ]
 
-        // Clear all dirty flags since we just synced everything
+        const results = await Promise.allSettled(categories.map(c => c.fn()))
+
         const store = useSyncStore.getState()
-        store.clearDirty('progress')
-        store.clearDirty('annotations')
-        store.clearDirty('collections')
-        store.clearDirty('bookMetadata')
+        let hasFailure = false
+
+        results.forEach((result, i) => {
+            if (result.status === 'fulfilled') {
+                store.clearDirty(categories[i].name)
+            } else {
+                hasFailure = true
+                console.error(`Sync failed for ${categories[i].name}:`, result.reason)
+                addSyncError(`${categories[i].name}: ${result.reason instanceof Error ? result.reason.message : 'Unknown error'}`)
+            }
+        })
 
         setLastSyncTime(new Date())
-        console.log('Sync completed successfully')
+        console.log(hasFailure ? 'Sync completed with partial failures' : 'Sync completed successfully')
     } catch (error) {
         console.error('Sync failed:', error)
         addSyncError(error instanceof Error ? error.message : 'Unknown sync error')

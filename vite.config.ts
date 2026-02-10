@@ -13,7 +13,7 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'prompt',
-            includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png', 'fonts/**/*'],
+            includeAssets: ['favicon.png', 'codex_logo.png'],
             manifest: {
                 name: 'Codex',
                 short_name: 'Codex',
@@ -24,27 +24,23 @@ export default defineConfig({
                 orientation: 'portrait-primary',
                 scope: '/',
                 start_url: '/',
+                categories: ['books', 'education'],
                 icons: [
                     {
-                        src: 'pwa-192x192.png',
-                        sizes: '192x192',
-                        type: 'image/png'
-                    },
-                    {
-                        src: 'pwa-512x512.png',
+                        src: 'favicon.png',
                         sizes: '512x512',
                         type: 'image/png'
                     },
                     {
-                        src: 'pwa-512x512.png',
+                        src: 'codex_logo.png',
                         sizes: '512x512',
                         type: 'image/png',
-                        purpose: 'any maskable'
+                        purpose: 'any'
                     }
                 ]
             },
             workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,mjs}'],
                 cleanupOutdatedCaches: true,
 
                 // SPA navigation fallback — loads app shell offline for any route
