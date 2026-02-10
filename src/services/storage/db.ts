@@ -5,6 +5,7 @@ import {
     deleteAnnotation as firebaseDeleteAnnotation,
     auth
 } from '@/services/firebase'
+import { useSyncStore } from '@/stores/syncStore'
 
 /**
  * PageTurner Database Schema
@@ -175,6 +176,7 @@ export async function addAnnotation(annotation: Annotation): Promise<void> {
             })
         } catch (err) {
             console.error('Firebase sync failed for annotation:', err)
+            useSyncStore.getState().markDirty('annotations')
         }
     }
 }
@@ -215,6 +217,7 @@ export async function deleteAnnotation(id: string): Promise<void> {
             await firebaseDeleteAnnotation(userId, id)
         } catch (err) {
             console.error('Firebase delete failed for annotation:', err)
+            useSyncStore.getState().markDirty('annotations')
         }
     }
 }

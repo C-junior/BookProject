@@ -12,8 +12,8 @@ export default defineConfig({
     plugins: [
         react(),
         VitePWA({
-            registerType: 'autoUpdate',
-            includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'fonts/**/*'],
+            registerType: 'prompt',
+            includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png', 'fonts/**/*'],
             manifest: {
                 name: 'Codex',
                 short_name: 'Codex',
@@ -45,7 +45,14 @@ export default defineConfig({
             },
             workbox: {
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+                cleanupOutdatedCaches: true,
+
+                // SPA navigation fallback — loads app shell offline for any route
+                navigateFallback: '/index.html',
+                navigateFallbackDenylist: [/^\/api\//, /\.\w+$/],
+
                 runtimeCaching: [
+                    // Google Fonts stylesheets
                     {
                         urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
                         handler: 'CacheFirst',
@@ -60,6 +67,7 @@ export default defineConfig({
                             }
                         }
                     },
+                    // Google Fonts font files
                     {
                         urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
                         handler: 'CacheFirst',
@@ -68,6 +76,36 @@ export default defineConfig({
                             expiration: {
                                 maxEntries: 10,
                                 maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            }
+                        }
+                    },
+                    // Supabase storage — cache downloaded book files for offline reading
+                    {
+                        urlPattern: /supabase.*\/storage\/v1\/object\/.*/i,
+                        handler: 'CacheFirst',
+                        options: {
+                            cacheName: 'supabase-book-files',
+                            expiration: {
+                                maxEntries: 50,
+                                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            }
+                        }
+                    },
+                    // Supabase cover images
+                    {
+                        urlPattern: /supabase.*\.(jpg|jpeg|png|webp|gif)/i,
+                        handler: 'CacheFirst',
+                        options: {
+                            cacheName: 'supabase-images',
+                            expiration: {
+                                maxEntries: 100,
+                                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
                             },
                             cacheableResponse: {
                                 statuses: [0, 200]
@@ -90,6 +128,9 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks: {
+                    'vendor-react': ['react', 'react-dom'],
+                    'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+                    'vendor-dexie': ['dexie'],
                     'pdf-worker': ['pdfjs-dist/build/pdf.worker.mjs'],
                     'epub': ['epubjs']
                 }

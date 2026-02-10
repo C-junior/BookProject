@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { useUserStore } from '@/stores/userStore'
 import { useReaderStore } from '@/stores/readerStore'
 import { LibraryView } from '@/components/library/LibraryView'
-import { EpubReader } from '@/components/reader/EpubReader'
-import { PdfReader } from '@/components/reader/PdfReader'
-import { LoginScreen } from '@/components/auth/LoginScreen'
 import { syncOnLogin, syncOnLogout } from '@/services/sync/syncService'
 import { auth } from '@/services/firebase'
 import type { Book } from '@/types'
 import './App.css'
+
+// Lazy-load heavy components — epub.js & pdfjs only download when needed
+const EpubReader = lazy(() => import('@/components/reader/EpubReader'))
+const PdfReader = lazy(() => import('@/components/reader/PdfReader'))
+const LoginScreen = lazy(() => import('@/components/auth/LoginScreen'))
 
 function App() {
     const { loadUsers, currentUser } = useUserStore()
@@ -55,17 +57,23 @@ function App() {
     }
 
     // Wait for initialization
+    const loadingFallback = (
+        <div className="app-loading">
+            <div className="app-loading-spinner" />
+        </div>
+    )
+
     if (!isInitialized) {
-        return (
-            <div className="app-loading">
-                <div className="app-loading-spinner" />
-            </div>
-        )
+        return loadingFallback
     }
 
     // Show login screen if not authenticated
     if (!isAuthenticated) {
-        return <LoginScreen onAuthenticated={handleAuthenticated} />
+        return (
+            <Suspense fallback={loadingFallback}>
+                <LoginScreen onAuthenticated={handleAuthenticated} />
+            </Suspense>
+        )
     }
 
     // Show reader if a book is open
@@ -73,20 +81,24 @@ function App() {
         // EPUB Reader
         if (currentBook.format === 'epub') {
             return (
-                <EpubReader
-                    book={currentBook}
-                    onClose={handleCloseBook}
-                />
+                <Suspense fallback={loadingFallback}>
+                    <EpubReader
+                        book={currentBook}
+                        onClose={handleCloseBook}
+                    />
+                </Suspense>
             )
         }
 
         // PDF Reader
         if (currentBook.format === 'pdf') {
             return (
-                <PdfReader
-                    book={currentBook}
-                    onClose={handleCloseBook}
-                />
+                <Suspense fallback={loadingFallback}>
+                    <PdfReader
+                        book={currentBook}
+                        onClose={handleCloseBook}
+                    />
+                </Suspense>
             )
         }
 

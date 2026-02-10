@@ -1,34 +1,32 @@
 /**
  * Cloud Sync Service
- * Bidirectional synchronization between IndexedDB and Firebase Firestore
+ * Offline-first: all writes go to IndexedDB first, sync to Firebase only when
+ * online and necessary. Uses dirty-flag queue to batch changes on reconnect.
  */
 
 import { auth, db as firestore } from '@/services/firebase'
 import { db } from '@/services/storage/db'
 import { useSyncStore } from '@/stores/syncStore'
+import type { DirtyCategory } from '@/stores/syncStore'
 import {
     collection,
     doc,
     getDocs,
     setDoc,
     serverTimestamp,
-    onSnapshot,
-    Timestamp,
-    type Unsubscribe
+    Timestamp
 } from 'firebase/firestore'
 import type { Annotation, Collection, ReadingProgress, Book } from '@/types'
 
 // Debounce timer for sync operations
 let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null
-const SYNC_DEBOUNCE_MS = 2000
+const SYNC_DEBOUNCE_MS = 5000 // 5s — reduces Firebase writes during active reading
 
-// Real-time listeners
-let annotationsUnsubscribe: Unsubscribe | null = null
-let collectionsUnsubscribe: Unsubscribe | null = null
-let progressUnsubscribe: Unsubscribe | null = null
+// Minimum interval between full syncs triggered by visibility change
+const MIN_SYNC_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
 
 /**
- * Sync all data types to/from Firestore
+ * Sync all data types to/from Firestore (full bidirectional)
  */
 export async function syncAll(): Promise<void> {
     const userId = auth.currentUser?.uid
@@ -59,6 +57,13 @@ export async function syncAll(): Promise<void> {
             syncBookMetadata(userId)
         ])
 
+        // Clear all dirty flags since we just synced everything
+        const store = useSyncStore.getState()
+        store.clearDirty('progress')
+        store.clearDirty('annotations')
+        store.clearDirty('collections')
+        store.clearDirty('bookMetadata')
+
         setLastSyncTime(new Date())
         console.log('Sync completed successfully')
     } catch (error) {
@@ -70,15 +75,69 @@ export async function syncAll(): Promise<void> {
 }
 
 /**
- * Debounced sync - prevents rapid successive syncs
+ * Flush only dirty categories to Firebase (lightweight sync)
+ */
+export async function flushDirtyData(): Promise<void> {
+    const userId = auth.currentUser?.uid
+    if (!userId) return
+
+    const { isOnline, isSyncing, setSyncing, setLastSyncTime, addSyncError } = useSyncStore.getState()
+    if (!isOnline || isSyncing) return
+
+    const dirtyCategories = useSyncStore.getState().getDirtyCategories()
+    if (dirtyCategories.length === 0) return
+
+    setSyncing(true)
+    console.log('Flushing dirty categories:', dirtyCategories)
+
+    try {
+        const tasks: Promise<void>[] = []
+        const categoryMap: Record<DirtyCategory, () => Promise<void>> = {
+            progress: () => syncProgress(userId),
+            annotations: () => syncAnnotations(userId),
+            collections: () => syncCollections(userId),
+            bookMetadata: () => syncBookMetadata(userId)
+        }
+
+        for (const category of dirtyCategories) {
+            tasks.push(
+                categoryMap[category]().then(() => {
+                    useSyncStore.getState().clearDirty(category)
+                })
+            )
+        }
+
+        await Promise.all(tasks)
+        setLastSyncTime(new Date())
+        console.log('Dirty flush completed')
+    } catch (error) {
+        console.error('Dirty flush failed:', error)
+        addSyncError(error instanceof Error ? error.message : 'Flush error')
+    } finally {
+        setSyncing(false)
+    }
+}
+
+/**
+ * Debounced sync — if offline, just marks dirty; if online, schedules sync
  */
 export function debouncedSync(): void {
+    const { isOnline } = useSyncStore.getState()
+
+    // Always mark progress dirty so we know to sync later
+    useSyncStore.getState().markDirty('progress')
+
+    if (!isOnline) {
+        // Offline: dirty flag is set, it will flush on reconnect
+        return
+    }
+
     if (syncDebounceTimer) {
         clearTimeout(syncDebounceTimer)
     }
 
     syncDebounceTimer = setTimeout(() => {
-        syncAll()
+        flushDirtyData()
     }, SYNC_DEBOUNCE_MS)
 }
 
@@ -86,10 +145,8 @@ export function debouncedSync(): void {
  * Sync annotations (highlights, bookmarks, notes)
  */
 async function syncAnnotations(userId: string): Promise<void> {
-    // Get local annotations
     const localAnnotations = await db.annotations.where('userId').equals(userId).toArray()
 
-    // Get cloud annotations
     const annoCol = collection(firestore, 'users', userId, 'annotations')
     const cloudSnap = await getDocs(annoCol)
     const cloudAnnotations = new Map<string, Annotation>()
@@ -332,126 +389,72 @@ async function syncBookMetadata(userId: string): Promise<void> {
 }
 
 /**
- * Start real-time sync listeners
- */
-export function startRealtimeSync(): void {
-    const userId = auth.currentUser?.uid
-    if (!userId) return
-
-    // Listen for annotation changes
-    const annoCol = collection(firestore, 'users', userId, 'annotations')
-    annotationsUnsubscribe = onSnapshot(annoCol, async (snapshot) => {
-        for (const change of snapshot.docChanges()) {
-            if (change.type === 'added' || change.type === 'modified') {
-                const data = change.doc.data() as Annotation
-                await db.annotations.put({
-                    ...data,
-                    id: change.doc.id,
-                    userId,
-                    createdAt: toDate(data.createdAt),
-                    updatedAt: toDate(data.updatedAt, data.createdAt)
-                } as Annotation)
-            } else if (change.type === 'removed') {
-                await db.annotations.delete(change.doc.id)
-            }
-        }
-    })
-
-    // Listen for collection changes
-    const collectionsCol = collection(firestore, 'users', userId, 'collections')
-    collectionsUnsubscribe = onSnapshot(collectionsCol, async (snapshot) => {
-        for (const change of snapshot.docChanges()) {
-            if (change.type === 'removed') {
-                await db.collections.delete(change.doc.id)
-                continue
-            }
-
-            const data = change.doc.data() as Collection
-            await db.collections.put({
-                ...data,
-                id: change.doc.id,
-                userId,
-                createdAt: toDate(data.createdAt)
-            })
-        }
-    })
-
-    // Listen for progress changes
-    const progressCol = collection(firestore, 'users', userId, 'progress')
-    progressUnsubscribe = onSnapshot(progressCol, async (snapshot) => {
-        for (const change of snapshot.docChanges()) {
-            const progress = change.doc.data() as ReadingProgress
-            const bookId = progress.bookId || change.doc.id
-
-            if (change.type === 'removed') {
-                await db.progress
-                    .where('[bookId+userId]')
-                    .equals([bookId, userId])
-                    .delete()
-                continue
-            }
-
-            const existing = await db.progress
-                .where('[bookId+userId]')
-                .equals([bookId, userId])
-                .first()
-
-            if (existing) {
-                await db.progress.update(existing.id, {
-                    location: progress.location,
-                    percentage: progress.percentage,
-                    chapterTitle: progress.chapterTitle,
-                    lastUpdated: toDate(progress.lastUpdated)
-                })
-            } else {
-                await db.progress.add({
-                    bookId,
-                    userId,
-                    location: progress.location,
-                    percentage: progress.percentage,
-                    chapterTitle: progress.chapterTitle,
-                    lastUpdated: toDate(progress.lastUpdated)
-                } as ReadingProgress & { id: number })
-            }
-        }
-    })
-
-    console.log('Real-time sync started')
-}
-
-/**
- * Stop real-time sync listeners
- */
-export function stopRealtimeSync(): void {
-    annotationsUnsubscribe?.()
-    collectionsUnsubscribe?.()
-    progressUnsubscribe?.()
-
-    annotationsUnsubscribe = null
-    collectionsUnsubscribe = null
-    progressUnsubscribe = null
-
-    console.log('Real-time sync stopped')
-}
-
-/**
- * Sync on login - initial sync when user authenticates
+ * Sync on login — initial sync when user authenticates
+ * Does a full bidirectional sync, then sets up auto-flush on reconnect
+ * and visibility-based sync for tab switches.
  */
 export async function syncOnLogin(): Promise<void> {
     await syncAll()
-    startRealtimeSync()
+    initSyncListeners()
 }
 
 /**
- * Sync on logout - stop listeners
+ * Sync on logout — stop listeners
  */
 export function syncOnLogout(): void {
-    stopRealtimeSync()
+    teardownSyncListeners()
 }
 
-/**
- * Helper: Check if date A is newer than date B
- */
+// ============================================
+// Lifecycle listeners (replace real-time Firestore listeners)
+// ============================================
+
+let onlineHandler: (() => void) | null = null
+let visibilityHandler: (() => void) | null = null
+
+function initSyncListeners(): void {
+    // Flush queued dirty data when coming back online
+    onlineHandler = () => {
+        console.log('Back online — flushing dirty data')
+        flushDirtyData()
+    }
+    window.addEventListener('online', onlineHandler)
+
+    // Re-sync when tab becomes visible (if enough time has passed)
+    visibilityHandler = () => {
+        if (document.visibilityState !== 'visible') return
+
+        const { lastSyncTime } = useSyncStore.getState()
+        const elapsed = lastSyncTime
+            ? Date.now() - lastSyncTime.getTime()
+            : Infinity
+
+        if (elapsed >= MIN_SYNC_INTERVAL_MS) {
+            console.log('Tab visible after', Math.round(elapsed / 1000), 's — syncing')
+            syncAll()
+        }
+    }
+    document.addEventListener('visibilitychange', visibilityHandler)
+
+    console.log('Sync listeners initialized (on-demand, no real-time)')
+}
+
+function teardownSyncListeners(): void {
+    if (onlineHandler) {
+        window.removeEventListener('online', onlineHandler)
+        onlineHandler = null
+    }
+    if (visibilityHandler) {
+        document.removeEventListener('visibilitychange', visibilityHandler)
+        visibilityHandler = null
+    }
+    console.log('Sync listeners removed')
+}
+
+// ============================================
+// Helpers
+// ============================================
+
 function isNewer(a?: Date, b?: Date): boolean {
     if (!a) return false
     if (!b) return true
