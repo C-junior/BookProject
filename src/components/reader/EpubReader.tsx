@@ -83,11 +83,20 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         const locationsApi = (bookRef.current as any)?.locations
         if (!locationsApi || !cfi) return null
 
-        const totalLocations = typeof locationsApi.length === 'function'
-            ? locationsApi.length()
-            : 0
+        // epub.js 0.3.x exposes percentageFromCfi which returns a 0–1 float
+        // representing progress through the ENTIRE book, not just the chapter.
+        if (typeof locationsApi.percentageFromCfi === 'function') {
+            const pct = locationsApi.percentageFromCfi(cfi)
+            if (typeof pct === 'number' && Number.isFinite(pct)) {
+                return Math.max(0, Math.min(100, Math.round(pct * 100)))
+            }
+        }
 
-        if (!totalLocations || totalLocations < 2 || typeof locationsApi.locationFromCfi !== 'function') {
+        // Fallback: manually compute from locationFromCfi / total locations
+        const total = locationsApi._locations?.length
+            ?? (typeof locationsApi.total === 'number' ? locationsApi.total : 0)
+
+        if (total < 2 || typeof locationsApi.locationFromCfi !== 'function') {
             return null
         }
 
@@ -96,7 +105,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             return null
         }
 
-        const percentage = Math.round((locationIndex / (totalLocations - 1)) * 100)
+        const percentage = Math.round((locationIndex / (total - 1)) * 100)
         return Math.max(0, Math.min(100, percentage))
     }, [])
 
@@ -134,12 +143,12 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                 // paginated and vertical-scroll modes.
                 try {
                     const locationsApi = (epubBook as any).locations
-                    const hasLocations = typeof locationsApi?.length === 'function'
-                        ? locationsApi.length() > 0
-                        : false
+                    const hasLocations = locationsApi?._locations?.length > 0
+                        || (typeof locationsApi?.total === 'number' && locationsApi.total > 0)
 
                     if (!hasLocations && typeof locationsApi?.generate === 'function') {
                         await locationsApi.generate(1600)
+                        console.log('EPUB locations generated, total:', locationsApi._locations?.length ?? locationsApi.total)
                     }
                     locationsGeneratedRef.current = true
                 } catch (locationErr) {
