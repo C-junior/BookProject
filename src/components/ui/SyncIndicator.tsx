@@ -4,7 +4,7 @@ import { syncAll } from '@/services/sync/syncService'
 import './SyncIndicator.css'
 
 export function SyncIndicator() {
-    const { isSyncing, isOnline, lastSyncTime, syncErrors, pendingChanges } = useSyncStore()
+    const { isSyncing, isOnline, lastSyncTime, lastSyncDevice, syncErrors, pendingChanges } = useSyncStore()
 
     const handleManualSync = async () => {
         await syncAll()
@@ -40,7 +40,12 @@ export function SyncIndicator() {
         if (isSyncing) return 'Syncing...'
         if (syncErrors.length > 0) return `Sync error: ${syncErrors[syncErrors.length - 1]}`
         if (pendingChanges > 0) return `${pendingChanges} changes pending`
-        if (lastSyncTime) return `Last synced: ${formatTime(lastSyncTime)}`
+        if (lastSyncTime) {
+            const timeStr = formatTime(lastSyncTime)
+            return lastSyncDevice
+                ? `Last synced: ${timeStr} from ${lastSyncDevice}`
+                : `Last synced: ${timeStr}`
+        }
         return 'Synced'
     }
 

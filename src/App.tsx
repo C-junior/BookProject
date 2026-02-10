@@ -15,6 +15,7 @@ import './App.css'
 const EpubReader = lazy(() => import('@/components/reader/EpubReader'))
 const PdfReader = lazy(() => import('@/components/reader/PdfReader'))
 const LoginScreen = lazy(() => import('@/components/auth/LoginScreen'))
+const ShareTarget = lazy(() => import('@/components/ui/ShareTarget').then(m => ({ default: m.ShareTarget })))
 
 function App() {
     const { loadUsers, currentUser } = useUserStore()
@@ -23,6 +24,9 @@ function App() {
     const [isInitialized, setIsInitialized] = useState(false)
     const [showUpdateToast, setShowUpdateToast] = useState(false)
     const [_downloadingBook, setDownloadingBook] = useState<string | null>(null)
+    const [isShareTarget, setIsShareTarget] = useState(
+        window.location.pathname === '/share-target'
+    )
 
     // Initialize app
     useEffect(() => {
@@ -148,6 +152,18 @@ function App() {
                     Back to Library
                 </button>
             </div>
+        )
+    }
+
+    // Handle share target route
+    if (isShareTarget && isAuthenticated) {
+        return (
+            <Suspense fallback={loadingFallback}>
+                <ShareTarget onComplete={() => {
+                    setIsShareTarget(false)
+                    window.history.replaceState(null, '', '/')
+                }} />
+            </Suspense>
         )
     }
 

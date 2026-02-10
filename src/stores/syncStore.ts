@@ -2,9 +2,28 @@ import { create } from 'zustand'
 
 type DirtyCategory = 'progress' | 'annotations' | 'collections' | 'bookMetadata'
 
+function getDeviceName(): string {
+    const ua = navigator.userAgent
+    let browser = 'Browser'
+    if (ua.includes('Firefox')) browser = 'Firefox'
+    else if (ua.includes('Edg/')) browser = 'Edge'
+    else if (ua.includes('Chrome')) browser = 'Chrome'
+    else if (ua.includes('Safari')) browser = 'Safari'
+
+    let os = ''
+    if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS'
+    else if (ua.includes('Android')) os = 'Android'
+    else if (ua.includes('Mac OS')) os = 'Mac'
+    else if (ua.includes('Windows')) os = 'Windows'
+    else if (ua.includes('Linux')) os = 'Linux'
+
+    return os ? `${browser} on ${os}` : browser
+}
+
 interface SyncState {
     isSyncing: boolean
     lastSyncTime: Date | null
+    lastSyncDevice: string | null
     isOnline: boolean
     syncErrors: string[]
     pendingChanges: number
@@ -15,6 +34,7 @@ interface SyncState {
     // Actions
     setSyncing: (syncing: boolean) => void
     setLastSyncTime: (time: Date) => void
+    setLastSyncDevice: (device: string) => void
     setOnline: (online: boolean) => void
     addSyncError: (error: string) => void
     clearSyncErrors: () => void
@@ -29,6 +49,7 @@ interface SyncState {
 export const useSyncStore = create<SyncState>((set, get) => ({
     isSyncing: false,
     lastSyncTime: null,
+    lastSyncDevice: null,
     isOnline: navigator.onLine,
     syncErrors: [],
     pendingChanges: 0,
@@ -42,6 +63,8 @@ export const useSyncStore = create<SyncState>((set, get) => ({
     setSyncing: (syncing) => set({ isSyncing: syncing }),
 
     setLastSyncTime: (time) => set({ lastSyncTime: time }),
+
+    setLastSyncDevice: (device) => set({ lastSyncDevice: device }),
 
     setOnline: (online) => set({ isOnline: online }),
 
@@ -88,4 +111,5 @@ if (typeof window !== 'undefined') {
     })
 }
 
+export { getDeviceName }
 export type { DirtyCategory }

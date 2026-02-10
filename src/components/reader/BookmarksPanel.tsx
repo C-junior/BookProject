@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import type { Annotation } from '@/types'
 import { useReaderStore } from '@/stores/readerStore'
+import { ExportAnnotations } from './ExportAnnotations'
 import { X, Bookmark, Trash2, Highlighter, Pencil, Plus } from 'lucide-react'
 import './BookmarksPanel.css'
 
 interface BookmarksPanelProps {
+    bookTitle: string
     bookmarks: Annotation[]
     highlights?: Annotation[]
     onSelect: (cfi: string) => void
@@ -13,7 +15,7 @@ interface BookmarksPanelProps {
     onEditBookmark?: (bookmark: Annotation) => void
 }
 
-export function BookmarksPanel({ bookmarks, highlights = [], onSelect, onDelete, onAddBookmark, onEditBookmark }: BookmarksPanelProps) {
+export function BookmarksPanel({ bookTitle, bookmarks, highlights = [], onSelect, onDelete, onAddBookmark, onEditBookmark }: BookmarksPanelProps) {
     const { toggleBookmarks, percentage } = useReaderStore()
     const [activeTab, setActiveTab] = useState<'bookmarks' | 'highlights'>('bookmarks')
 
@@ -52,6 +54,13 @@ export function BookmarksPanel({ bookmarks, highlights = [], onSelect, onDelete,
                         <X size={20} />
                     </button>
                 </div>
+
+                {/* Export buttons */}
+                <ExportAnnotations
+                    bookTitle={bookTitle}
+                    bookmarks={bookmarks}
+                    highlights={highlights}
+                />
 
                 {/* Tabs */}
                 <div className="bookmarks-tabs">

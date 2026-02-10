@@ -37,7 +37,23 @@ export default defineConfig({
                         type: 'image/png',
                         purpose: 'any'
                     }
-                ]
+                ],
+                share_target: {
+                    action: '/share-target',
+                    method: 'POST',
+                    enctype: 'multipart/form-data',
+                    params: {
+                        title: 'title',
+                        text: 'text',
+                        url: 'url',
+                        files: [
+                            {
+                                name: 'file',
+                                accept: ['application/epub+zip', '.epub', 'application/pdf', '.pdf']
+                            }
+                        ]
+                    }
+                } as any
             },
             workbox: {
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,mjs}'],

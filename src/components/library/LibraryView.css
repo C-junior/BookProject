@@ -334,6 +334,60 @@
     font-size: var(--font-size-sm);
 }
 
+/* URL Import */
+.import-url-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-sm);
+}
+
+.import-url-divider::before,
+.import-url-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+}
+
+.import-url-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.import-url-icon {
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+}
+
+.import-url-input {
+    flex: 1;
+    height: var(--touch-target-min);
+    padding: 0 var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    transition: border-color var(--transition-fast);
+}
+
+.import-url-input:focus {
+    outline: none;
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 0 0 3px var(--color-accent-muted);
+}
+
+.import-url-input::placeholder {
+    color: var(--color-text-tertiary);
+}
+
+.import-url-input:disabled {
+    opacity: 0.5;
+}
+
 /* === DELETE MODAL === */
 .delete-modal-content {
     display: flex;

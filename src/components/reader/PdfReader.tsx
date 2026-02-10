@@ -347,6 +347,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
             {/* Bookmarks Panel */}
             {showBookmarks && (
                 <BookmarksPanel
+                    bookTitle={book.title}
                     bookmarks={bookmarks}
                     onSelect={handleSelectBookmark}
                     onDelete={handleDeleteBookmark}

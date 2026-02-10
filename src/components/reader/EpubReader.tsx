@@ -3,6 +3,7 @@ import { useReaderStore } from '@/stores/readerStore'
 import { useUserStore } from '@/stores/userStore'
 import { useAutoSaveBookmark } from '@/hooks/useAutoSaveBookmark'
 import { useSwipeNavigation } from '@/hooks/useSwipeNavigation'
+import { useWakeLock } from '@/hooks/useWakeLock'
 import { useEpubInit } from '@/hooks/useEpubInit'
 import { useEpubNavigation } from '@/hooks/useEpubNavigation'
 import { useEpubAnnotations } from '@/hooks/useEpubAnnotations'
@@ -93,6 +94,9 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         enabled: preferences.autoSavePosition
     })
 
+    // Prevent screen dimming while reading
+    useWakeLock()
+
     // Swipe state
     const [swipeOffset, setSwipeOffset] = useState(0)
 
@@ -172,6 +176,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
 
             {showBookmarks && (
                 <BookmarksPanel
+                    bookTitle={book.title}
                     bookmarks={bookmarks}
                     highlights={highlights}
                     onSelect={handleSelectLocation}

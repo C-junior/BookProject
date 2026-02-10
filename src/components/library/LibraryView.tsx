@@ -20,7 +20,8 @@ import {
     BookOpen,
     Loader2,
     LogOut,
-    FolderOpen
+    FolderOpen,
+    Link2
 } from 'lucide-react'
 import { parseBookFile } from '@/services/parsers'
 import { signOut, auth } from '@/services/firebase'
@@ -65,6 +66,8 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     const [importError, setImportError] = useState<string | null>(null)
     const [deleteConfirm, setDeleteConfirm] = useState<Book | null>(null)
     const [bookToAddToCollection, setBookToAddToCollection] = useState<Book | null>(null)
+    const [importUrl, setImportUrl] = useState('')
+    const [urlImporting, setUrlImporting] = useState(false)
 
     // Collections and progress state
     const [collections, setCollections] = useState<Collection[]>([])
@@ -187,6 +190,48 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             setImportError(err instanceof Error ? err.message : 'Failed to import book')
         } finally {
             setImportLoading(false)
+        }
+    }
+
+    const handleUrlImport = async () => {
+        const url = importUrl.trim()
+        if (!url) return
+
+        setUrlImporting(true)
+        setImportError(null)
+
+        try {
+            const res = await fetch(url)
+            if (!res.ok) throw new Error(`Download failed (${res.status})`)
+
+            const blob = await res.blob()
+            const filename = url.split('/').pop()?.split('?')[0] || 'book.epub'
+            const file = new File([blob], filename, { type: blob.type })
+
+            const book = await parseBookFile(file)
+            book.userId = activeUserId
+
+            const userId = auth.currentUser?.uid
+            if (userId && book.fileBlob) {
+                try {
+                    const storageUrl = await uploadBookFile(userId, book.id, book.fileBlob, book.format)
+                    book.storageUrl = storageUrl
+                    if (book.coverBlob) {
+                        const coverStorageUrl = await uploadCoverImage(userId, book.id, book.coverBlob)
+                        book.coverStorageUrl = coverStorageUrl
+                    }
+                } catch (uploadErr) {
+                    console.error('Failed to upload to storage:', uploadErr)
+                }
+            }
+
+            await addNewBook(book)
+            setImportUrl('')
+            setShowImportModal(false)
+        } catch (err) {
+            setImportError(err instanceof Error ? err.message : 'Failed to import from URL')
+        } finally {
+            setUrlImporting(false)
         }
     }
 
@@ -429,7 +474,31 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                         disabled={importLoading}
                     />
 
-                    {importLoading && (
+                    <div className="import-url-divider">
+                        <span>or import from URL</span>
+                    </div>
+
+                    <div className="import-url-row">
+                        <Link2 size={18} className="import-url-icon" />
+                        <input
+                            type="url"
+                            placeholder="Paste EPUB or PDF link..."
+                            value={importUrl}
+                            onChange={(e) => setImportUrl(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleUrlImport()}
+                            className="import-url-input"
+                            disabled={urlImporting}
+                        />
+                        <Button
+                            variant="primary"
+                            onClick={handleUrlImport}
+                            disabled={!importUrl.trim() || urlImporting}
+                        >
+                            {urlImporting ? 'Importing...' : 'Import'}
+                        </Button>
+                    </div>
+
+                    {(importLoading || urlImporting) && (
                         <div className="import-loading">
                             <Loader2 size={20} className="library-spinner" />
                             <span>Importing...</span>

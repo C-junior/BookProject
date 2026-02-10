@@ -7,6 +7,7 @@
 import { auth, db as firestore } from '@/services/firebase'
 import { db } from '@/services/storage/db'
 import { useSyncStore } from '@/stores/syncStore'
+import { getDeviceName } from '@/stores/syncStore'
 import type { DirtyCategory } from '@/stores/syncStore'
 import {
     collection,
@@ -73,6 +74,7 @@ export async function syncAll(): Promise<void> {
         })
 
         setLastSyncTime(new Date())
+        useSyncStore.getState().setLastSyncDevice(getDeviceName())
         console.log(hasFailure ? 'Sync completed with partial failures' : 'Sync completed successfully')
     } catch (error) {
         console.error('Sync failed:', error)
@@ -136,7 +138,8 @@ export function debouncedSync(): void {
     useSyncStore.getState().markDirty('progress')
 
     if (!isOnline) {
-        // Offline: dirty flag is set, it will flush on reconnect
+        // Offline: dirty flag is set, try Background Sync API
+        requestBackgroundSync()
         return
     }
 
@@ -481,4 +484,20 @@ function toDate(value: unknown, fallback: unknown = undefined): Date {
     }
     if (fallback !== undefined) return toDate(fallback)
     return new Date()
+}
+
+/**
+ * Request background sync via the SW Registration API.
+ * Falls back silently on unsupported browsers (Safari/Firefox).
+ */
+export async function requestBackgroundSync(): Promise<void> {
+    try {
+        const registration = await navigator.serviceWorker?.ready
+        if (registration && 'sync' in registration) {
+            await (registration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } }).sync.register('codex-sync')
+            console.log('Background sync registered: codex-sync')
+        }
+    } catch {
+        // Background Sync not supported — handled by online listener fallback
+    }
 }
