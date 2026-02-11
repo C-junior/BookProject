@@ -1,12 +1,20 @@
-import { defineConfig } from 'vite';
-import { createHtmlPlugin } from 'vite-plugin-html';
-import { visualizer } from 'rollup-plugin-visualizer';
-import { VitePWA } from 'vite-plugin-pwa';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
+import { createHtmlPlugin } from 'vite-plugin-html'
+import { visualizer } from 'rollup-plugin-visualizer'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// https://vite.dev/config/
 export default defineConfig({
-<<<<<<< HEAD
     plugins: [
         react(),
+        createHtmlPlugin(),
+        visualizer(),
         VitePWA({
             registerType: 'prompt',
             includeAssets: ['favicon.png', 'codex_logo.png'],
@@ -52,6 +60,8 @@ export default defineConfig({
                 } as any
             },
             workbox: {
+                // Merging the increased file size limit from the incoming change
+                maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,mjs}'],
                 cleanupOutdatedCaches: true,
 
@@ -148,15 +158,3 @@ export default defineConfig({
         // Headers removed to allow browser defaults and avoid conflicts with tracking prevention
     }
 })
-=======
-  plugins: [
-    createHtmlPlugin(),
-    visualizer(),
-    VitePWA({
-      workbox: {
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024
-      }
-    })
-  ]
-});
->>>>>>> b97ef68380ca972ae25f66dd185f2da6d055f8a9
