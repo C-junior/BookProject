@@ -175,12 +175,14 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
     const goNext = useCallback(() => {
         if (currentPage < numPages) {
             setCurrentPage(prev => prev + 1)
+            navigator.vibrate?.(10)
         }
     }, [currentPage, numPages])
 
     const goPrev = useCallback(() => {
         if (currentPage > 1) {
             setCurrentPage(prev => prev - 1)
+            navigator.vibrate?.(10)
         }
     }, [currentPage])
 

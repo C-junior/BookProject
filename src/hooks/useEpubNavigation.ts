@@ -2,6 +2,10 @@ import { useEffect, useCallback } from 'react'
 import type { Rendition } from 'epubjs'
 import { useReaderStore } from '@/stores/readerStore'
 
+function haptic(ms = 10) {
+    navigator.vibrate?.(ms)
+}
+
 interface UseEpubNavigationParams {
     renditionRef: React.MutableRefObject<Rendition | null>
     onClose: () => void
@@ -22,12 +26,14 @@ export function useEpubNavigation({
     const goNext = useCallback(async () => {
         if (renditionRef.current) {
             await renditionRef.current.next()
+            haptic()
         }
     }, [renditionRef])
 
     const goPrev = useCallback(async () => {
         if (renditionRef.current) {
             await renditionRef.current.prev()
+            haptic()
         }
     }, [renditionRef])
 

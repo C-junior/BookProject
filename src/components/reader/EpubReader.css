@@ -61,6 +61,53 @@
 /* Swipe animation state */
 .epub-reader-container.swiping {
     will-change: transform;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+}
+
+/* Page-flip animation for keyboard / toolbar page turns */
+.epub-reader-container.page-flip-next {
+    animation: pageFlipNext 0.35s cubic-bezier(.4, 0, .2, 1) both;
+    transform-origin: left center;
+}
+
+.epub-reader-container.page-flip-prev {
+    animation: pageFlipPrev 0.35s cubic-bezier(.4, 0, .2, 1) both;
+    transform-origin: right center;
+}
+
+@keyframes pageFlipNext {
+    0% {
+        transform: perspective(1200px) rotateY(0deg);
+        opacity: 1;
+    }
+
+    40% {
+        transform: perspective(1200px) rotateY(-4deg) translateX(-8px);
+        opacity: 0.85;
+    }
+
+    100% {
+        transform: perspective(1200px) rotateY(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes pageFlipPrev {
+    0% {
+        transform: perspective(1200px) rotateY(0deg);
+        opacity: 1;
+    }
+
+    40% {
+        transform: perspective(1200px) rotateY(4deg) translateX(8px);
+        opacity: 0.85;
+    }
+
+    100% {
+        transform: perspective(1200px) rotateY(0deg);
+        opacity: 1;
+    }
 }
 
 /* === SWIPE GESTURE OVERLAY === */
@@ -306,5 +353,14 @@
 @media (prefers-reduced-motion: reduce) {
     .epub-reader-tap-hint {
         animation: fadeIn 0.3s ease forwards;
+    }
+
+    .epub-reader-container.page-flip-next,
+    .epub-reader-container.page-flip-prev {
+        animation: none;
+    }
+
+    .epub-reader-container.swiping {
+        transform: none !important;
     }
 }

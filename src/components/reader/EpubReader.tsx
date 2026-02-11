@@ -97,17 +97,31 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     // Prevent screen dimming while reading
     useWakeLock()
 
-    // Swipe state
+    // Swipe + page-flip state
     const [swipeOffset, setSwipeOffset] = useState(0)
+    const [pageFlipDirection, setPageFlipDirection] = useState<'next' | 'prev' | null>(null)
 
     const handleSwipeMove = useCallback((deltaX: number) => {
-        const maxOffset = 100
+        const maxOffset = 120
         setSwipeOffset(Math.max(-maxOffset, Math.min(maxOffset, -deltaX)))
     }, [])
 
     const handleSwipeEnd = useCallback(() => {
         setSwipeOffset(0)
     }, [])
+
+    // Wrap goNext/goPrev to trigger page-flip animation on non-swipe turns
+    const handleNext = useCallback(async () => {
+        setPageFlipDirection('next')
+        await goNext()
+        setTimeout(() => setPageFlipDirection(null), 350)
+    }, [goNext])
+
+    const handlePrev = useCallback(async () => {
+        setPageFlipDirection('prev')
+        await goPrev()
+        setTimeout(() => setPageFlipDirection(null), 350)
+    }, [goPrev])
 
     useSwipeNavigation({
         ref: swipeOverlayRef,
@@ -138,8 +152,8 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             <ReaderToolbar
                 book={book}
                 onClose={onClose}
-                onPrev={goPrev}
-                onNext={goNext}
+                onPrev={handlePrev}
+                onNext={handleNext}
             />
 
             {isLoading && (
@@ -159,10 +173,19 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
 
             <div
                 ref={containerRef}
-                className={`epub-reader-container ${isVerticalScrollMode ? 'vertical-scroll' : ''} ${isLoading || error ? 'hidden' : ''} ${swipeOffset !== 0 ? 'swiping' : ''}`}
+                className={[
+                    'epub-reader-container',
+                    isVerticalScrollMode ? 'vertical-scroll' : '',
+                    isLoading || error ? 'hidden' : '',
+                    swipeOffset !== 0 ? 'swiping' : '',
+                    pageFlipDirection === 'next' ? 'page-flip-next' : '',
+                    pageFlipDirection === 'prev' ? 'page-flip-prev' : ''
+                ].filter(Boolean).join(' ')}
                 style={{
-                    transform: swipeOffset !== 0 ? `translateX(${swipeOffset}px)` : undefined,
-                    transition: swipeOffset === 0 ? 'transform 0.3s ease-out' : 'none'
+                    transform: swipeOffset !== 0
+                        ? `perspective(1200px) translateX(${swipeOffset * 0.4}px) rotateY(${swipeOffset * 0.15}deg)`
+                        : undefined,
+                    transition: swipeOffset === 0 ? 'transform 0.35s cubic-bezier(.4,0,.2,1)' : 'none'
                 }}
             />
 
