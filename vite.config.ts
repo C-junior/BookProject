@@ -1,14 +1,10 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import { defineConfig } from 'vite';
+import { createHtmlPlugin } from 'vite-plugin-html';
+import { visualizer } from 'rollup-plugin-visualizer';
+import { VitePWA } from 'vite-plugin-pwa';
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-// https://vite.dev/config/
 export default defineConfig({
+<<<<<<< HEAD
     plugins: [
         react(),
         VitePWA({
@@ -152,3 +148,15 @@ export default defineConfig({
         // Headers removed to allow browser defaults and avoid conflicts with tracking prevention
     }
 })
+=======
+  plugins: [
+    createHtmlPlugin(),
+    visualizer(),
+    VitePWA({
+      workbox: {
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024
+      }
+    })
+  ]
+});
+>>>>>>> b97ef68380ca972ae25f66dd185f2da6d055f8a9
