@@ -143,7 +143,6 @@ export default defineConfig({
                     'vendor-react': ['react', 'react-dom'],
                     'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
                     'vendor-dexie': ['dexie'],
-                    'pdf-worker': ['pdfjs-dist/build/pdf.worker.mjs'],
                     'epub': ['epubjs']
                 }
             }
