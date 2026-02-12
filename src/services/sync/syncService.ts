@@ -375,8 +375,8 @@ async function syncBookMetadata(userId: string): Promise<void> {
         const localBook = localBooks.find(b => b.id === id)
 
         if (!localBook && cloud.storageUrl) {
-            // Create cloud-only book entry
-            await db.books.add({
+            // Create/update cloud-only book entry (put = upsert, avoids ConstraintError)
+            await db.books.put({
                 id: cloud.id!,
                 userId,
                 title: cloud.title!,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useUserStore } from '@/stores/userStore'
-import { isFirebaseConfigured, signInWithGoogle, signIn, signUp, onAuthChange } from '@/services/firebase'
+import { isFirebaseConfigured, signInWithGoogle, signIn, signUp, onAuthChange, handleRedirectResult } from '@/services/firebase'
 import { Plus } from 'lucide-react'
 import './LoginScreen.css'
 
@@ -28,9 +28,11 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
     // Listen for Firebase auth state changes
     useEffect(() => {
         if (useFirebase) {
+            // Handle redirect result (from COOP fallback flow)
+            handleRedirectResult().catch(console.error)
+
             const unsubscribe = onAuthChange((user) => {
                 if (user) {
-                    // User is signed in with Firebase
                     onAuthenticated()
                 }
             })

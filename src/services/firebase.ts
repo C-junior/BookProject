@@ -6,6 +6,8 @@ import { initializeApp } from 'firebase/app'
 import {
     getAuth,
     signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     GoogleAuthProvider,
@@ -60,15 +62,49 @@ googleProvider.setCustomParameters({
 // ============================================
 
 /**
- * Sign in with Google popup
+ * Sign in with Google — tries popup first, falls back to redirect
+ * if popup is blocked by Cross-Origin-Opener-Policy (COOP).
  */
 export async function signInWithGoogle(): Promise<User> {
-    const result = await signInWithPopup(auth, googleProvider)
+    try {
+        const result = await signInWithPopup(auth, googleProvider)
+        await createOrUpdateUserProfile(result.user)
+        return result.user
+    } catch (error: unknown) {
+        const fbError = error as { code?: string; message?: string }
+        // Popup blocked by COOP, browser policy, or popup blocker → use redirect
+        if (
+            fbError.code === 'auth/popup-blocked' ||
+            fbError.code === 'auth/popup-closed-by-user' ||
+            fbError.code === 'auth/cancelled-popup-request' ||
+            fbError.message?.includes('Cross-Origin-Opener-Policy')
+        ) {
+            console.warn('Popup auth blocked, falling back to redirect flow')
+            await signInWithRedirect(auth, googleProvider)
+            // After redirect, the page reloads and handleRedirectResult() picks it up
+            // Return a never-resolving promise since the page is about to reload
+            return new Promise(() => { })
+        }
+        throw error
+    }
+}
 
-    // Create/update user profile in Firestore
-    await createOrUpdateUserProfile(result.user)
-
-    return result.user
+/**
+ * Handle the result from a redirect-based sign-in.
+ * Call this once on app startup to capture redirect results.
+ */
+export async function handleRedirectResult(): Promise<User | null> {
+    try {
+        const result = await getRedirectResult(auth)
+        if (result?.user) {
+            await createOrUpdateUserProfile(result.user)
+            return result.user
+        }
+        return null
+    } catch (error) {
+        console.error('Redirect sign-in error:', error)
+        return null
+    }
 }
 
 /**
