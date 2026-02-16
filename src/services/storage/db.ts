@@ -170,9 +170,9 @@ export async function addAnnotation(annotation: Annotation): Promise<void> {
                 type: annotation.type,
                 cfiRange: annotation.cfiRange,
                 text: annotation.text || '',
-                note: annotation.note,
+                note: annotation.note || null,
                 color: annotation.color || 'yellow',
-                label: annotation.label
+                label: annotation.label || null
             })
         } catch (err) {
             console.error('Firebase sync failed for annotation:', err)

@@ -192,15 +192,32 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
                     hideAnnotationMenu()
                 })
 
-                // Text selection
+                // Text selection — compute position for highlight menu
                 rendition.on('selected', (cfiRange: string, contents: any) => {
-                    const range = contents.range(cfiRange)
+                    const text = contents.range(cfiRange)?.toString() || ''
+                    if (!text.trim()) return
+
                     const iframe = containerRef.current?.querySelector('iframe')
                     const iframeRect = iframe?.getBoundingClientRect()
 
-                    if (iframeRect) {
-                        showAnnotationMenuAt(range.toString(), cfiRange)
+                    let position: { x: number; y: number } | undefined
+                    try {
+                        const range = contents.range(cfiRange)
+                        const rangeRect = range?.getBoundingClientRect()
+                        if (rangeRect && iframeRect) {
+                            position = {
+                                x: Math.max(40, Math.min(
+                                    window.innerWidth - 40,
+                                    iframeRect.left + rangeRect.left + rangeRect.width / 2
+                                )),
+                                y: Math.max(60, iframeRect.top + rangeRect.top)
+                            }
+                        }
+                    } catch {
+                        // Fallback: center horizontally, top third of screen
                     }
+
+                    showAnnotationMenuAt(text, cfiRange, position)
                 })
 
                 // Tap to toggle toolbar

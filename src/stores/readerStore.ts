@@ -19,6 +19,7 @@ interface ReaderState {
     showSearch: boolean
     showBookmarks: boolean
     showAnnotationMenu: boolean
+    annotationMenuPosition: { x: number; y: number } | null
 
     // Table of contents
     toc: TocItem[]
@@ -52,7 +53,7 @@ interface ReaderState {
     toggleToc: () => void
     toggleSearch: () => void
     toggleBookmarks: () => void
-    showAnnotationMenuAt: (text: string, cfi: string) => void
+    showAnnotationMenuAt: (text: string, cfi: string, position?: { x: number; y: number }) => void
     hideAnnotationMenu: () => void
 
     setToc: (toc: TocItem[]) => void
@@ -105,6 +106,7 @@ export const useReaderStore = create<ReaderState>()(
             showSearch: false,
             showBookmarks: false,
             showAnnotationMenu: false,
+            annotationMenuPosition: null,
 
             toc: [],
 
@@ -223,16 +225,18 @@ export const useReaderStore = create<ReaderState>()(
                 showSearch: false
             })),
 
-            showAnnotationMenuAt: (text: string, cfi: string) => set({
+            showAnnotationMenuAt: (text: string, cfi: string, position?: { x: number; y: number }) => set({
                 showAnnotationMenu: true,
                 selectedText: text,
-                selectionCfi: cfi
+                selectionCfi: cfi,
+                annotationMenuPosition: position || null
             }),
 
             hideAnnotationMenu: () => set({
                 showAnnotationMenu: false,
                 selectedText: '',
-                selectionCfi: ''
+                selectionCfi: '',
+                annotationMenuPosition: null
             }),
 
             // Set table of contents

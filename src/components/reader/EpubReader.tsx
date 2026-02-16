@@ -38,6 +38,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         preferences,
         toc,
         showAnnotationMenu: showAnnotationMenuFlag,
+        annotationMenuPosition,
         selectedText,
         saveCurrentProgress,
         toggleToolbar
@@ -65,7 +66,6 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     const {
         bookmarks,
         highlights,
-        menuPosition,
         showBookmarkModal,
         editingBookmark,
         dictionaryWord,
@@ -124,7 +124,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     }, [goPrev])
 
     useSwipeNavigation({
-        ref: swipeOverlayRef,
+        ref: isVerticalScrollMode ? swipeOverlayRef : containerRef,
         onSwipeLeft: goNext,
         onSwipeRight: goPrev,
         onTap: toggleToolbar,
@@ -216,9 +216,9 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                 />
             )}
 
-            {menuPosition && showAnnotationMenuFlag && (
+            {showAnnotationMenuFlag && (
                 <HighlightMenu
-                    position={menuPosition}
+                    position={annotationMenuPosition || { x: window.innerWidth / 2, y: 100 }}
                     onHighlight={handleHighlight}
                     onDefine={(text) => setDictionaryWord(text)}
                     onClose={handleDismissMenu}

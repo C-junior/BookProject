@@ -124,12 +124,8 @@
     pointer-events: none;
 }
 
-/* Re-enable pointer events for touch devices to capture swipes */
-@media (hover: none) and (pointer: coarse) {
-    .epub-reader-swipe-overlay {
-        pointer-events: auto;
-    }
-}
+/* Swipe detection is handled via JS touch events on the container itself.
+   The overlay is kept for desktop click-through but never blocks touch on mobile. */
 
 /* === LOADING STATE === */
 .epub-reader-loading {

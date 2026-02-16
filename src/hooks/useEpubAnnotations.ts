@@ -13,8 +13,6 @@ interface UseEpubAnnotationsParams {
 interface UseEpubAnnotationsResult {
     bookmarks: Annotation[]
     highlights: Annotation[]
-    menuPosition: { x: number; y: number } | null
-    setMenuPosition: (pos: { x: number; y: number } | null) => void
     showBookmarkModal: boolean
     editingBookmark: Annotation | null
     dictionaryWord: string | null
@@ -40,12 +38,12 @@ export function useEpubAnnotations({
         selectionCfi,
         selectedText,
         annotations,
+        preferences,
         addAnnotationToState,
         removeAnnotationFromState,
         hideAnnotationMenu
     } = useReaderStore()
 
-    const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null)
     const [showBookmarkModal, setShowBookmarkModal] = useState(false)
     const [editingBookmark, setEditingBookmark] = useState<Annotation | null>(null)
     const [dictionaryWord, setDictionaryWord] = useState<string | null>(null)
@@ -100,7 +98,6 @@ export function useEpubAnnotations({
             }, `highlight-${color}`)
 
             hideAnnotationMenu()
-            setMenuPosition(null)
 
             const contents = (renditionRef.current as any).getContents()
             contents.forEach((content: any) => {
@@ -113,7 +110,6 @@ export function useEpubAnnotations({
 
     const handleDismissMenu = useCallback(() => {
         hideAnnotationMenu()
-        setMenuPosition(null)
         if (renditionRef.current) {
             const contents = (renditionRef.current as any).getContents()
             contents.forEach((content: any) => {
@@ -146,6 +142,21 @@ export function useEpubAnnotations({
         } else {
             if (!currentLocation) return
 
+            // Capture scroll offset in vertical scroll mode for precise restoration
+            let note: string | undefined
+            const isVertical = preferences.readingMode === 'vertical-scroll'
+            if (isVertical) {
+                try {
+                    const container = document.querySelector('.epub-reader-container')
+                    if (container) {
+                        const scrollPercent = container.scrollHeight > container.clientHeight
+                            ? container.scrollTop / (container.scrollHeight - container.clientHeight)
+                            : 0
+                        note = JSON.stringify({ scrollOffset: scrollPercent })
+                    }
+                } catch { /* ignore */ }
+            }
+
             const newBookmark: Annotation = {
                 id: `bookmark-${Date.now()}`,
                 bookId,
@@ -155,6 +166,7 @@ export function useEpubAnnotations({
                 text: `Page ${percentage}%`,
                 color,
                 label,
+                note,
                 createdAt: new Date(),
                 updatedAt: new Date()
             }
@@ -165,7 +177,7 @@ export function useEpubAnnotations({
 
         setShowBookmarkModal(false)
         setEditingBookmark(null)
-    }, [bookId, userId, currentLocation, percentage, addAnnotationToState, removeAnnotationFromState, editingBookmark])
+    }, [bookId, userId, currentLocation, percentage, preferences.readingMode, addAnnotationToState, removeAnnotationFromState, editingBookmark])
 
     const handleCancelBookmarkModal = useCallback(() => {
         setShowBookmarkModal(false)
@@ -194,17 +206,32 @@ export function useEpubAnnotations({
         }
     }, [annotations, currentLocation, removeAnnotationFromState, renditionRef])
 
-    const handleSelectLocation = useCallback(async (cfi: string) => {
+    const handleSelectLocation = useCallback(async (cfi: string, annotation?: Annotation) => {
         if (renditionRef.current && cfi) {
             await renditionRef.current.display(cfi)
+
+            // Restore scroll offset in vertical scroll mode
+            if (annotation?.note && preferences.readingMode === 'vertical-scroll') {
+                try {
+                    const meta = JSON.parse(annotation.note)
+                    if (typeof meta.scrollOffset === 'number') {
+                        // Wait for render, then scroll to saved offset
+                        requestAnimationFrame(() => {
+                            const container = document.querySelector('.epub-reader-container')
+                            if (container) {
+                                const scrollTarget = meta.scrollOffset * (container.scrollHeight - container.clientHeight)
+                                container.scrollTo({ top: scrollTarget, behavior: 'smooth' })
+                            }
+                        })
+                    }
+                } catch { /* note is not scroll metadata, ignore */ }
+            }
         }
-    }, [renditionRef])
+    }, [renditionRef, preferences.readingMode])
 
     return {
         bookmarks,
         highlights,
-        menuPosition,
-        setMenuPosition,
         showBookmarkModal,
         editingBookmark,
         dictionaryWord,

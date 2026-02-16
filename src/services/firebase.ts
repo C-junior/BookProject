@@ -318,11 +318,11 @@ interface SyncedAnnotation {
     id: string
     bookId: string
     type: 'highlight' | 'bookmark' | 'note'
-    cfiRange?: string
+    cfiRange?: string | null
     text: string
-    note?: string
+    note?: string | null
     color: string
-    label?: string
+    label?: string | null
     createdAt: unknown
 }
 

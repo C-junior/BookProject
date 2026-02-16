@@ -96,7 +96,7 @@ export const useLibraryStore = create<LibraryState>()(
             isLoading: false,
             error: null,
             searchQuery: '',
-            sortBy: 'addedAt',
+            sortBy: 'lastReadAt',
             sortOrder: 'desc',
             viewMode: 'grid',
             selectedCollection: null,

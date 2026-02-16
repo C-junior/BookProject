@@ -21,7 +21,9 @@ import {
     Loader2,
     LogOut,
     FolderOpen,
-    Link2
+    Link2,
+    Clock,
+    ChevronRight
 } from 'lucide-react'
 import { parseBookFile } from '@/services/parsers'
 import { signOut, auth } from '@/services/firebase'
@@ -324,6 +326,14 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
 
     const filteredBooks = getFilteredBooks()
 
+    // Determine last-read book for hero section
+    const { selectedCollection } = useLibraryStore()
+    const lastReadBook = !searchQuery && !selectedCollection
+        ? books
+            .filter(b => b.lastReadAt && progressMap[b.id] && progressMap[b.id] > 0 && progressMap[b.id] < 100 && !b.isCloudOnly)
+            .sort((a, b) => new Date(b.lastReadAt!).getTime() - new Date(a.lastReadAt!).getTime())[0] || null
+        : null
+
     return (
         <div className="library">
             {/* Header */}
@@ -414,6 +424,48 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
 
             {/* Content */}
             <main className="library-content">
+                {/* Continue Reading Hero */}
+                {lastReadBook && !isLoading && !error && (
+                    <section className="library-hero" onClick={() => onOpenBook(lastReadBook)}>
+                        <div className="library-hero-cover">
+                            {(lastReadBook.coverUrl || lastReadBook.coverStorageUrl) ? (
+                                <img
+                                    src={lastReadBook.coverUrl || lastReadBook.coverStorageUrl}
+                                    alt={`Cover of ${lastReadBook.title}`}
+                                    className="library-hero-cover-img"
+                                />
+                            ) : (
+                                <div className="library-hero-cover-placeholder">
+                                    <BookOpen size={36} />
+                                </div>
+                            )}
+                        </div>
+                        <div className="library-hero-info">
+                            <div className="library-hero-label">
+                                <Clock size={14} />
+                                <span>Continue Reading</span>
+                            </div>
+                            <h2 className="library-hero-title">{lastReadBook.title}</h2>
+                            <p className="library-hero-author">{lastReadBook.author || 'Unknown Author'}</p>
+                            <div className="library-hero-progress">
+                                <div className="library-hero-progress-track">
+                                    <div
+                                        className="library-hero-progress-fill"
+                                        style={{ width: `${progressMap[lastReadBook.id] || 0}%` }}
+                                    />
+                                </div>
+                                <span className="library-hero-progress-text">
+                                    {progressMap[lastReadBook.id] || 0}% complete
+                                </span>
+                            </div>
+                            <div className="library-hero-cta">
+                                <span>Resume</span>
+                                <ChevronRight size={18} />
+                            </div>
+                        </div>
+                    </section>
+                )}
+
                 {isLoading ? (
                     <LibrarySkeleton />
                 ) : error ? (
