@@ -141,6 +141,30 @@ export async function getProgress(bookId: string, userId: string): Promise<Readi
         .first()
 }
 
+export async function getProgressForBooks(
+    userId: string,
+    bookIds: string[]
+): Promise<Record<string, ReadingProgress>> {
+    if (!userId || bookIds.length === 0) {
+        return {}
+    }
+
+    const targetBookIds = new Set(bookIds)
+    const userProgress = await db.progress.where('userId').equals(userId).toArray()
+    const progressMap: Record<string, ReadingProgress> = {}
+
+    for (const item of userProgress) {
+        if (!targetBookIds.has(item.bookId)) continue
+
+        const existing = progressMap[item.bookId]
+        if (!existing || new Date(item.lastUpdated).getTime() > new Date(existing.lastUpdated).getTime()) {
+            progressMap[item.bookId] = item
+        }
+    }
+
+    return progressMap
+}
+
 export async function getRecentlyRead(userId: string, limit = 10): Promise<Book[]> {
     const progressList = await db.progress
         .where('userId')
@@ -283,7 +307,38 @@ export async function deleteUser(id: string): Promise<void> {
 // ============================================
 
 export async function createCollection(collection: Collection): Promise<void> {
-    await db.collections.add(collection)
+    const trimmedName = collection.name.trim()
+    const normalizedName = trimmedName.toLowerCase()
+    const userId = collection.userId
+
+    if (!trimmedName) {
+        throw new Error('Collection name is required')
+    }
+
+    await db.transaction('rw', db.collections, async () => {
+        let existing: Collection | undefined
+
+        if (userId) {
+            existing = await db.collections
+                .where('userId')
+                .equals(userId)
+                .filter(col => col.name.trim().toLowerCase() === normalizedName)
+                .first()
+        } else {
+            existing = await db.collections
+                .filter(col => !col.userId && col.name.trim().toLowerCase() === normalizedName)
+                .first()
+        }
+
+        if (existing) {
+            throw new Error('Collection already exists')
+        }
+
+        await db.collections.add({
+            ...collection,
+            name: trimmedName
+        })
+    })
 }
 
 export async function getAllCollections(userId: string): Promise<Collection[]> {

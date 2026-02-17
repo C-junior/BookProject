@@ -8,6 +8,7 @@ interface UseAutoSaveBookmarkOptions {
     userId: string
     enabled?: boolean
     intervalMs?: number
+    debounceMs?: number
 }
 
 /**
@@ -18,10 +19,13 @@ export function useAutoSaveBookmark({
     bookId,
     userId,
     enabled = true,
-    intervalMs = 60000 // Default: 60 seconds
+    intervalMs = 60000, // Default: 60 seconds
+    debounceMs = 1500
 }: UseAutoSaveBookmarkOptions) {
-    const { currentLocation, percentage, chapterTitle, addAnnotationToState, annotations } = useReaderStore()
+    const { currentLocation, percentage, chapterTitle } = useReaderStore()
     const lastSavedLocationRef = useRef<string>('')
+    const saveTimeoutRef = useRef<number | null>(null)
+    const isSavingRef = useRef(false)
 
     const savePosition = useCallback(async () => {
         // Don't save if disabled or no location
@@ -29,6 +33,7 @@ export function useAutoSaveBookmark({
 
         // Don't save if position hasn't changed
         if (currentLocation === lastSavedLocationRef.current) return
+        if (isSavingRef.current) return
 
         const autoSaveId = `autosave-${userId}-${bookId}`
 
@@ -46,18 +51,22 @@ export function useAutoSaveBookmark({
         }
 
         try {
+            isSavingRef.current = true
             await upsertAutoSaveBookmark(autoSaveBookmark)
             lastSavedLocationRef.current = currentLocation
 
             // Update state if not already present
+            const { annotations, addAnnotationToState } = useReaderStore.getState()
             const existingIndex = annotations.findIndex(a => a.id === autoSaveId)
             if (existingIndex === -1) {
                 addAnnotationToState(autoSaveBookmark)
             }
         } catch (error) {
             console.error('Auto-save bookmark failed:', error)
+        } finally {
+            isSavingRef.current = false
         }
-    }, [enabled, currentLocation, bookId, userId, percentage, chapterTitle, annotations, addAnnotationToState])
+    }, [enabled, currentLocation, bookId, userId, percentage, chapterTitle])
 
     // Auto-save on interval
     useEffect(() => {
@@ -68,10 +77,33 @@ export function useAutoSaveBookmark({
         return () => clearInterval(interval)
     }, [enabled, intervalMs, savePosition])
 
-    // Save immediately when location changes significantly (debounced by interval)
+    // Save on location updates with debounce to avoid excessive writes during quick navigation.
+    useEffect(() => {
+        if (!enabled || !currentLocation) return
+
+        if (saveTimeoutRef.current) {
+            window.clearTimeout(saveTimeoutRef.current)
+        }
+
+        saveTimeoutRef.current = window.setTimeout(() => {
+            savePosition()
+        }, debounceMs)
+
+        return () => {
+            if (saveTimeoutRef.current) {
+                window.clearTimeout(saveTimeoutRef.current)
+                saveTimeoutRef.current = null
+            }
+        }
+    }, [enabled, currentLocation, debounceMs, savePosition])
+
     // Also save on unmount
     useEffect(() => {
         return () => {
+            if (saveTimeoutRef.current) {
+                window.clearTimeout(saveTimeoutRef.current)
+                saveTimeoutRef.current = null
+            }
             if (enabled && currentLocation && currentLocation !== lastSavedLocationRef.current) {
                 savePosition()
             }

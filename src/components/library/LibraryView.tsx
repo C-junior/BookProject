@@ -32,7 +32,7 @@ import {
     getAllCollections,
     createCollection,
     deleteCollection as removeCollection,
-    getProgress,
+    getProgressForBooks,
     updateBook
 } from '@/services/storage/db'
 import './LibraryView.css'
@@ -132,11 +132,13 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             return
         }
         try {
+            const bookIds = books.map(book => book.id)
+            const allProgress = await getProgressForBooks(activeUserId, bookIds)
             const map: Record<string, number> = {}
-            for (const book of books) {
-                const progress = await getProgress(book.id, activeUserId)
+            for (const bookId of bookIds) {
+                const progress = allProgress[bookId]
                 if (progress) {
-                    map[book.id] = Math.round(progress.percentage)
+                    map[bookId] = Math.round(progress.percentage)
                 }
             }
             setProgressMap(map)
@@ -269,6 +271,11 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             await createCollection({ id, userId: activeUserId, name, color, createdAt: new Date() })
             await loadCollectionsList(activeUserId)
         } catch (err) {
+            if (err instanceof Error && err.message === 'Collection already exists') {
+                console.warn(`Collection "${name}" already exists for this user`)
+                await loadCollectionsList(activeUserId)
+                return
+            }
             console.error('Failed to create collection:', err)
         }
     }
