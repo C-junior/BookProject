@@ -4,6 +4,8 @@ import { useLibraryStore } from '@/stores/libraryStore'
 import { useUserStore } from '@/stores/userStore'
 import { auth } from '@/services/firebase'
 import { uploadBookFile, uploadCoverImage } from '@/services/storage/storageService'
+import { updateBook } from '@/services/storage/db'
+import type { Book } from '@/types'
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import './ShareTarget.css'
 
@@ -81,24 +83,30 @@ export function ShareTarget({ onComplete }: ShareTargetProps) {
         const book = await parseBookFile(file)
         book.userId = userId
 
-        const firebaseUid = auth.currentUser?.uid
-        if (firebaseUid && book.fileBlob) {
-            try {
-                const storageUrl = await uploadBookFile(firebaseUid, book.id, book.fileBlob, book.format)
-                book.storageUrl = storageUrl
-                if (book.coverBlob) {
-                    const coverStorageUrl = await uploadCoverImage(firebaseUid, book.id, book.coverBlob)
-                    book.coverStorageUrl = coverStorageUrl
-                }
-            } catch (uploadErr) {
-                console.error('Failed to upload:', uploadErr)
-            }
-        }
-
         await addNewBook(book)
+        void uploadBookAssetsInBackground(book)
         setStatus('success')
         setMessage(`"${book.title}" added to your library!`)
         setTimeout(onComplete, 2000)
+    }
+
+    const uploadBookAssetsInBackground = async (book: Book) => {
+        const firebaseUid = auth.currentUser?.uid
+        if (!firebaseUid || !book.fileBlob) return
+
+        try {
+            const storageUrl = await uploadBookFile(firebaseUid, book.id, book.fileBlob, book.format)
+            const updates: Partial<Book> = { storageUrl }
+
+            if (book.coverBlob) {
+                const coverStorageUrl = await uploadCoverImage(firebaseUid, book.id, book.coverBlob)
+                updates.coverStorageUrl = coverStorageUrl
+            }
+
+            await updateBook(book.id, updates)
+        } catch (uploadErr) {
+            console.error('Failed to upload in background:', uploadErr)
+        }
     }
 
     return (

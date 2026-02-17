@@ -27,6 +27,18 @@
     --pdf-page-bg: #f5e6d3;
 }
 
+/* Mint theme */
+[data-theme="mint"] .pdf-reader {
+    --pdf-bg: #dff2e3;
+    --pdf-page-bg: #e8f5e9;
+}
+
+/* Warm theme */
+[data-theme="warm"] .pdf-reader {
+    --pdf-bg: #f6efc7;
+    --pdf-page-bg: #fff9c4;
+}
+
 /* Loading state */
 .pdf-reader-loading {
     position: absolute;

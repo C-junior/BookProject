@@ -33,7 +33,7 @@ import {
     createCollection,
     deleteCollection as removeCollection,
     getProgressForBooks,
-    updateBook
+    updateBook as updateBookInDb
 } from '@/services/storage/db'
 import './LibraryView.css'
 
@@ -52,6 +52,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
         viewMode,
         loadBooks,
         addNewBook,
+        updateBookData,
         removeBook,
         setSearchQuery,
         setSortBy,
@@ -155,39 +156,8 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             for (const file of Array.from(files)) {
                 const book = await parseBookFile(file)
                 book.userId = activeUserId
-
-                // Upload to Firebase Storage if user is authenticated
-                const userId = auth.currentUser?.uid
-                if (userId && book.fileBlob) {
-                    try {
-                        // Upload book file
-                        const storageUrl = await uploadBookFile(
-                            userId,
-                            book.id,
-                            book.fileBlob,
-                            book.format
-                        )
-                        book.storageUrl = storageUrl
-
-                        // Upload cover if available
-                        if (book.coverBlob) {
-                            const coverStorageUrl = await uploadCoverImage(
-                                userId,
-                                book.id,
-                                book.coverBlob
-                            )
-                            book.coverStorageUrl = coverStorageUrl
-                        }
-
-                        console.log(`Uploaded book to Storage: ${book.title}`, book.storageUrl)
-                    } catch (uploadErr) {
-                        console.error('Failed to upload to Supabase Storage:', uploadErr)
-                        console.error('Upload error details:', JSON.stringify(uploadErr, null, 2))
-                        // Continue without storage - book will still work locally
-                    }
-                }
-
                 await addNewBook(book)
+                void uploadBookAssetsInBackground(book)
             }
             setShowImportModal(false)
         } catch (err) {
@@ -215,21 +185,8 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             const book = await parseBookFile(file)
             book.userId = activeUserId
 
-            const userId = auth.currentUser?.uid
-            if (userId && book.fileBlob) {
-                try {
-                    const storageUrl = await uploadBookFile(userId, book.id, book.fileBlob, book.format)
-                    book.storageUrl = storageUrl
-                    if (book.coverBlob) {
-                        const coverStorageUrl = await uploadCoverImage(userId, book.id, book.coverBlob)
-                        book.coverStorageUrl = coverStorageUrl
-                    }
-                } catch (uploadErr) {
-                    console.error('Failed to upload to storage:', uploadErr)
-                }
-            }
-
             await addNewBook(book)
+            void uploadBookAssetsInBackground(book)
             setImportUrl('')
             setShowImportModal(false)
         } catch (err) {
@@ -242,10 +199,55 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     const handleDeleteBook = async () => {
         if (!deleteConfirm) return
         try {
-            await removeBook(deleteConfirm.id)
+            const shouldCleanupStorage = Boolean(deleteConfirm.storageUrl || deleteConfirm.coverStorageUrl)
+            const storageUserId = auth.currentUser?.uid
+
+            await removeBook(deleteConfirm.id, {
+                storageUserId,
+                cleanupStorage: shouldCleanupStorage
+            })
             setDeleteConfirm(null)
         } catch (err) {
             console.error('Failed to delete book:', err)
+        }
+    }
+
+    const handleRemoveFromDevice = async () => {
+        if (!deleteConfirm) return
+        try {
+            await updateBookData(deleteConfirm.id, {
+                fileBlob: undefined,
+                coverBlob: undefined,
+                isCloudOnly: true,
+                coverUrl: shouldKeepCoverUrl(deleteConfirm.coverUrl) ? deleteConfirm.coverUrl : undefined
+            })
+            setDeleteConfirm(null)
+        } catch (err) {
+            console.error('Failed to remove local copy:', err)
+        }
+    }
+
+    const hasCloudCopy = Boolean(deleteConfirm?.storageUrl)
+    const isCloudOnlyDelete = Boolean(deleteConfirm?.isCloudOnly || (deleteConfirm && !deleteConfirm.fileBlob && hasCloudCopy))
+    const canRemoveLocalOnly = Boolean(deleteConfirm && hasCloudCopy && !isCloudOnlyDelete)
+
+    const uploadBookAssetsInBackground = async (book: Book) => {
+        const userId = auth.currentUser?.uid
+        if (!userId || !book.fileBlob) return
+
+        try {
+            const storageUrl = await uploadBookFile(userId, book.id, book.fileBlob, book.format)
+            const updates: Partial<Book> = { storageUrl }
+
+            if (book.coverBlob) {
+                const coverStorageUrl = await uploadCoverImage(userId, book.id, book.coverBlob)
+                updates.coverStorageUrl = coverStorageUrl
+            }
+
+            await updateBookData(book.id, updates)
+            console.log(`Uploaded book to Storage: ${book.title}`, storageUrl)
+        } catch (uploadErr) {
+            console.error('Background upload failed:', uploadErr)
         }
     }
 
@@ -304,7 +306,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             // Add the new collection ID if not already present
             if (!currentIds.includes(collectionId)) {
                 const newCollectionIds = [...currentIds, collectionId]
-                await updateBook(bookToAddToCollection.id, { collectionIds: newCollectionIds })
+                await updateBookInDb(bookToAddToCollection.id, { collectionIds: newCollectionIds })
 
                 // Reload books to reflect the change
                 await loadBooks(activeUserId)
@@ -576,13 +578,26 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             <Modal
                 isOpen={!!deleteConfirm}
                 onClose={() => setDeleteConfirm(null)}
-                title="Delete Book"
+                title={canRemoveLocalOnly ? 'Remove Book' : 'Delete Book'}
                 size="sm"
             >
                 <div className="delete-modal-content">
                     <p>
-                        Are you sure you want to delete <strong>{deleteConfirm?.title}</strong>?
-                        This action cannot be undone.
+                        {canRemoveLocalOnly ? (
+                            <>
+                                Choose how to remove <strong>{deleteConfirm?.title}</strong>:
+                            </>
+                        ) : isCloudOnlyDelete ? (
+                            <>
+                                Delete <strong>{deleteConfirm?.title}</strong> from your cloud account?
+                                This removes it permanently from all devices.
+                            </>
+                        ) : (
+                            <>
+                                Are you sure you want to delete <strong>{deleteConfirm?.title}</strong>?
+                                This action cannot be undone.
+                            </>
+                        )}
                     </p>
                     <div className="delete-modal-actions">
                         <Button
@@ -591,12 +606,29 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                         >
                             Cancel
                         </Button>
-                        <Button
-                            variant="danger"
-                            onClick={handleDeleteBook}
-                        >
-                            Delete
-                        </Button>
+                        {canRemoveLocalOnly ? (
+                            <>
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleRemoveFromDevice}
+                                >
+                                    Remove from Device
+                                </Button>
+                                <Button
+                                    variant="danger"
+                                    onClick={handleDeleteBook}
+                                >
+                                    Delete Permanently
+                                </Button>
+                            </>
+                        ) : (
+                            <Button
+                                variant="danger"
+                                onClick={handleDeleteBook}
+                            >
+                                Delete
+                            </Button>
+                        )}
                     </div>
                 </div>
             </Modal>
@@ -633,4 +665,11 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
 }
 
 export default LibraryView
+
+function shouldKeepCoverUrl(coverUrl?: string): boolean {
+    if (!coverUrl) return false
+    if (coverUrl.startsWith('blob:')) return false
+    if (coverUrl.startsWith('http://localhost') || coverUrl.startsWith('https://localhost')) return false
+    return true
+}
 

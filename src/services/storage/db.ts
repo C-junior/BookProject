@@ -3,8 +3,10 @@ import type { Book, ReadingProgress, Annotation, UserProfile, Collection, Readin
 import {
     syncAnnotation as firebaseSyncAnnotation,
     deleteAnnotation as firebaseDeleteAnnotation,
+    deleteBookMetadata as firebaseDeleteBookMetadata,
     auth
 } from '@/services/firebase'
+import { deleteBookFiles } from '@/services/storage/storageService'
 import { useSyncStore } from '@/stores/syncStore'
 
 /**
@@ -62,6 +64,7 @@ export const db = new PageTurnerDatabase()
 
 export async function addBook(book: Book): Promise<string> {
     await db.books.add(book)
+    useSyncStore.getState().markDirty('bookMetadata')
     return book.id
 }
 
@@ -88,14 +91,40 @@ export async function getAllBooks(userId: string): Promise<Book[]> {
 
 export async function updateBook(id: string, updates: Partial<Book>): Promise<void> {
     await db.books.update(id, updates)
+    useSyncStore.getState().markDirty('bookMetadata')
 }
 
-export async function deleteBook(id: string): Promise<void> {
+interface DeleteBookOptions {
+    storageUserId?: string
+    cleanupStorage?: boolean
+}
+
+export async function deleteBook(id: string, options?: DeleteBookOptions): Promise<void> {
+    const { storageUserId, cleanupStorage = false } = options || {}
+
+    if (cleanupStorage && storageUserId) {
+        try {
+            await deleteBookFiles(storageUserId, id)
+        } catch (err) {
+            console.warn(`Failed to delete storage files for book ${id}:`, err)
+        }
+    }
+
     await db.transaction('rw', [db.books, db.progress, db.annotations], async () => {
         await db.books.delete(id)
         await db.progress.where('bookId').equals(id).delete()
         await db.annotations.where('bookId').equals(id).delete()
     })
+
+    useSyncStore.getState().markDirty('bookMetadata')
+
+    if (storageUserId) {
+        try {
+            await firebaseDeleteBookMetadata(storageUserId, id)
+        } catch (err) {
+            console.warn(`Failed to delete cloud metadata for book ${id}:`, err)
+        }
+    }
 }
 
 export async function getBooksByCollection(collectionId: string, userId: string): Promise<Book[]> {

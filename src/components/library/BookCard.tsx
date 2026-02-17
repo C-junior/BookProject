@@ -20,6 +20,7 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
     const [isDownloading, setIsDownloading] = React.useState(false)
     const [downloadProgress, setDownloadProgress] = React.useState(0)
     const menuRef = React.useRef<HTMLDivElement>(null)
+    const [coverFailed, setCoverFailed] = React.useState(false)
 
     const isCloudOnly = book.isCloudOnly && !book.fileBlob
 
@@ -39,6 +40,23 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
             document.removeEventListener('mousedown', handleClickOutside)
         }
     }, [showMenu])
+
+    const localCoverUrl = React.useMemo(() => {
+        if (!book.coverBlob) return null
+        return URL.createObjectURL(book.coverBlob)
+    }, [book.coverBlob])
+
+    React.useEffect(() => {
+        return () => {
+            if (localCoverUrl) {
+                URL.revokeObjectURL(localCoverUrl)
+            }
+        }
+    }, [localCoverUrl])
+
+    React.useEffect(() => {
+        setCoverFailed(false)
+    }, [book.id, book.coverUrl, book.coverStorageUrl, localCoverUrl])
 
     const formatFileSize = (bytes: number): string => {
         if (bytes < 1024) return `${bytes} B`
@@ -88,7 +106,8 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
             onOpen({ ...book, fileBlob, isCloudOnly: false })
         } catch (err) {
             console.error('Failed to download book:', err)
-            alert('Failed to download book. Please try again.')
+            const message = err instanceof Error ? err.message : 'Failed to download book.'
+            alert(`${message} The cloud copy may have been deleted.`)
         } finally {
             setIsDownloading(false)
             setDownloadProgress(0)
@@ -116,7 +135,15 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
     const bookCollections = collections?.filter(c => book.collectionIds?.includes(c.id)) || []
 
     // Use storage URL for cover if local cover not available
-    const coverUrl = book.coverUrl || book.coverStorageUrl
+    const persistedCoverUrl = React.useMemo(() => {
+        if (!book.coverUrl) return undefined
+        if (isInvalidBlobCoverUrl(book.coverUrl)) return undefined
+        return book.coverUrl
+    }, [book.coverUrl])
+
+    const coverUrl = coverFailed
+        ? undefined
+        : (localCoverUrl || persistedCoverUrl || book.coverStorageUrl)
 
     return (
         <article className={`book-card ${isCloudOnly ? 'book-card-cloud' : ''}`} onClick={handleClick}>
@@ -127,6 +154,7 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
                         src={coverUrl}
                         alt={`Cover of ${book.title}`}
                         className="book-card-cover-image"
+                        onError={() => setCoverFailed(true)}
                     />
                 ) : (
                     <div className="book-card-cover-placeholder">
@@ -247,5 +275,11 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
 }
 
 export default BookCard
+
+function isInvalidBlobCoverUrl(url: string): boolean {
+    if (!url.startsWith('blob:')) return false
+    const hasCurrentOrigin = url.includes(window.location.origin)
+    return !hasCurrentOrigin
+}
 
 

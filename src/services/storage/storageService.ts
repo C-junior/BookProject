@@ -82,7 +82,19 @@ export async function downloadBookFile(
     const response = await fetch(downloadUrl)
 
     if (!response.ok) {
-        throw new Error(`Failed to download file: ${response.statusText}`)
+        let detail = ''
+        try {
+            detail = (await response.text()).trim()
+        } catch {
+            // ignore body parse failures
+        }
+
+        const statusDetail = `HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`
+        if (response.status === 400 || response.status === 404) {
+            throw new Error(`Cloud file not found or unavailable (${statusDetail}).`)
+        }
+
+        throw new Error(`Failed to download file (${statusDetail})${detail ? `: ${detail.slice(0, 120)}` : ''}`)
     }
 
     const contentLength = response.headers.get('content-length')

@@ -31,6 +31,18 @@
     --reader-text: #3d3129;
 }
 
+/* Mint theme reader */
+[data-theme="mint"] .epub-reader {
+    --reader-bg: #e8f5e9;
+    --reader-text: #1f3a2d;
+}
+
+/* Warm theme reader */
+[data-theme="warm"] .epub-reader {
+    --reader-bg: #fff9c4;
+    --reader-text: #4d3d12;
+}
+
 /* === READING CONTAINER === */
 .epub-reader-container {
     flex: 1;

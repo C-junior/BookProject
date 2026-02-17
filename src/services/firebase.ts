@@ -157,7 +157,7 @@ interface UserProfileData {
     createdAt: unknown
     lastLoginAt: unknown
     preferences?: {
-        theme: 'light' | 'dark' | 'sepia'
+        theme: 'light' | 'dark' | 'sepia' | 'mint' | 'warm'
         fontSize: number
         fontFamily: string
     }
@@ -356,6 +356,14 @@ export async function getBookAnnotations(userId: string, bookId: string): Promis
     const q = query(annoCol, where('bookId', '==', bookId))
     const annoSnap = await getDocs(q)
     return annoSnap.docs.map(doc => doc.data() as SyncedAnnotation)
+}
+
+/**
+ * Delete a book metadata document from Firestore
+ */
+export async function deleteBookMetadata(userId: string, bookId: string): Promise<void> {
+    const bookRef = doc(db, 'users', userId, 'books', bookId)
+    await deleteDoc(bookRef)
 }
 
 export { auth, app, db }

@@ -65,6 +65,8 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
             light: { bg: '#fffef8', text: '#1a1a1a', accent: '#2563eb' },
             dark: { bg: '#121212', text: '#e0e0e0', accent: '#60a5fa' },
             sepia: { bg: '#f5e6d3', text: '#3d3129', accent: '#8b5a2b' },
+            mint: { bg: '#e8f5e9', text: '#1f3a2d', accent: '#2e7d32' },
+            warm: { bg: '#fff9c4', text: '#4d3d12', accent: '#8a6d1a' },
             custom: { bg: '#fffef8', text: '#1a1a1a', accent: '#2563eb' }
         }
 

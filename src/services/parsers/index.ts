@@ -59,7 +59,7 @@ function extractTitleFromFilename(fileName: string): string {
 /**
  * Parse EPUB file and extract metadata
  */
-async function parseEpub(file: File): Promise<{ metadata: BookMetadata; coverUrl?: string }> {
+async function parseEpub(file: File): Promise<{ metadata: BookMetadata; coverUrl?: string; coverBlob?: Blob }> {
     try {
         // Dynamic import to avoid loading epub.js until needed
         const ePub = (await import('epubjs')).default
@@ -72,10 +72,23 @@ async function parseEpub(file: File): Promise<{ metadata: BookMetadata; coverUrl
 
         // Try to get cover
         let coverUrl: string | undefined
+        let coverBlob: Blob | undefined
         try {
             const coverUrlResult = await book.coverUrl()
             if (coverUrlResult) {
-                coverUrl = coverUrlResult
+                if (isEphemeralUrl(coverUrlResult)) {
+                    try {
+                        const response = await fetch(coverUrlResult)
+                        if (response.ok) {
+                            coverBlob = await response.blob()
+                            coverUrl = await blobToDataUrl(coverBlob)
+                        }
+                    } catch {
+                        // Ignore invalid temporary URL covers
+                    }
+                } else {
+                    coverUrl = coverUrlResult
+                }
             }
         } catch {
             // Cover extraction failed, continue without cover
@@ -93,7 +106,8 @@ async function parseEpub(file: File): Promise<{ metadata: BookMetadata; coverUrl
                 publishDate: metadata.pubdate,
                 language: metadata.language
             },
-            coverUrl
+            coverUrl,
+            coverBlob
         }
     } catch (error) {
         console.error('Error parsing EPUB:', error)
@@ -194,12 +208,14 @@ export async function parseBookFile(file: File): Promise<Book> {
 
     let metadata: BookMetadata
     let coverUrl: string | undefined
+    let coverBlob: Blob | undefined
 
     switch (format) {
         case 'epub':
             const epubResult = await parseEpub(file)
             metadata = epubResult.metadata
             coverUrl = epubResult.coverUrl
+            coverBlob = epubResult.coverBlob
             break
 
         case 'pdf':
@@ -232,6 +248,7 @@ export async function parseBookFile(file: File): Promise<Book> {
         author: metadata.author,
         format,
         coverUrl,
+        coverBlob,
         fileBlob: file,
         fileSize: file.size,
         metadata,
@@ -242,3 +259,22 @@ export async function parseBookFile(file: File): Promise<Book> {
 }
 
 export default parseBookFile
+
+function isEphemeralUrl(url: string): boolean {
+    return url.startsWith('blob:') || url.startsWith('http://localhost') || url.startsWith('https://localhost')
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+            if (typeof reader.result === 'string') {
+                resolve(reader.result)
+                return
+            }
+            reject(new Error('Failed to convert blob to data URL'))
+        }
+        reader.onerror = () => reject(reader.error || new Error('Failed to read blob'))
+        reader.readAsDataURL(blob)
+    })
+}

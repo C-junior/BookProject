@@ -69,7 +69,7 @@ export async function syncAll(): Promise<void> {
             } else {
                 hasFailure = true
                 console.error(`Sync failed for ${categories[i].name}:`, result.reason)
-                addSyncError(`${categories[i].name}: ${result.reason instanceof Error ? result.reason.message : 'Unknown error'}`)
+                addSyncError(formatSyncError(categories[i].name, result.reason))
             }
         })
 
@@ -78,7 +78,7 @@ export async function syncAll(): Promise<void> {
         console.log(hasFailure ? 'Sync completed with partial failures' : 'Sync completed successfully')
     } catch (error) {
         console.error('Sync failed:', error)
-        addSyncError(error instanceof Error ? error.message : 'Unknown sync error')
+        addSyncError(formatSyncError('syncAll', error))
     } finally {
         setSyncing(false)
     }
@@ -122,7 +122,7 @@ export async function flushDirtyData(): Promise<void> {
         console.log('Dirty flush completed')
     } catch (error) {
         console.error('Dirty flush failed:', error)
-        addSyncError(error instanceof Error ? error.message : 'Flush error')
+        addSyncError(formatSyncError('flushDirtyData', error))
     } finally {
         setSyncing(false)
     }
@@ -352,7 +352,7 @@ async function syncBookMetadata(userId: string): Promise<void> {
 
         // Update if not in cloud or if we have storage URLs the cloud doesn't have
         if (!existingCloud || (local.storageUrl && !existingCloud.storageUrl)) {
-            await setDoc(doc(firestore, 'users', userId, 'books', local.id), {
+            const payload = sanitizeForFirestore({
                 id: local.id,
                 userId,
                 title: local.title,
@@ -362,11 +362,13 @@ async function syncBookMetadata(userId: string): Promise<void> {
                 addedAt: local.addedAt,
                 lastReadAt: local.lastReadAt || null,
                 collectionIds: local.collectionIds || [],
-                coverUrl: local.coverUrl || null,
+                coverUrl: normalizeSyncedCoverUrl(local.coverUrl),
                 storageUrl: local.storageUrl || null,
                 coverStorageUrl: local.coverStorageUrl || null,
                 metadata: local.metadata
             })
+
+            await setDoc(doc(firestore, 'users', userId, 'books', local.id), payload)
         }
     }
 
@@ -484,6 +486,51 @@ function toDate(value: unknown, fallback: unknown = undefined): Date {
     }
     if (fallback !== undefined) return toDate(fallback)
     return new Date()
+}
+
+function formatSyncError(scope: string, error: unknown): string {
+    if (error instanceof Error) {
+        return `${scope}: ${error.message}`
+    }
+    if (typeof error === 'string') {
+        return `${scope}: ${error}`
+    }
+    return `${scope}: Unknown error`
+}
+
+function sanitizeForFirestore<T>(value: T): T {
+    if (value === null || value === undefined) {
+        return value
+    }
+
+    if (value instanceof Date || value instanceof Timestamp) {
+        return value
+    }
+
+    if (Array.isArray(value)) {
+        const arr = value
+            .filter((item) => item !== undefined)
+            .map((item) => sanitizeForFirestore(item))
+        return arr as T
+    }
+
+    if (typeof value === 'object') {
+        const out: Record<string, unknown> = {}
+        for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+            if (v === undefined) continue
+            out[k] = sanitizeForFirestore(v)
+        }
+        return out as T
+    }
+
+    return value
+}
+
+function normalizeSyncedCoverUrl(coverUrl?: string): string | null {
+    if (!coverUrl) return null
+    if (coverUrl.startsWith('blob:')) return null
+    if (coverUrl.startsWith('http://localhost') || coverUrl.startsWith('https://localhost')) return null
+    return coverUrl
 }
 
 /**

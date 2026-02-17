@@ -4,6 +4,7 @@ import { useReaderStore } from '@/stores/readerStore'
 import { LibraryView } from '@/components/library/LibraryView'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { UpdateToast } from '@/components/ui/UpdateToast'
+import { SyncErrorToast } from '@/components/ui/SyncErrorToast'
 import { syncOnLogin, syncOnLogout } from '@/services/sync/syncService'
 import { downloadBookFile } from '@/services/storage/storageService'
 import { updateBook } from '@/services/storage/db'
@@ -175,6 +176,7 @@ function App() {
             {showUpdateToast && (
                 <UpdateToast onUpdate={handleSWUpdate} />
             )}
+            <SyncErrorToast />
         </ErrorBoundary>
     )
 }

@@ -260,6 +260,56 @@ h6 {
   --color-border-accent: rgba(15, 118, 110, 0.3);
 }
 
+/* ---------- Mint Theme ---------- */
+[data-theme="mint"] {
+  --color-bg-primary: #e8f5e9;
+  --color-bg-secondary: #dff2e3;
+  --color-bg-tertiary: #d2ecd7;
+  --color-bg-elevated: #f2fbf3;
+  --color-bg-glass: rgba(232, 245, 233, 0.9);
+
+  --color-text-primary: #1f3a2d;
+  --color-text-secondary: #395746;
+  --color-text-tertiary: #5c7a68;
+
+  --color-accent-primary: #2e7d32;
+  --color-accent-secondary: #388e3c;
+  --color-accent-muted: rgba(46, 125, 50, 0.15);
+  --color-accent-glow: rgba(46, 125, 50, 0.2);
+
+  --color-warm: #c08400;
+  --color-warm-muted: rgba(192, 132, 0, 0.14);
+
+  --color-border: rgba(31, 58, 45, 0.12);
+  --color-border-strong: rgba(31, 58, 45, 0.2);
+  --color-border-accent: rgba(46, 125, 50, 0.3);
+}
+
+/* ---------- Warm Theme ---------- */
+[data-theme="warm"] {
+  --color-bg-primary: #fff9c4;
+  --color-bg-secondary: #fff3a8;
+  --color-bg-tertiary: #ffeb80;
+  --color-bg-elevated: #fffde0;
+  --color-bg-glass: rgba(255, 249, 196, 0.9);
+
+  --color-text-primary: #4d3d12;
+  --color-text-secondary: #6b5418;
+  --color-text-tertiary: #8c6f20;
+
+  --color-accent-primary: #8a6d1a;
+  --color-accent-secondary: #a17f22;
+  --color-accent-muted: rgba(138, 109, 26, 0.14);
+  --color-accent-glow: rgba(138, 109, 26, 0.2);
+
+  --color-warm: #d97706;
+  --color-warm-muted: rgba(217, 119, 6, 0.15);
+
+  --color-border: rgba(77, 61, 18, 0.12);
+  --color-border-strong: rgba(77, 61, 18, 0.2);
+  --color-border-accent: rgba(138, 109, 26, 0.3);
+}
+
 /* ---------- Base Styles ---------- */
 body {
   background-color: var(--color-bg-primary);

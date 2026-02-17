@@ -121,7 +121,7 @@ export interface UserProfile {
 }
 
 export interface ReaderPreferences {
-    theme: 'light' | 'dark' | 'sepia' | 'custom'
+    theme: 'light' | 'dark' | 'sepia' | 'mint' | 'warm' | 'custom'
     readingMode: 'paginated' | 'vertical-scroll'
     customTheme?: CustomTheme
     fontFamily: string

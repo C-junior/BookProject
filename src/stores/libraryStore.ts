@@ -13,13 +13,11 @@ interface LibraryState {
     sortOrder: 'asc' | 'desc'
     viewMode: 'grid' | 'list'
     selectedCollection: string | null
-    _filteredBooksCache: Book[] | null
-    _filteredBooksCacheKey: string | null
 
     // Actions
     loadBooks: (userId: string) => Promise<void>
     addNewBook: (book: Book) => Promise<void>
-    removeBook: (id: string) => Promise<void>
+    removeBook: (id: string, options?: { storageUserId?: string; cleanupStorage?: boolean }) => Promise<void>
     updateBookData: (id: string, updates: Partial<Book>) => Promise<void>
     setSearchQuery: (query: string) => void
     setSortBy: (sort: 'title' | 'author' | 'addedAt' | 'lastReadAt') => void
@@ -79,16 +77,6 @@ function computeFilteredBooks(
     return sorted
 }
 
-function buildCacheKey(
-    booksLength: number,
-    searchQuery: string,
-    sortBy: string,
-    sortOrder: string,
-    selectedCollection: string | null
-): string {
-    return `${booksLength}|${searchQuery}|${sortBy}|${sortOrder}|${selectedCollection ?? ''}`
-}
-
 export const useLibraryStore = create<LibraryState>()(
     persist(
         (set, get) => ({
@@ -100,14 +88,12 @@ export const useLibraryStore = create<LibraryState>()(
             sortOrder: 'desc',
             viewMode: 'grid',
             selectedCollection: null,
-            _filteredBooksCache: null,
-            _filteredBooksCacheKey: null,
 
             loadBooks: async (userId: string) => {
                 set({ isLoading: true, error: null })
                 try {
                     const books = await getAllBooks(userId)
-                    set({ books, isLoading: false, _filteredBooksCache: null, _filteredBooksCacheKey: null })
+                    set({ books, isLoading: false })
                 } catch (error) {
                     set({
                         error: error instanceof Error ? error.message : 'Failed to load books',
@@ -122,9 +108,7 @@ export const useLibraryStore = create<LibraryState>()(
                     await addBook(book)
                     set(state => ({
                         books: [book, ...state.books],
-                        isLoading: false,
-                        _filteredBooksCache: null,
-                        _filteredBooksCacheKey: null
+                        isLoading: false
                     }))
                 } catch (error) {
                     set({
@@ -135,15 +119,13 @@ export const useLibraryStore = create<LibraryState>()(
                 }
             },
 
-            removeBook: async (id: string) => {
+            removeBook: async (id: string, options) => {
                 set({ isLoading: true, error: null })
                 try {
-                    await deleteBook(id)
+                    await deleteBook(id, options)
                     set(state => ({
                         books: state.books.filter(b => b.id !== id),
-                        isLoading: false,
-                        _filteredBooksCache: null,
-                        _filteredBooksCacheKey: null
+                        isLoading: false
                     }))
                 } catch (error) {
                     set({
@@ -160,9 +142,7 @@ export const useLibraryStore = create<LibraryState>()(
                     set(state => ({
                         books: state.books.map(b =>
                             b.id === id ? { ...b, ...updates } : b
-                        ),
-                        _filteredBooksCache: null,
-                        _filteredBooksCacheKey: null
+                        )
                     }))
                 } catch (error) {
                     set({
@@ -172,25 +152,15 @@ export const useLibraryStore = create<LibraryState>()(
                 }
             },
 
-            setSearchQuery: (query: string) => set({ searchQuery: query, _filteredBooksCache: null, _filteredBooksCacheKey: null }),
-            setSortBy: (sort) => set({ sortBy: sort, _filteredBooksCache: null, _filteredBooksCacheKey: null }),
-            setSortOrder: (order) => set({ sortOrder: order, _filteredBooksCache: null, _filteredBooksCacheKey: null }),
+            setSearchQuery: (query: string) => set({ searchQuery: query }),
+            setSortBy: (sort) => set({ sortBy: sort }),
+            setSortOrder: (order) => set({ sortOrder: order }),
             setViewMode: (mode) => set({ viewMode: mode }),
-            setSelectedCollection: (id) => set({ selectedCollection: id, _filteredBooksCache: null, _filteredBooksCacheKey: null }),
+            setSelectedCollection: (id) => set({ selectedCollection: id }),
 
             getFilteredBooks: () => {
-                const { books, searchQuery, sortBy, sortOrder, selectedCollection, _filteredBooksCache, _filteredBooksCacheKey } = get()
-
-                const key = buildCacheKey(books.length, searchQuery, sortBy, sortOrder, selectedCollection)
-
-                if (_filteredBooksCache && _filteredBooksCacheKey === key) {
-                    return _filteredBooksCache
-                }
-
-                const result = computeFilteredBooks(books, searchQuery, sortBy, sortOrder, selectedCollection)
-
-                set({ _filteredBooksCache: result, _filteredBooksCacheKey: key })
-                return result
+                const { books, searchQuery, sortBy, sortOrder, selectedCollection } = get()
+                return computeFilteredBooks(books, searchQuery, sortBy, sortOrder, selectedCollection)
             }
         }),
         {

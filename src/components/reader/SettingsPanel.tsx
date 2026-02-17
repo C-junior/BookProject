@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { useReaderStore } from '@/stores/readerStore'
-import { X, Sun, Moon, BookOpen, ScrollText, Type, AlignLeft, AlignJustify } from 'lucide-react'
+import { X, Sun, Moon, BookOpen, ScrollText, Type, AlignLeft, AlignJustify, Leaf } from 'lucide-react'
 import './SettingsPanel.css'
 
 const FONT_FAMILIES = [
@@ -15,7 +15,9 @@ const FONT_FAMILIES = [
 const THEMES = [
     { value: 'light', label: 'Light', icon: Sun, color: '#fffef8' },
     { value: 'dark', label: 'Dark', icon: Moon, color: '#121212' },
-    { value: 'sepia', label: 'Sepia', icon: BookOpen, color: '#f5e6d3' }
+    { value: 'sepia', label: 'Sepia', icon: BookOpen, color: '#f5e6d3' },
+    { value: 'mint', label: 'Mint', icon: Leaf, color: '#e8f5e9' },
+    { value: 'warm', label: 'Warm', icon: Sun, color: '#fff9c4' }
 ] as const
 
 export function SettingsPanel() {
