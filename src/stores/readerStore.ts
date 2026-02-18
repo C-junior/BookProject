@@ -11,6 +11,8 @@ interface ReaderState {
     currentLocation: string
     percentage: number
     chapterTitle: string
+    currentPage: number
+    totalPages: number
 
     // UI state
     showToolbar: boolean
@@ -40,7 +42,7 @@ interface ReaderState {
     // Actions
     openBook: (book: Book, userId: string) => Promise<void>
     closeBook: () => void
-    setLocation: (location: string, percentage: number, chapterTitle?: string) => void
+    setLocation: (location: string, percentage: number, chapterTitle?: string, currentPage?: number, totalPages?: number) => void
     saveCurrentProgress: (userId: string) => Promise<void>
 
     toggleToolbar: () => void
@@ -90,6 +92,8 @@ export const useReaderStore = create<ReaderState>()(
             currentLocation: '',
             percentage: 0,
             chapterTitle: '',
+            currentPage: 1,
+            totalPages: 0,
 
             showToolbar: false,
             showSettings: false,
@@ -126,7 +130,9 @@ export const useReaderStore = create<ReaderState>()(
                     showSettings: false,
                     showToc: false,
                     showSearch: false,
-                    annotations: []
+                    annotations: [],
+                    currentPage: 1,
+                    totalPages: 0
                 })
 
                 // Load annotations
@@ -141,6 +147,8 @@ export const useReaderStore = create<ReaderState>()(
                     currentLocation: '',
                     percentage: 0,
                     chapterTitle: '',
+                    currentPage: 1,
+                    totalPages: 0,
                     toc: [],
                     searchQuery: '',
                     searchResults: [],
@@ -149,11 +157,13 @@ export const useReaderStore = create<ReaderState>()(
             },
 
             // Update current reading location
-            setLocation: (location: string, percentage: number, chapterTitle?: string) => {
+            setLocation: (location: string, percentage: number, chapterTitle?: string, currentPage?: number, totalPages?: number) => {
                 set({
                     currentLocation: location,
                     percentage,
-                    ...(chapterTitle !== undefined && { chapterTitle })
+                    ...(chapterTitle !== undefined && { chapterTitle }),
+                    ...(currentPage !== undefined && { currentPage }),
+                    ...(totalPages !== undefined && { totalPages })
                 })
             },
 

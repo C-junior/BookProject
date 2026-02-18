@@ -123,21 +123,14 @@
 }
 
 /* === SWIPE GESTURE OVERLAY === */
-/* Transparent overlay to capture swipe gestures that iframe blocks */
-/* pointer-events: none allows clicks to pass through to iframe content */
-/* but touch events are still captured on this element via the ref */
 .epub-reader-swipe-overlay {
     position: absolute;
     inset: 0;
     z-index: 4;
     background: transparent;
     touch-action: pan-x pan-y;
-    /* Allow clicks/taps to pass through to content below */
-    pointer-events: none;
+    pointer-events: auto;
 }
-
-/* Swipe detection is handled via JS touch events on the container itself.
-   The overlay is kept for desktop click-through but never blocks touch on mobile. */
 
 /* === LOADING STATE === */
 .epub-reader-loading {

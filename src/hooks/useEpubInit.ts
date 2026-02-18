@@ -138,14 +138,14 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
 
                 bookRef.current = epubBook
 
-                // Generate location map for progress
+                // Generate location map for progress & page counting
                 try {
                     const locationsApi = (epubBook as any).locations
                     const hasLocations = locationsApi?._locations?.length > 0
                         || (typeof locationsApi?.total === 'number' && locationsApi.total > 0)
 
                     if (!hasLocations && typeof locationsApi?.generate === 'function') {
-                        await locationsApi.generate(1600)
+                        await locationsApi.generate(1000)
                     }
                     locationsGeneratedRef.current = true
                 } catch {
@@ -190,7 +190,14 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
                         ? Math.max(0, Math.min(100, Math.round(startPct * 100)))
                         : 0
 
-                    setLocation(cfi, cfiBasedPct ?? fallback)
+                    const locationsApi = (bookRef.current as any)?.locations
+                    const totalPages = locationsApi?.total || 0
+                    const locationIndex = locationsApi?.locationFromCfi(cfi)
+                    const currentPage = (typeof locationIndex === 'number' && locationIndex >= 0)
+                        ? locationIndex + 1
+                        : 1
+
+                    setLocation(cfi, cfiBasedPct ?? fallback, undefined, currentPage, totalPages)
                     hideAnnotationMenu()
                 })
 

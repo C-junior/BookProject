@@ -318,7 +318,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
     // Save progress
     useEffect(() => {
         if (numPages > 0) {
-            setLocation(currentPage.toString(), percentage)
+            setLocation(currentPage.toString(), percentage, undefined, currentPage, numPages)
             localStorage.setItem(pageStorageKey, currentPage.toString())
         }
     }, [currentPage, numPages, percentage, pageStorageKey, setLocation])

@@ -23,6 +23,8 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
         showToolbar,
         percentage,
         chapterTitle,
+        currentPage,
+        totalPages,
         toggleSettings,
         toggleToc,
         toggleSearch,
@@ -88,7 +90,9 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
                     </button>
 
                     <div className="reader-toolbar-progress">
-                        <span className="reader-toolbar-percentage">{percentage}%</span>
+                        <span className="reader-toolbar-percentage">
+                            {totalPages > 0 ? `${currentPage} / ${totalPages}` : `${percentage}%`}
+                        </span>
                     </div>
 
                     <button

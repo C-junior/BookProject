@@ -128,7 +128,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     }, [goPrev])
 
     useSwipeNavigation({
-        ref: isVerticalScrollMode ? swipeOverlayRef : containerRef,
+        ref: swipeOverlayRef,
         onSwipeLeft: goNext,
         onSwipeRight: goPrev,
         onTap: toggleToolbar,
