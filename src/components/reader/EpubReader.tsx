@@ -10,6 +10,7 @@ import { useEpubAnnotations } from '@/hooks/useEpubAnnotations'
 import { useEpubSearch } from '@/hooks/useEpubSearch'
 import type { Book, BookmarkColor } from '@/types'
 import { auth } from '@/services/firebase'
+import { startSession, endSession } from '@/services/storage/db'
 import { ReaderToolbar } from './ReaderToolbar'
 import { SettingsPanel } from './SettingsPanel'
 import { TocPanel } from './TocPanel'
@@ -28,6 +29,9 @@ interface EpubReaderProps {
 
 export function EpubReader({ book, onClose }: EpubReaderProps) {
     const swipeOverlayRef = useRef<HTMLDivElement>(null)
+    const currentPercentageRef = useRef(0)
+    const sessionIdRef = useRef<number | null>(null)
+    const sessionStartPercentageRef = useRef(0)
 
     const {
         percentage,
@@ -146,6 +150,39 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         return () => { saveCurrentProgress(userId) }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    useEffect(() => {
+        currentPercentageRef.current = percentage
+    }, [percentage])
+
+    // Track reading sessions for stats
+    useEffect(() => {
+        let cancelled = false
+
+        const begin = async () => {
+            try {
+                const sessionId = await startSession(book.id, userId)
+                if (cancelled) return
+                sessionIdRef.current = sessionId
+                sessionStartPercentageRef.current = currentPercentageRef.current
+            } catch (err) {
+                console.error('Failed to start reading session:', err)
+            }
+        }
+
+        begin()
+
+        return () => {
+            cancelled = true
+            const sessionId = sessionIdRef.current
+            if (!sessionId) return
+
+            const delta = Math.abs(currentPercentageRef.current - sessionStartPercentageRef.current)
+            const pagesRead = Math.max(0, Math.round(delta))
+            void endSession(sessionId, pagesRead)
+            sessionIdRef.current = null
+        }
+    }, [book.id, userId])
 
     return (
         <div className="epub-reader" data-theme={preferences.theme}>

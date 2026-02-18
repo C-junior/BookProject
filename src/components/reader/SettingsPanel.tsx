@@ -209,6 +209,7 @@ export function SettingsPanel() {
                         </button>
                     </div>
                 </div>
+
             </div>
         </div>
     )

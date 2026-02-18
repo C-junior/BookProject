@@ -52,10 +52,10 @@ export async function syncAll(): Promise<void> {
 
     try {
         const categories = [
-            { name: 'annotations' as const, fn: () => syncAnnotations(userId) },
-            { name: 'collections' as const, fn: () => syncCollections(userId) },
-            { name: 'progress' as const, fn: () => syncProgress(userId) },
-            { name: 'bookMetadata' as const, fn: () => syncBookMetadata(userId) }
+            { name: 'annotations' as const, fn: () => runWithRetry(() => syncAnnotations(userId), 'annotations') },
+            { name: 'collections' as const, fn: () => runWithRetry(() => syncCollections(userId), 'collections') },
+            { name: 'progress' as const, fn: () => runWithRetry(() => syncProgress(userId), 'progress') },
+            { name: 'bookMetadata' as const, fn: () => runWithRetry(() => syncBookMetadata(userId), 'bookMetadata') }
         ]
 
         const results = await Promise.allSettled(categories.map(c => c.fn()))
@@ -103,10 +103,10 @@ export async function flushDirtyData(): Promise<void> {
     try {
         const tasks: Promise<void>[] = []
         const categoryMap: Record<DirtyCategory, () => Promise<void>> = {
-            progress: () => syncProgress(userId),
-            annotations: () => syncAnnotations(userId),
-            collections: () => syncCollections(userId),
-            bookMetadata: () => syncBookMetadata(userId)
+            progress: () => runWithRetry(() => syncProgress(userId), 'progress'),
+            annotations: () => runWithRetry(() => syncAnnotations(userId), 'annotations'),
+            collections: () => runWithRetry(() => syncCollections(userId), 'collections'),
+            bookMetadata: () => runWithRetry(() => syncBookMetadata(userId), 'bookMetadata')
         }
 
         for (const category of dirtyCategories) {
@@ -531,6 +531,39 @@ function normalizeSyncedCoverUrl(coverUrl?: string): string | null {
     if (coverUrl.startsWith('blob:')) return null
     if (coverUrl.startsWith('http://localhost') || coverUrl.startsWith('https://localhost')) return null
     return coverUrl
+}
+
+async function runWithRetry<T>(
+    task: () => Promise<T>,
+    label: string,
+    maxAttempts = 3
+): Promise<T> {
+    let attempt = 0
+    let lastError: unknown
+
+    while (attempt < maxAttempts) {
+        attempt += 1
+        try {
+            return await task()
+        } catch (err) {
+            lastError = err
+            if (attempt >= maxAttempts) break
+
+            const base = 600 * Math.pow(2, attempt - 1)
+            const jitter = Math.floor(Math.random() * 300)
+            const delayMs = base + jitter
+            console.warn(`Sync retry ${attempt}/${maxAttempts} for ${label} in ${delayMs}ms`)
+            await wait(delayMs)
+        }
+    }
+
+    throw lastError instanceof Error
+        ? new Error(`${label} failed after retries: ${lastError.message}`)
+        : new Error(`${label} failed after retries`)
+}
+
+function wait(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 /**

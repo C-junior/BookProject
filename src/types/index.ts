@@ -157,8 +157,6 @@ export interface ReaderState {
     showSearch: boolean
     searchQuery: string
     searchResults: SearchResult[]
-    isSpeaking: boolean
-    speechRate: number
 }
 
 export interface SearchResult {

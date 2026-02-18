@@ -23,7 +23,9 @@ import {
     FolderOpen,
     Link2,
     Clock,
-    ChevronRight
+    ChevronRight,
+    ChartColumnBig,
+    Sparkles
 } from 'lucide-react'
 import { parseBookFile } from '@/services/parsers'
 import { signOut, auth } from '@/services/firebase'
@@ -33,6 +35,7 @@ import {
     createCollection,
     deleteCollection as removeCollection,
     getProgressForBooks,
+    getReadingStatsDetailed,
     updateBook as updateBookInDb
 } from '@/services/storage/db'
 import './LibraryView.css'
@@ -40,6 +43,15 @@ import './LibraryView.css'
 interface LibraryViewProps {
     onOpenBook: (book: Book) => void
     onLogout?: () => void
+}
+
+interface LibraryReadingStats {
+    totalBooks: number
+    totalTime: number
+    totalPages: number
+    sessionsCount: number
+    averageSessionTime: number
+    weeklyActivity: { day: string; minutes: number }[]
 }
 
 export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
@@ -57,6 +69,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
         setSearchQuery,
         setSortBy,
         setViewMode,
+        setSelectedCollection,
         getFilteredBooks
     } = useLibraryStore()
 
@@ -65,16 +78,19 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
 
     const [showImportModal, setShowImportModal] = useState(false)
     const [showCollectionsManager, setShowCollectionsManager] = useState(false)
+    const [showStatsModal, setShowStatsModal] = useState(false)
     const [importLoading, setImportLoading] = useState(false)
     const [importError, setImportError] = useState<string | null>(null)
     const [deleteConfirm, setDeleteConfirm] = useState<Book | null>(null)
     const [bookToAddToCollection, setBookToAddToCollection] = useState<Book | null>(null)
     const [importUrl, setImportUrl] = useState('')
     const [urlImporting, setUrlImporting] = useState(false)
+    const [selectedSmartCollection, setSelectedSmartCollection] = useState<string | null>(null)
 
     // Collections and progress state
     const [collections, setCollections] = useState<Collection[]>([])
     const [progressMap, setProgressMap] = useState<Record<string, number>>({})
+    const [readingStats, setReadingStats] = useState<LibraryReadingStats | null>(null)
 
     // Onboarding state
     const [showOnboarding, setShowOnboarding] = useState(false)
@@ -97,6 +113,10 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     // Load progress when books change
     useEffect(() => {
         loadProgressData()
+    }, [books, activeUserId])
+
+    useEffect(() => {
+        loadReadingStatsData()
     }, [books, activeUserId])
 
     // Load collections from IndexedDB
@@ -209,6 +229,16 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             setDeleteConfirm(null)
         } catch (err) {
             console.error('Failed to delete book:', err)
+        }
+    }
+
+    const loadReadingStatsData = async () => {
+        if (!activeUserId) return
+        try {
+            const stats = await getReadingStatsDetailed(activeUserId)
+            setReadingStats(stats)
+        } catch (err) {
+            console.error('Failed to load reading stats:', err)
         }
     }
 
@@ -334,6 +364,31 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     }
 
     const filteredBooks = getFilteredBooks()
+    const smartCollections = [
+        { id: 'smart:epub', label: 'EPUB' },
+        { id: 'smart:pdf', label: 'PDF' },
+        { id: 'smart:cloud', label: 'Nuvem' },
+        { id: 'smart:recent', label: 'Recentes' }
+    ]
+
+    const booksForDisplay = filteredBooks.filter((book) => {
+        if (!selectedSmartCollection) return true
+        switch (selectedSmartCollection) {
+            case 'smart:epub':
+                return book.format === 'epub'
+            case 'smart:pdf':
+                return book.format === 'pdf'
+            case 'smart:cloud':
+                return Boolean(book.isCloudOnly || (!book.fileBlob && book.storageUrl))
+            case 'smart:recent': {
+                const added = new Date(book.addedAt).getTime()
+                const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+                return added >= sevenDaysAgo
+            }
+            default:
+                return true
+        }
+    })
 
     // Determine last-read book for hero section
     const { selectedCollection } = useLibraryStore()
@@ -360,14 +415,20 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                     <div className="library-header-actions">
                         <Button
                             variant="secondary"
-                            leftIcon={<FolderOpen size={18} />}
+                            leftIcon={<ChartColumnBig size={16} />}
+                            onClick={() => setShowStatsModal(true)}
+                        >
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            leftIcon={<FolderOpen size={16} />}
                             onClick={() => setShowCollectionsManager(true)}
                         >
                             Collections
                         </Button>
                         <Button
                             variant="primary"
-                            leftIcon={<Plus size={18} />}
+                            leftIcon={<Plus size={16} />}
                             onClick={() => setShowImportModal(true)}
                         >
                             Add Book
@@ -429,6 +490,45 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                         </div>
                     </div>
                 </div>
+
+                <div className="library-collections-bar">
+                    <button
+                        className={`library-collection-chip ${!selectedCollection && !selectedSmartCollection ? 'active' : ''}`}
+                        onClick={() => {
+                            setSelectedCollection(null)
+                            setSelectedSmartCollection(null)
+                        }}
+                    >
+                        All
+                    </button>
+                    {collections.map((col) => (
+                        <button
+                            key={col.id}
+                            className={`library-collection-chip ${selectedCollection === col.id ? 'active' : ''}`}
+                            onClick={() => {
+                                setSelectedCollection(col.id)
+                                setSelectedSmartCollection(null)
+                            }}
+                            style={{ borderColor: selectedCollection === col.id ? col.color : undefined }}
+                        >
+                            <span className="library-collection-chip-dot" style={{ backgroundColor: col.color }} />
+                            {col.name}
+                        </button>
+                    ))}
+                    {smartCollections.map((smart) => (
+                        <button
+                            key={smart.id}
+                            className={`library-collection-chip ${selectedSmartCollection === smart.id ? 'active' : ''}`}
+                            onClick={() => {
+                                setSelectedCollection(null)
+                                setSelectedSmartCollection(smart.id)
+                            }}
+                        >
+                            <Sparkles size={12} />
+                            {smart.label}
+                        </button>
+                    ))}
+                </div>
             </header>
 
             {/* Content */}
@@ -484,7 +584,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                             Try Again
                         </Button>
                     </div>
-                ) : filteredBooks.length === 0 ? (
+                ) : booksForDisplay.length === 0 ? (
                     <div className="library-empty">
                         <BookOpen size={64} className="library-empty-icon" />
                         <h2 className="library-empty-title">
@@ -507,7 +607,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                     </div>
                 ) : (
                     <div className={`library-grid library-grid-${viewMode}`}>
-                        {filteredBooks.map((book) => (
+                        {booksForDisplay.map((book) => (
                             <BookCard
                                 key={book.id}
                                 book={book}
@@ -633,6 +733,39 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                 </div>
             </Modal>
 
+            {/* Reading Statistics Modal */}
+            <Modal
+                isOpen={showStatsModal}
+                onClose={() => setShowStatsModal(false)}
+                title="Estatisticas"
+                size="md"
+            >
+                <div className="library-stats">
+                    {readingStats ? (
+                        <div className="library-stats-grid">
+                            <article className="library-stat-card">
+                                <p className="library-stat-label">Reading Time</p>
+                                <p className="library-stat-value">{formatDuration(readingStats.totalTime)}</p>
+                            </article>
+                            <article className="library-stat-card">
+                                <p className="library-stat-label">Sessions</p>
+                                <p className="library-stat-value">{readingStats.sessionsCount}</p>
+                            </article>
+                            <article className="library-stat-card">
+                                <p className="library-stat-label">Books Read</p>
+                                <p className="library-stat-value">{readingStats.totalBooks}</p>
+                            </article>
+                            <article className="library-stat-card">
+                                <p className="library-stat-label">Avg Session</p>
+                                <p className="library-stat-value">{formatDuration(readingStats.averageSessionTime)}</p>
+                            </article>
+                        </div>
+                    ) : (
+                        <p className="library-empty-text">No statistics yet.</p>
+                    )}
+                </div>
+            </Modal>
+
             {/* Collections Manager Modal */}
             {showCollectionsManager && (
                 <CollectionsManager
@@ -671,5 +804,14 @@ function shouldKeepCoverUrl(coverUrl?: string): boolean {
     if (coverUrl.startsWith('blob:')) return false
     if (coverUrl.startsWith('http://localhost') || coverUrl.startsWith('https://localhost')) return false
     return true
+}
+
+function formatDuration(totalSeconds: number): string {
+    if (totalSeconds <= 0) return '0m'
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    if (hours === 0) return `${minutes}m`
+    if (minutes === 0) return `${hours}h`
+    return `${hours}h ${minutes}m`
 }
 

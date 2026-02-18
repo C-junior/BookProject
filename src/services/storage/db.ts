@@ -425,6 +425,13 @@ export async function endSession(
     if (session) {
         const endTime = new Date()
         const duration = Math.floor((endTime.getTime() - session.startTime.getTime()) / 1000)
+
+        // Ignore ultra-short/no-op sessions (common in dev remounts)
+        if (duration < 5 && pagesRead <= 0) {
+            await db.sessions.delete(sessionId)
+            return
+        }
+
         await db.sessions.update(sessionId, {
             endTime,
             pagesRead,
@@ -445,6 +452,51 @@ export async function getReadingStats(userId: string): Promise<{
         totalBooks: new Set(progress.map(p => p.bookId)).size,
         totalTime: sessions.reduce((sum, s) => sum + s.duration, 0),
         totalPages: sessions.reduce((sum, s) => sum + s.pagesRead, 0)
+    }
+}
+
+export async function getReadingStatsDetailed(userId: string): Promise<{
+    totalBooks: number
+    totalTime: number
+    totalPages: number
+    sessionsCount: number
+    averageSessionTime: number
+    weeklyActivity: { day: string; minutes: number }[]
+}> {
+    const sessions = await db.sessions.where('userId').equals(userId).toArray()
+    const progress = await db.progress.where('userId').equals(userId).toArray()
+
+    const totalTime = sessions.reduce((sum, s) => sum + s.duration, 0)
+    const sessionsCount = sessions.length
+    const totalPages = sessions.reduce((sum, s) => sum + s.pagesRead, 0)
+    const averageSessionTime = sessionsCount > 0 ? Math.round(totalTime / sessionsCount) : 0
+
+    const now = new Date()
+    const days: { key: string; label: string; minutes: number }[] = []
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(now)
+        date.setDate(now.getDate() - i)
+        const key = date.toISOString().slice(0, 10)
+        const label = date.toLocaleDateString(undefined, { weekday: 'short' })
+        days.push({ key, label, minutes: 0 })
+    }
+
+    const byDay = new Map(days.map(d => [d.key, d]))
+    for (const s of sessions) {
+        const key = new Date(s.endTime).toISOString().slice(0, 10)
+        const day = byDay.get(key)
+        if (day) {
+            day.minutes += Math.round(s.duration / 60)
+        }
+    }
+
+    return {
+        totalBooks: new Set(progress.map(p => p.bookId)).size,
+        totalTime,
+        totalPages,
+        sessionsCount,
+        averageSessionTime,
+        weeklyActivity: days.map(d => ({ day: d.label, minutes: d.minutes }))
     }
 }
 

@@ -34,11 +34,6 @@ interface ReaderState {
     selectedText: string
     selectionCfi: string
 
-    // Text-to-speech
-    isSpeaking: boolean
-    speechRate: number
-    speechVoice: string | null
-
     // Reader preferences
     preferences: ReaderPreferences
 
@@ -66,10 +61,6 @@ interface ReaderState {
     loadAnnotations: (bookId: string, userId: string) => Promise<void>
     addAnnotationToState: (annotation: Annotation) => void
     removeAnnotationFromState: (id: string) => void
-
-    toggleSpeech: () => void
-    setSpeechRate: (rate: number) => void
-    setSpeechVoice: (voice: string) => void
 
     updatePreference: <K extends keyof ReaderPreferences>(
         key: K,
@@ -118,10 +109,6 @@ export const useReaderStore = create<ReaderState>()(
             selectedText: '',
             selectionCfi: '',
 
-            isSpeaking: false,
-            speechRate: 1,
-            speechVoice: null,
-
             preferences: defaultPreferences,
 
             // Open a book for reading
@@ -157,8 +144,7 @@ export const useReaderStore = create<ReaderState>()(
                     toc: [],
                     searchQuery: '',
                     searchResults: [],
-                    annotations: [],
-                    isSpeaking: false
+                    annotations: []
                 })
             },
 
@@ -278,15 +264,6 @@ export const useReaderStore = create<ReaderState>()(
                 annotations: state.annotations.filter(a => a.id !== id)
             })),
 
-            // Text-to-speech
-            toggleSpeech: () => set(state => ({
-                isSpeaking: !state.isSpeaking
-            })),
-
-            setSpeechRate: (rate: number) => set({ speechRate: rate }),
-
-            setSpeechVoice: (voice: string) => set({ speechVoice: voice }),
-
             // Preferences
             updatePreference: (key, value) => set(state => ({
                 preferences: { ...state.preferences, [key]: value }
@@ -299,9 +276,7 @@ export const useReaderStore = create<ReaderState>()(
         {
             name: 'pageturner-reader',
             partialize: (state) => ({
-                preferences: state.preferences,
-                speechRate: state.speechRate,
-                speechVoice: state.speechVoice
+                preferences: state.preferences
             })
         }
     )

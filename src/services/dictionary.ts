@@ -1,5 +1,5 @@
 /**
- * Dictionary & Wikipedia Lookup Service
+ * Portuguese Dictionary Lookup Service
  */
 
 export interface DictionaryDefinition {
@@ -14,91 +14,41 @@ export interface DictionaryDefinition {
     }[]
 }
 
-export interface WikipediaSummary {
-    title: string
-    extract: string
-    thumbnail?: {
-        source: string
-        width: number
-        height: number
-    }
-    pageUrl: string
-}
-
 /**
- * Fetch word definition from Free Dictionary API
+ * Fetch word definition from Free Dictionary API (Portuguese only).
+ * If Portuguese is not available, returns null (no English fallback).
  */
 export async function fetchDefinition(word: string): Promise<DictionaryDefinition | null> {
     try {
-        const cleanWord = word.trim().toLowerCase().split(/\s+/)[0] // Get first word only
+        const cleanWord = word.trim().toLowerCase().split(/\s+/)[0]
         const response = await fetch(
-            `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`
+            `https://api.dictionaryapi.dev/api/v2/entries/pt/${encodeURIComponent(cleanWord)}`
         )
 
         if (!response.ok) {
             if (response.status === 404) return null
-            throw new Error('Dictionary lookup failed')
+            throw new Error('Portuguese dictionary lookup failed')
         }
 
         const data = await response.json()
         const entry = data[0]
+        if (!entry || !Array.isArray(entry.meanings) || entry.meanings.length === 0) {
+            return null
+        }
 
         return {
-            word: entry.word,
+            word: entry.word || cleanWord,
             phonetic: entry.phonetic || entry.phonetics?.[0]?.text,
             meanings: entry.meanings.map((m: any) => ({
-                partOfSpeech: m.partOfSpeech,
-                definitions: m.definitions.slice(0, 3).map((d: any) => ({
+                partOfSpeech: m.partOfSpeech || 'classe gramatical',
+                definitions: (m.definitions || []).slice(0, 3).map((d: any) => ({
                     definition: d.definition,
                     example: d.example
                 }))
             }))
         }
     } catch (error) {
-        console.error('Dictionary lookup error:', error)
-        return null
-    }
-}
-
-/**
- * Fetch Wikipedia summary for a term
- */
-export async function fetchWikipediaSummary(term: string): Promise<WikipediaSummary | null> {
-    try {
-        const cleanTerm = term.trim()
-        const response = await fetch(
-            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanTerm)}`,
-            {
-                headers: {
-                    'Accept': 'application/json'
-                }
-            }
-        )
-
-        if (!response.ok) {
-            if (response.status === 404) return null
-            throw new Error('Wikipedia lookup failed')
-        }
-
-        const data = await response.json()
-
-        // Skip disambiguation pages
-        if (data.type === 'disambiguation') {
-            return null
-        }
-
-        return {
-            title: data.title,
-            extract: data.extract,
-            thumbnail: data.thumbnail ? {
-                source: data.thumbnail.source,
-                width: data.thumbnail.width,
-                height: data.thumbnail.height
-            } : undefined,
-            pageUrl: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(data.title)}`
-        }
-    } catch (error) {
-        console.error('Wikipedia lookup error:', error)
+        console.error('Portuguese dictionary lookup error:', error)
         return null
     }
 }

@@ -4,7 +4,7 @@ import { useReaderStore } from '@/stores/readerStore'
 import { useUserStore } from '@/stores/userStore'
 import { useAutoSaveBookmark } from '@/hooks/useAutoSaveBookmark'
 import type { Book, Annotation } from '@/types'
-import { addAnnotation, deleteAnnotation, getAnnotationsByType } from '@/services/storage/db'
+import { addAnnotation, deleteAnnotation, getAnnotationsByType, startSession, endSession } from '@/services/storage/db'
 import { auth } from '@/services/firebase'
 import { ReaderToolbar } from './ReaderToolbar'
 import { SettingsPanel } from './SettingsPanel'
@@ -26,6 +26,9 @@ interface PdfReaderProps {
 export function PdfReader({ book, onClose }: PdfReaderProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null)
+    const sessionIdRef = useRef<number | null>(null)
+    const currentPageRef = useRef(1)
+    const startPageRef = useRef(1)
 
     // State
     const [isLoading, setIsLoading] = useState(true)
@@ -33,6 +36,8 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
     const [numPages, setNumPages] = useState(0)
     const [currentPage, setCurrentPage] = useState(1)
     const [scale, setScale] = useState(1.0)
+    const [contrast, setContrast] = useState(100)
+    const [viewMode, setViewMode] = useState<'single' | 'double' | 'comic'>('single')
     const [bookmarks, setBookmarks] = useState<Annotation[]>([])
 
     const {
@@ -49,6 +54,10 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
 
     // Calculate percentage
     const percentage = numPages > 0 ? Math.round((currentPage / numPages) * 100) : 0
+
+    useEffect(() => {
+        currentPageRef.current = currentPage
+    }, [currentPage])
 
     // Auto-save reading position as bookmark (if enabled in preferences)
     useAutoSaveBookmark({
@@ -104,42 +113,60 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         }
     }, [book.id, book.fileBlob, pageStorageKey])
 
-    // Render current page
+    // Render current page(s)
     useEffect(() => {
         if (!pdfDocRef.current || !containerRef.current || isLoading) return
 
-        const renderPage = async (pageNum: number) => {
+        const renderPages = async (pageNum: number) => {
             if (!pdfDocRef.current) return
 
             try {
-                const page = await pdfDocRef.current.getPage(pageNum)
-                const viewport = page.getViewport({ scale })
+                const pagesToRender: number[] = []
 
-                // Create canvas
-                const canvas = document.createElement('canvas')
-                canvas.className = 'pdf-page-canvas'
-                canvas.width = viewport.width
-                canvas.height = viewport.height
+                if (viewMode === 'single') {
+                    pagesToRender.push(pageNum)
+                } else {
+                    const anchor = pageNum % 2 === 0 ? pageNum - 1 : pageNum
+                    if (anchor >= 1 && anchor <= numPages) pagesToRender.push(anchor)
+                    if (anchor + 1 <= numPages) pagesToRender.push(anchor + 1)
+                    if (viewMode === 'comic') {
+                        pagesToRender.reverse()
+                    }
+                }
 
-                const context = canvas.getContext('2d')
-                if (!context) return
+                const pagesWrapper = document.createElement('div')
+                pagesWrapper.className = `pdf-pages pdf-pages-${viewMode}`
 
-                // Clear container and add canvas
                 containerRef.current!.innerHTML = ''
-                containerRef.current!.appendChild(canvas)
+                containerRef.current!.appendChild(pagesWrapper)
 
-                // Render
-                await page.render({
-                    canvasContext: context,
-                    viewport
-                }).promise
+                for (const targetPage of pagesToRender) {
+                    const page = await pdfDocRef.current.getPage(targetPage)
+                    const viewport = page.getViewport({ scale })
+
+                    const canvas = document.createElement('canvas')
+                    canvas.className = 'pdf-page-canvas'
+                    canvas.width = viewport.width
+                    canvas.height = viewport.height
+                    canvas.style.filter = `contrast(${contrast}%)`
+
+                    const context = canvas.getContext('2d')
+                    if (!context) continue
+
+                    pagesWrapper.appendChild(canvas)
+
+                    await page.render({
+                        canvasContext: context,
+                        viewport
+                    }).promise
+                }
             } catch (err) {
                 console.error('Error rendering page:', err)
             }
         }
 
-        renderPage(currentPage)
-    }, [currentPage, scale, isLoading])
+        renderPages(currentPage)
+    }, [currentPage, scale, contrast, viewMode, numPages, isLoading])
 
     // Update location and save progress
     useEffect(() => {
@@ -167,24 +194,66 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         return () => clearInterval(saveInterval)
     }, [saveCurrentProgress, userId])
 
+    // Track reading sessions for stats
+    useEffect(() => {
+        let cancelled = false
+
+        const begin = async () => {
+            try {
+                const sessionId = await startSession(book.id, userId)
+                if (cancelled) return
+                sessionIdRef.current = sessionId
+                startPageRef.current = currentPageRef.current
+            } catch (err) {
+                console.error('Failed to start reading session:', err)
+            }
+        }
+
+        begin()
+
+        return () => {
+            cancelled = true
+            const sessionId = sessionIdRef.current
+            if (!sessionId) return
+
+            const pagesRead = Math.max(0, Math.abs(currentPageRef.current - startPageRef.current))
+            void endSession(sessionId, pagesRead)
+            sessionIdRef.current = null
+        }
+    }, [book.id, userId])
+
     // Navigation
+    const normalizePageForViewMode = useCallback((page: number) => {
+        const bounded = Math.max(1, Math.min(page, numPages))
+        if (viewMode === 'single') return bounded
+        return bounded % 2 === 0 ? Math.max(1, bounded - 1) : bounded
+    }, [numPages, viewMode])
+
     const goToPage = useCallback((page: number) => {
-        setCurrentPage(Math.max(1, Math.min(page, numPages)))
-    }, [numPages])
+        setCurrentPage(normalizePageForViewMode(page))
+    }, [normalizePageForViewMode])
 
     const goNext = useCallback(() => {
-        if (currentPage < numPages) {
-            setCurrentPage(prev => prev + 1)
-            navigator.vibrate?.(10)
-        }
-    }, [currentPage, numPages])
+        const step = viewMode === 'single' ? 1 : 2
+        setCurrentPage(prev => {
+            const next = viewMode === 'comic'
+                ? Math.max(1, prev - step)
+                : Math.min(numPages, prev + step)
+            if (next !== prev) navigator.vibrate?.(10)
+            return next
+        })
+    }, [numPages, viewMode])
 
     const goPrev = useCallback(() => {
-        if (currentPage > 1) {
-            setCurrentPage(prev => prev - 1)
-            navigator.vibrate?.(10)
-        }
-    }, [currentPage])
+        const step = viewMode === 'single' ? 1 : 2
+        setCurrentPage(prev => {
+            const next = viewMode === 'comic'
+                ? Math.min(numPages, prev + step)
+                : Math.max(1, prev - step)
+            if (next !== prev) navigator.vibrate?.(10)
+            return next
+        })
+    }, [numPages, viewMode])
 
     // Zoom controls
     const zoomIn = useCallback(() => {
@@ -303,6 +372,28 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                         <button onClick={zoomIn} aria-label="Zoom in">
                             <ZoomIn size={18} />
                         </button>
+                        <select
+                            value={viewMode}
+                            onChange={(e) => setViewMode(e.target.value as typeof viewMode)}
+                            className="pdf-view-mode-select"
+                            aria-label="PDF view mode"
+                        >
+                            <option value="single">Single</option>
+                            <option value="double">Double</option>
+                            <option value="comic">Comic RTL</option>
+                        </select>
+                        <div className="pdf-contrast-control">
+                            <label htmlFor="pdf-contrast">Contrast</label>
+                            <input
+                                id="pdf-contrast"
+                                type="range"
+                                min="80"
+                                max="180"
+                                step="5"
+                                value={contrast}
+                                onChange={(e) => setContrast(parseInt(e.target.value))}
+                            />
+                        </div>
                     </div>
 
                     {/* Page container */}
