@@ -1,8 +1,9 @@
 import React from 'react'
 import type { Book, Collection } from '@/types'
-import { BookOpen, MoreVertical, Trash2, FolderPlus, Cloud, Download, Loader2 } from 'lucide-react'
-import { downloadBookFile, downloadCoverImage } from '@/services/storage/storageService'
+import { BookOpen, MoreVertical, Trash2, FolderPlus, Cloud, Download, Loader2, ImagePlus } from 'lucide-react'
+import { downloadBookFile, downloadCoverImage, uploadCoverImage } from '@/services/storage/storageService'
 import { updateBook } from '@/services/storage/db'
+import { auth } from '@/services/firebase'
 import './BookCard.css'
 
 interface BookCardProps {
@@ -12,14 +13,16 @@ interface BookCardProps {
     onOpen: (book: Book) => void
     onDelete: (book: Book) => void
     onAddToCollection?: (book: Book) => void
+    onUpdateBook?: (id: string, updates: Partial<Book>) => Promise<void>
     onBookUpdated?: () => void // Callback when book is downloaded
 }
 
-export function BookCard({ book, progress, collections, onOpen, onDelete, onAddToCollection, onBookUpdated }: BookCardProps) {
+export function BookCard({ book, progress, collections, onOpen, onDelete, onAddToCollection, onUpdateBook, onBookUpdated }: BookCardProps) {
     const [showMenu, setShowMenu] = React.useState(false)
     const [isDownloading, setIsDownloading] = React.useState(false)
     const [downloadProgress, setDownloadProgress] = React.useState(0)
     const menuRef = React.useRef<HTMLDivElement>(null)
+    const customCoverInputRef = React.useRef<HTMLInputElement>(null)
     const [coverFailed, setCoverFailed] = React.useState(false)
 
     const isCloudOnly = book.isCloudOnly && !book.fileBlob
@@ -131,6 +134,51 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
         onAddToCollection?.(book)
     }
 
+    const handleCustomCoverClick = (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setShowMenu(false)
+        customCoverInputRef.current?.click()
+    }
+
+    const handleCustomCoverSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0]
+        e.target.value = ''
+        if (!selectedFile) return
+        if (!selectedFile.type.startsWith('image/')) {
+            alert('Please select an image file.')
+            return
+        }
+
+        const compressedCoverBlob = await compressCoverImage(selectedFile)
+
+        const updates: Partial<Book> = {
+            coverBlob: compressedCoverBlob,
+            coverUrl: undefined
+        }
+
+        try {
+            const userId = auth.currentUser?.uid
+            if (userId) {
+                try {
+                    updates.coverStorageUrl = await uploadCoverImage(userId, book.id, compressedCoverBlob)
+                } catch (uploadErr) {
+                    console.warn('Cover upload failed, keeping local custom cover only:', uploadErr)
+                }
+            }
+
+            if (onUpdateBook) {
+                await onUpdateBook(book.id, updates)
+            } else {
+                await updateBook(book.id, updates)
+            }
+            onBookUpdated?.()
+        } catch (err) {
+            console.error('Failed to set custom cover:', err)
+            alert('Failed to set custom cover.')
+        }
+    }
+
     // Get book's assigned collections
     const bookCollections = collections?.filter(c => book.collectionIds?.includes(c.id)) || []
 
@@ -230,7 +278,21 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
             </div>
 
             {/* Menu button */}
-            <div className="book-card-menu" ref={menuRef}>
+            <div
+                className="book-card-menu"
+                ref={menuRef}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+            >
+                <input
+                    ref={customCoverInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onChange={handleCustomCoverSelected}
+                />
                 <button
                     className="book-card-menu-button"
                     onClick={handleMenuClick}
@@ -241,7 +303,11 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
                 </button>
 
                 {showMenu && (
-                    <div className="book-card-dropdown">
+                    <div
+                        className="book-card-dropdown"
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
                         {isCloudOnly && (
                             <button
                                 className="book-card-dropdown-item"
@@ -258,6 +324,15 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
                             >
                                 <FolderPlus size={16} />
                                 <span>Add to Collection</span>
+                            </button>
+                        )}
+                        {book.format === 'epub' && (
+                            <button
+                                className="book-card-dropdown-item"
+                                onClick={handleCustomCoverClick}
+                            >
+                                <ImagePlus size={16} />
+                                <span>Custom Cover</span>
                             </button>
                         )}
                         <button
@@ -280,6 +355,37 @@ function isInvalidBlobCoverUrl(url: string): boolean {
     if (!url.startsWith('blob:')) return false
     const hasCurrentOrigin = url.includes(window.location.origin)
     return !hasCurrentOrigin
+}
+
+async function compressCoverImage(file: File): Promise<Blob> {
+    const bitmap = await createImageBitmap(file)
+    const maxWidth = 1000
+    const maxHeight = 1500
+    const scale = Math.min(maxWidth / bitmap.width, maxHeight / bitmap.height, 1)
+    const width = Math.max(1, Math.round(bitmap.width * scale))
+    const height = Math.max(1, Math.round(bitmap.height * scale))
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    if (!ctx) {
+        bitmap.close()
+        throw new Error('Canvas context unavailable')
+    }
+
+    ctx.drawImage(bitmap, 0, 0, width, height)
+    bitmap.close()
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((result) => resolve(result), 'image/jpeg', 0.8)
+    })
+
+    if (!blob) {
+        throw new Error('Image compression failed')
+    }
+
+    return blob
 }
 
 

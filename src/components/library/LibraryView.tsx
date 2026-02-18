@@ -415,20 +415,25 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                     <div className="library-header-actions">
                         <Button
                             variant="secondary"
-                            leftIcon={<ChartColumnBig size={16} />}
+                            leftIcon={<ChartColumnBig size={18} />}
+                            className="library-action-btn library-action-btn-icon"
                             onClick={() => setShowStatsModal(true)}
+                            aria-label="Open reading statistics"
+                            title="Reading statistics"
                         >
                         </Button>
                         <Button
                             variant="secondary"
-                            leftIcon={<FolderOpen size={16} />}
+                            leftIcon={<FolderOpen size={18} />}
+                            className="library-action-btn"
                             onClick={() => setShowCollectionsManager(true)}
                         >
                             Collections
                         </Button>
                         <Button
                             variant="primary"
-                            leftIcon={<Plus size={16} />}
+                            leftIcon={<Plus size={18} />}
+                            className="library-action-btn library-action-btn-primary"
                             onClick={() => setShowImportModal(true)}
                         >
                             Add Book
@@ -616,6 +621,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                                 onOpen={onOpenBook}
                                 onDelete={setDeleteConfirm}
                                 onAddToCollection={handleAddToCollection}
+                                onUpdateBook={updateBookData}
                             />
                         ))}
                     </div>
