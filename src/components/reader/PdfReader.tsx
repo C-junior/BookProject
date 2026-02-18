@@ -3,20 +3,27 @@ import * as pdfjsLib from 'pdfjs-dist'
 import { useReaderStore } from '@/stores/readerStore'
 import { useUserStore } from '@/stores/userStore'
 import { useAutoSaveBookmark } from '@/hooks/useAutoSaveBookmark'
+import { usePinchZoom } from '@/hooks/usePinchZoom'
+import { usePdfCrop } from '@/hooks/usePdfCrop'
 import type { Book, Annotation } from '@/types'
 import { addAnnotation, deleteAnnotation, getAnnotationsByType, startSession, endSession } from '@/services/storage/db'
 import { auth } from '@/services/firebase'
 import { ReaderToolbar } from './ReaderToolbar'
 import { SettingsPanel } from './SettingsPanel'
 import { BookmarksPanel } from './BookmarksPanel'
-import { Loader2, AlertCircle, ZoomIn, ZoomOut } from 'lucide-react'
+import {
+    Loader2, AlertCircle, Maximize, Columns2,
+    SunMedium, Crop, ChevronDown
+} from 'lucide-react'
 import './PdfReader.css'
 
-// Set up PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.mjs',
     import.meta.url
 ).toString()
+
+type ZoomPreset = 'fit-width' | 'fit-page' | 'actual' | 'custom'
+type ViewMode = 'single' | 'double' | 'comic'
 
 interface PdfReaderProps {
     book: Book
@@ -24,49 +31,68 @@ interface PdfReaderProps {
 }
 
 export function PdfReader({ book, onClose }: PdfReaderProps) {
-    const containerRef = useRef<HTMLDivElement>(null)
+    const pageContainerRef = useRef<HTMLDivElement>(null)
     const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null)
     const sessionIdRef = useRef<number | null>(null)
     const currentPageRef = useRef(1)
     const startPageRef = useRef(1)
+    const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const basePageDims = useRef({ width: 0, height: 0 })
 
-    // State
+    // Core state
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [numPages, setNumPages] = useState(0)
     const [currentPage, setCurrentPage] = useState(1)
-    const [scale, setScale] = useState(1.0)
-    const [contrast, setContrast] = useState(100)
-    const [viewMode, setViewMode] = useState<'single' | 'double' | 'comic'>('single')
     const [bookmarks, setBookmarks] = useState<Annotation[]>([])
 
+    // PDF-specific settings
+    const [zoomPreset, setZoomPreset] = useState<ZoomPreset>('fit-width')
+    const [contrast, setContrast] = useState(100)
+    const [viewMode, setViewMode] = useState<ViewMode>('single')
+    const [cropMargins, setCropMargins] = useState(false)
+    const [showPdfSettings, setShowPdfSettings] = useState(false)
+    const [controlsVisible, setControlsVisible] = useState(true)
+
     const {
-        showSettings,
-        showBookmarks,
-        preferences,
-        setLocation,
-        toggleToolbar,
-        saveCurrentProgress
+        showSettings, showBookmarks: showBookmarksPanel, preferences,
+        setLocation, toggleToolbar, saveCurrentProgress
     } = useReaderStore()
 
     const userId = auth.currentUser?.uid || useUserStore.getState().getCurrentUserId()
     const pageStorageKey = `pdf-page-${userId}-${book.id}`
-
-    // Calculate percentage
     const percentage = numPages > 0 ? Math.round((currentPage / numPages) * 100) : 0
 
-    useEffect(() => {
-        currentPageRef.current = currentPage
-    }, [currentPage])
-
-    // Auto-save reading position as bookmark (if enabled in preferences)
-    useAutoSaveBookmark({
-        bookId: book.id,
-        userId,
-        enabled: preferences.autoSavePosition
+    // Pinch zoom
+    const {
+        scale, isZoomed, setScale, resetZoom,
+        containerRef: pinchContainerRef, contentRef: pinchContentRef
+    } = usePinchZoom({
+        minScale: 0.5,
+        maxScale: 5,
+        doubleTapScale: 2.5
     })
 
-    // Initialize PDF
+    // Margin cropping
+    const { detectCrop, getCropStyle } = usePdfCrop(cropMargins)
+
+    useEffect(() => { currentPageRef.current = currentPage }, [currentPage])
+
+    useAutoSaveBookmark({ bookId: book.id, userId, enabled: preferences.autoSavePosition })
+
+    // Auto-hide controls
+    const resetHideTimer = useCallback(() => {
+        if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+        setControlsVisible(true)
+        hideTimerRef.current = setTimeout(() => setControlsVisible(false), 2500)
+    }, [])
+
+    useEffect(() => {
+        resetHideTimer()
+        return () => { if (hideTimerRef.current) clearTimeout(hideTimerRef.current) }
+    }, [resetHideTimer])
+
+    // Load PDF
     useEffect(() => {
         if (!book.fileBlob) {
             setError('No PDF file available')
@@ -80,19 +106,15 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
             try {
                 setIsLoading(true)
                 setError(null)
-
                 const arrayBuffer = await book.fileBlob!.arrayBuffer()
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-
                 if (!isMounted) return
 
                 pdfDocRef.current = pdf
                 setNumPages(pdf.numPages)
 
-                // Load saved page or start at page 1
                 const savedPage = parseInt(localStorage.getItem(pageStorageKey) || '1')
                 setCurrentPage(Math.min(savedPage, pdf.numPages))
-
                 setIsLoading(false)
             } catch (err) {
                 console.error('Error loading PDF:', err)
@@ -104,18 +126,37 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         }
 
         loadPdf()
-
         return () => {
             isMounted = false
-            if (pdfDocRef.current) {
-                pdfDocRef.current.destroy()
-            }
+            if (pdfDocRef.current) pdfDocRef.current.destroy()
         }
     }, [book.id, book.fileBlob, pageStorageKey])
 
-    // Render current page(s)
+    // Calculate fit scale based on preset
+    const calculateBaseScale = useCallback((pageWidth: number, pageHeight: number): number => {
+        const container = pinchContainerRef.current
+        if (!container) return 1
+
+        const cw = container.clientWidth - 16 // small padding
+        const ch = container.clientHeight - 16
+
+        switch (zoomPreset) {
+            case 'fit-width':
+                return cw / pageWidth
+            case 'fit-page':
+                return Math.min(cw / pageWidth, ch / pageHeight)
+            case 'actual':
+                return 1
+            case 'custom':
+                return scale
+            default:
+                return cw / pageWidth
+        }
+    }, [zoomPreset, scale, pinchContainerRef])
+
+    // Render pages
     useEffect(() => {
-        if (!pdfDocRef.current || !containerRef.current || isLoading) return
+        if (!pdfDocRef.current || !pageContainerRef.current || isLoading) return
 
         const renderPages = async (pageNum: number) => {
             if (!pdfDocRef.current) return
@@ -129,36 +170,58 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                     const anchor = pageNum % 2 === 0 ? pageNum - 1 : pageNum
                     if (anchor >= 1 && anchor <= numPages) pagesToRender.push(anchor)
                     if (anchor + 1 <= numPages) pagesToRender.push(anchor + 1)
-                    if (viewMode === 'comic') {
-                        pagesToRender.reverse()
-                    }
+                    if (viewMode === 'comic') pagesToRender.reverse()
                 }
 
-                const pagesWrapper = document.createElement('div')
-                pagesWrapper.className = `pdf-pages pdf-pages-${viewMode}`
+                const wrapper = document.createElement('div')
+                wrapper.className = `pdf-pages pdf-pages-${viewMode}`
 
-                containerRef.current!.innerHTML = ''
-                containerRef.current!.appendChild(pagesWrapper)
+                pageContainerRef.current!.innerHTML = ''
+                pageContainerRef.current!.appendChild(wrapper)
 
                 for (const targetPage of pagesToRender) {
-                    const page = await pdfDocRef.current.getPage(targetPage)
-                    const viewport = page.getViewport({ scale })
+                    const page = await pdfDocRef.current!.getPage(targetPage)
+                    const baseViewport = page.getViewport({ scale: 1 })
+
+                    // Store base dims for preset calculations
+                    if (targetPage === pagesToRender[0]) {
+                        basePageDims.current = { width: baseViewport.width, height: baseViewport.height }
+                    }
+
+                    const renderScale = calculateBaseScale(baseViewport.width, baseViewport.height)
+                    const viewport = page.getViewport({ scale: renderScale })
 
                     const canvas = document.createElement('canvas')
                     canvas.className = 'pdf-page-canvas'
                     canvas.width = viewport.width
                     canvas.height = viewport.height
-                    canvas.style.filter = `contrast(${contrast}%)`
+                    if (contrast !== 100) {
+                        canvas.style.filter = `contrast(${contrast}%)`
+                    }
 
                     const context = canvas.getContext('2d')
                     if (!context) continue
 
-                    pagesWrapper.appendChild(canvas)
+                    wrapper.appendChild(canvas)
 
-                    await page.render({
-                        canvasContext: context,
-                        viewport
-                    }).promise
+                    await page.render({ canvasContext: context, viewport }).promise
+
+                    // Auto-crop detection on first page
+                    if (cropMargins && targetPage === pagesToRender[0]) {
+                        detectCrop(canvas)
+                    }
+                }
+
+                // Apply crop style to all canvases
+                if (cropMargins) {
+                    const cropStyle = getCropStyle()
+                    const canvases = pageContainerRef.current?.querySelectorAll('.pdf-page-canvas')
+                    canvases?.forEach(c => {
+                        const el = c as HTMLElement
+                        if (cropStyle.clipPath) {
+                            el.style.clipPath = cropStyle.clipPath
+                        }
+                    })
                 }
             } catch (err) {
                 console.error('Error rendering page:', err)
@@ -166,9 +229,9 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         }
 
         renderPages(currentPage)
-    }, [currentPage, scale, contrast, viewMode, numPages, isLoading])
+    }, [currentPage, contrast, viewMode, numPages, isLoading, zoomPreset, cropMargins, calculateBaseScale, detectCrop, getCropStyle])
 
-    // Update location and save progress
+    // Save progress
     useEffect(() => {
         if (numPages > 0) {
             setLocation(currentPage.toString(), percentage)
@@ -185,19 +248,15 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         loadBookmarks()
     }, [book.id, userId])
 
-    // Auto-save progress
+    // Auto-save interval
     useEffect(() => {
-        const saveInterval = setInterval(() => {
-            saveCurrentProgress(userId)
-        }, 30000)
-
+        const saveInterval = setInterval(() => saveCurrentProgress(userId), 30000)
         return () => clearInterval(saveInterval)
     }, [saveCurrentProgress, userId])
 
-    // Track reading sessions for stats
+    // Reading session tracking
     useEffect(() => {
         let cancelled = false
-
         const begin = async () => {
             try {
                 const sessionId = await startSession(book.id, userId)
@@ -208,14 +267,11 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                 console.error('Failed to start reading session:', err)
             }
         }
-
         begin()
-
         return () => {
             cancelled = true
             const sessionId = sessionIdRef.current
             if (!sessionId) return
-
             const pagesRead = Math.max(0, Math.abs(currentPageRef.current - startPageRef.current))
             void endSession(sessionId, pagesRead)
             sessionIdRef.current = null
@@ -231,7 +287,8 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
 
     const goToPage = useCallback((page: number) => {
         setCurrentPage(normalizePageForViewMode(page))
-    }, [normalizePageForViewMode])
+        resetZoom()
+    }, [normalizePageForViewMode, resetZoom])
 
     const goNext = useCallback(() => {
         const step = viewMode === 'single' ? 1 : 2
@@ -242,7 +299,8 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
             if (next !== prev) navigator.vibrate?.(10)
             return next
         })
-    }, [numPages, viewMode])
+        resetZoom()
+    }, [numPages, viewMode, resetZoom])
 
     const goPrev = useCallback(() => {
         const step = viewMode === 'single' ? 1 : 2
@@ -253,46 +311,75 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
             if (next !== prev) navigator.vibrate?.(10)
             return next
         })
-    }, [numPages, viewMode])
-
-    // Zoom controls
-    const zoomIn = useCallback(() => {
-        setScale(prev => Math.min(prev + 0.25, 3))
-    }, [])
-
-    const zoomOut = useCallback(() => {
-        setScale(prev => Math.max(prev - 0.25, 0.5))
-    }, [])
+        resetZoom()
+    }, [numPages, viewMode, resetZoom])
 
     // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             switch (e.key) {
-                case 'ArrowLeft':
-                case 'PageUp':
-                    goPrev()
-                    break
-                case 'ArrowRight':
-                case 'PageDown':
-                case ' ':
-                    goNext()
-                    break
-                case '+':
-                case '=':
-                    zoomIn()
-                    break
-                case '-':
-                    zoomOut()
-                    break
-                case 'Escape':
-                    onClose()
-                    break
+                case 'ArrowLeft': case 'PageUp': goPrev(); break
+                case 'ArrowRight': case 'PageDown': case ' ': goNext(); break
+                case '+': case '=': setScale(scale + 0.25); break
+                case '-': setScale(scale - 0.25); break
+                case 'Escape': onClose(); break
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [goPrev, goNext, setScale, scale, onClose])
+
+    // Touch swipe for navigation (only when not zoomed)
+    useEffect(() => {
+        const container = pinchContainerRef.current
+        if (!container || isZoomed) return
+
+        let startX = 0
+        let startY = 0
+        let startTime = 0
+
+        const onStart = (e: TouchEvent) => {
+            if (e.touches.length !== 1) return
+            startX = e.touches[0].clientX
+            startY = e.touches[0].clientY
+            startTime = Date.now()
+        }
+
+        const onEnd = (e: TouchEvent) => {
+            if (e.changedTouches.length === 0) return
+            const touch = e.changedTouches[0]
+            const dx = startX - touch.clientX
+            const dy = Math.abs(startY - touch.clientY)
+            const elapsed = Date.now() - startTime
+
+            const isTap = Math.abs(dx) < 15 && dy < 15 && elapsed < 300
+            if (isTap) {
+                // Center tap → toggle controls
+                const rect = container.getBoundingClientRect()
+                const tapX = touch.clientX - rect.left
+                const centerZone = rect.width * 0.3
+                const centerStart = (rect.width - centerZone) / 2
+                if (tapX >= centerStart && tapX <= centerStart + centerZone) {
+                    toggleToolbar()
+                    resetHideTimer()
+                }
+                return
+            }
+
+            if (Math.abs(dx) > 50 && Math.abs(dx) > dy * 0.7) {
+                if (dx > 0) goNext()
+                else goPrev()
+                resetHideTimer()
             }
         }
 
-        window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [goPrev, goNext, zoomIn, zoomOut, onClose])
+        container.addEventListener('touchstart', onStart, { passive: true })
+        container.addEventListener('touchend', onEnd, { passive: true })
+        return () => {
+            container.removeEventListener('touchstart', onStart)
+            container.removeEventListener('touchend', onEnd)
+        }
+    }, [isZoomed, goNext, goPrev, toggleToolbar, resetHideTimer, pinchContainerRef])
 
     // Bookmark handlers
     const handleAddBookmark = useCallback(async () => {
@@ -308,7 +395,6 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
             createdAt: new Date(),
             updatedAt: new Date()
         }
-
         await addAnnotation(newBookmark)
         setBookmarks(prev => [...prev, newBookmark])
     }, [book.id, userId, currentPage])
@@ -320,30 +406,40 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
 
     const handleSelectBookmark = useCallback((cfi: string) => {
         const page = parseInt(cfi)
-        if (!isNaN(page)) {
-            goToPage(page)
-        }
+        if (!isNaN(page)) goToPage(page)
     }, [goToPage])
 
-    // Handle click for toolbar toggle
+    // Zoom preset handlers
+    const handleZoomPreset = useCallback((preset: ZoomPreset) => {
+        setZoomPreset(preset)
+        resetZoom()
+    }, [resetZoom])
+
     const handleContainerClick = useCallback(() => {
         toggleToolbar()
-    }, [toggleToolbar])
+        resetHideTimer()
+    }, [toggleToolbar, resetHideTimer])
+
+    // View mode label
+    const viewModeLabels: Record<ViewMode, string> = {
+        single: 'Single',
+        double: 'Spread',
+        comic: 'Comic RTL'
+    }
+
+    const zoomPresetLabels: Record<ZoomPreset, string> = {
+        'fit-width': 'Fit Width',
+        'fit-page': 'Fit Page',
+        'actual': 'Actual Size',
+        'custom': `${Math.round(scale * 100)}%`
+    }
 
     return (
-        <div
-            className="pdf-reader"
-            data-theme={preferences.theme}
-        >
-            {/* Toolbar */}
-            <ReaderToolbar
-                book={book}
-                onClose={onClose}
-                onPrev={goPrev}
-                onNext={goNext}
-            />
+        <div className="pdf-reader" data-theme={preferences.theme}>
+            {/* Toolbar — auto-hides */}
+            <ReaderToolbar book={book} onClose={onClose} onPrev={goPrev} onNext={goNext} />
 
-            {/* Loading state */}
+            {/* Loading */}
             {isLoading && (
                 <div className="pdf-reader-loading">
                     <Loader2 size={40} className="pdf-reader-spinner" />
@@ -351,7 +447,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                 </div>
             )}
 
-            {/* Error state */}
+            {/* Error */}
             {error && (
                 <div className="pdf-reader-error">
                     <AlertCircle size={40} />
@@ -360,85 +456,146 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                 </div>
             )}
 
-            {/* PDF container */}
+            {/* Main PDF area */}
             {!isLoading && !error && (
                 <div className="pdf-reader-wrapper">
-                    {/* Zoom controls */}
-                    <div className="pdf-zoom-controls">
-                        <button onClick={zoomOut} aria-label="Zoom out">
-                            <ZoomOut size={18} />
-                        </button>
-                        <span>{Math.round(scale * 100)}%</span>
-                        <button onClick={zoomIn} aria-label="Zoom in">
-                            <ZoomIn size={18} />
-                        </button>
-                        <select
-                            value={viewMode}
-                            onChange={(e) => setViewMode(e.target.value as typeof viewMode)}
-                            className="pdf-view-mode-select"
-                            aria-label="PDF view mode"
-                        >
-                            <option value="single">Single</option>
-                            <option value="double">Double</option>
-                            <option value="comic">Comic RTL</option>
-                        </select>
-                        <div className="pdf-contrast-control">
-                            <label htmlFor="pdf-contrast">Contrast</label>
-                            <input
-                                id="pdf-contrast"
-                                type="range"
-                                min="80"
-                                max="180"
-                                step="5"
-                                value={contrast}
-                                onChange={(e) => setContrast(parseInt(e.target.value))}
-                            />
+                    {/* Pinch-zoom container */}
+                    <div
+                        ref={pinchContainerRef}
+                        className="pdf-pinch-container"
+                        onClick={handleContainerClick}
+                    >
+                        <div ref={pinchContentRef} className="pdf-pinch-content">
+                            <div ref={pageContainerRef} className="pdf-reader-container" />
                         </div>
                     </div>
 
-                    {/* Page container */}
-                    <div
-                        ref={containerRef}
-                        className="pdf-reader-container"
-                        onClick={handleContainerClick}
-                    />
-
-                    {/* Page indicator */}
-                    <div className="pdf-page-indicator">
-                        <button
-                            onClick={goPrev}
-                            disabled={currentPage <= 1}
-                            className="pdf-page-btn"
+                    {/* Minimal page indicator pill */}
+                    <div className={`pdf-page-pill ${controlsVisible ? 'visible' : 'hidden'}`}>
+                        <span
+                            className="pdf-page-pill-prev"
+                            onPointerDown={(e) => { e.stopPropagation(); goPrev() }}
                         >
-                            ←
-                        </button>
-                        <span className="pdf-page-info">
+                            ‹
+                        </span>
+                        <span className="pdf-page-pill-text">
                             <input
                                 type="number"
                                 value={currentPage}
                                 onChange={(e) => goToPage(parseInt(e.target.value) || 1)}
                                 min={1}
                                 max={numPages}
-                                className="pdf-page-input"
+                                className="pdf-page-pill-input"
+                                onClick={(e) => e.stopPropagation()}
                             />
-                            <span>/ {numPages}</span>
+                            <span className="pdf-page-pill-sep">/ {numPages}</span>
                         </span>
-                        <button
-                            onClick={goNext}
-                            disabled={currentPage >= numPages}
-                            className="pdf-page-btn"
+                        <span
+                            className="pdf-page-pill-next"
+                            onPointerDown={(e) => { e.stopPropagation(); goNext() }}
                         >
-                            →
-                        </button>
+                            ›
+                        </span>
                     </div>
+
+                    {/* PDF Settings toggle (bottom-right FAB) */}
+                    <button
+                        className={`pdf-settings-fab ${controlsVisible ? 'visible' : 'hidden'}`}
+                        onClick={(e) => { e.stopPropagation(); setShowPdfSettings(!showPdfSettings) }}
+                        aria-label="PDF settings"
+                    >
+                        <ChevronDown
+                            size={20}
+                            style={{ transform: showPdfSettings ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 200ms' }}
+                        />
+                    </button>
+
+                    {/* PDF Settings bottom sheet */}
+                    {showPdfSettings && (
+                        <>
+                            <div
+                                className="pdf-settings-backdrop"
+                                onClick={() => setShowPdfSettings(false)}
+                            />
+                            <div className="pdf-settings-sheet">
+                                <div className="pdf-settings-handle" />
+
+                                {/* Zoom Presets */}
+                                <div className="pdf-settings-section">
+                                    <span className="pdf-settings-label">
+                                        <Maximize size={14} /> Zoom
+                                    </span>
+                                    <div className="pdf-settings-chips">
+                                        {(['fit-width', 'fit-page', 'actual'] as ZoomPreset[]).map(p => (
+                                            <button
+                                                key={p}
+                                                className={`pdf-chip ${zoomPreset === p ? 'active' : ''}`}
+                                                onClick={() => handleZoomPreset(p)}
+                                            >
+                                                {zoomPresetLabels[p]}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* View Mode */}
+                                <div className="pdf-settings-section">
+                                    <span className="pdf-settings-label">
+                                        <Columns2 size={14} /> View
+                                    </span>
+                                    <div className="pdf-settings-chips">
+                                        {(['single', 'double', 'comic'] as ViewMode[]).map(m => (
+                                            <button
+                                                key={m}
+                                                className={`pdf-chip ${viewMode === m ? 'active' : ''}`}
+                                                onClick={() => setViewMode(m)}
+                                            >
+                                                {viewModeLabels[m]}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Contrast */}
+                                <div className="pdf-settings-section">
+                                    <span className="pdf-settings-label">
+                                        <SunMedium size={14} /> Contrast
+                                        <span className="pdf-settings-value">{contrast}%</span>
+                                    </span>
+                                    <input
+                                        type="range"
+                                        min="80"
+                                        max="180"
+                                        step="5"
+                                        value={contrast}
+                                        onChange={(e) => setContrast(parseInt(e.target.value))}
+                                        className="pdf-settings-slider"
+                                    />
+                                </div>
+
+                                {/* Crop Margins */}
+                                <div className="pdf-settings-section">
+                                    <span className="pdf-settings-label">
+                                        <Crop size={14} /> Crop Margins
+                                    </span>
+                                    <button
+                                        className={`pdf-crop-toggle ${cropMargins ? 'active' : ''}`}
+                                        onClick={() => setCropMargins(!cropMargins)}
+                                        role="switch"
+                                        aria-checked={cropMargins}
+                                    >
+                                        <span className="pdf-crop-toggle-thumb" />
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 
-            {/* Settings Panel */}
+            {/* Existing settings & bookmarks panels */}
             {showSettings && <SettingsPanel />}
-
-            {/* Bookmarks Panel */}
-            {showBookmarks && (
+            {showBookmarksPanel && (
                 <BookmarksPanel
                     bookTitle={book.title}
                     bookmarks={bookmarks}
