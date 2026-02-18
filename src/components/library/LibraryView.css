@@ -721,9 +721,9 @@
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
-    /* Keep 2 columns on tablet */
+    /* 3 columns on tablet */
     .library-grid-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .delete-modal-actions {
@@ -735,20 +735,20 @@
 /* === DESKTOP === */
 @media (min-width: 768px) {
     .library-grid-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
 
 /* === LARGE DESKTOP === */
 @media (min-width: 1024px) {
     .library-grid-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: var(--space-5);
     }
 }
 
 @media (min-width: 1280px) {
     .library-grid-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(6, minmax(0, 1fr));
     }
 }
