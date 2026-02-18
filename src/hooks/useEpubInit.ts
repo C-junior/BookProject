@@ -13,6 +13,15 @@ interface UseEpubInitResult {
     getProgressPercentageFromCfi: (cfi: string) => number | null
 }
 
+// Calculate approximate characters per page based on screen size and font size
+const calculatePageSize = (width: number, height: number, fontSize: number): number => {
+    const area = width * height
+    const charArea = fontSize * fontSize
+    // Heuristic: (Screen Area / Char Area) * Density Factor
+    // Density factor 0.6 accounts for margins, line height, and whitespace
+    return Math.max(300, Math.floor((area / charArea) * 0.6))
+}
+
 export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpubInitResult {
     const containerRef = useRef<HTMLDivElement | null>(null)
     const renditionRef = useRef<Rendition | null>(null)
@@ -141,13 +150,16 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
                 // Generate location map for progress & page counting
                 try {
                     const locationsApi = (epubBook as any).locations
-                    const hasLocations = locationsApi?._locations?.length > 0
-                        || (typeof locationsApi?.total === 'number' && locationsApi.total > 0)
+                    const initialPageSize = calculatePageSize(
+                        window.innerWidth,
+                        window.innerHeight,
+                        preferences.fontSize
+                    )
 
-                    if (!hasLocations && typeof locationsApi?.generate === 'function') {
-                        await locationsApi.generate(1000)
+                    if (typeof locationsApi?.generate === 'function') {
+                        await locationsApi.generate(initialPageSize)
+                        locationsGeneratedRef.current = true
                     }
-                    locationsGeneratedRef.current = true
                 } catch {
                     locationsGeneratedRef.current = false
                 }
@@ -258,8 +270,62 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
         if (renditionRef.current) {
             applyReaderStyles(renditionRef.current)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [preferences])
+    }, [preferences, applyReaderStyles])
+
+    // Handle dynamic page resizing
+    useEffect(() => {
+        let timeoutId: any
+
+        const handleResize = async () => {
+            if (!bookRef.current || !locationsGeneratedRef.current) return
+
+            const newSize = calculatePageSize(
+                window.innerWidth,
+                window.innerHeight,
+                preferences.fontSize
+            )
+
+            const locationsApi = (bookRef.current as any).locations
+            if (typeof locationsApi?.generate === 'function') {
+                try {
+                    await locationsApi.generate(newSize)
+
+                    // Force update UI with new page count
+                    const currentLocation = useReaderStore.getState().currentLocation
+                    if (currentLocation) {
+                        const total = locationsApi.total || 0
+                        const current = locationsApi.locationFromCfi(currentLocation) + 1
+                        useReaderStore.getState().setLocation(
+                            currentLocation,
+                            useReaderStore.getState().percentage,
+                            undefined,
+                            current,
+                            total
+                        )
+                    }
+                } catch (e) {
+                    console.error('Failed to regenerate locations', e)
+                }
+            }
+        }
+
+        const runDebounced = () => {
+            clearTimeout(timeoutId)
+            timeoutId = setTimeout(handleResize, 500)
+        }
+
+        // Only run if we actually have a book loaded
+        if (locationsGeneratedRef.current) {
+            runDebounced()
+        }
+
+        window.addEventListener('resize', runDebounced)
+
+        return () => {
+            clearTimeout(timeoutId)
+            window.removeEventListener('resize', runDebounced)
+        }
+    }, [preferences.fontSize, book.id])
 
     return {
         containerRef,
