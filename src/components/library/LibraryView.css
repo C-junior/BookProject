@@ -75,13 +75,6 @@
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    overflow-x: auto;
-    padding-bottom: var(--space-1);
-    scrollbar-width: none;
-}
-
-.library-header-actions::-webkit-scrollbar {
-    display: none;
 }
 
 .library-action-btn {
@@ -706,11 +699,6 @@
     .library-search {
         flex: 1;
         max-width: 400px;
-    }
-
-    .library-header-actions {
-        overflow: visible;
-        padding-bottom: 0;
     }
 
     .library-content {

@@ -425,10 +425,11 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                         <Button
                             variant="secondary"
                             leftIcon={<FolderOpen size={18} />}
-                            className="library-action-btn"
+                            className="library-action-btn library-action-btn-icon"
                             onClick={() => setShowCollectionsManager(true)}
+                            aria-label="Open collections"
+                            title="Collections"
                         >
-                            Collections
                         </Button>
                         <Button
                             variant="primary"
