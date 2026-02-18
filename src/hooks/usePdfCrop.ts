@@ -40,7 +40,8 @@ export function usePdfCrop(enabled: boolean): PdfCropResult {
 
         // Sample at reduced resolution for performance
         const sampleStep = Math.max(1, Math.floor(Math.min(w, h) / 200))
-        const threshold = 240 // pixel brightness threshold (near-white)
+        // Increased threshold to catch light gray scanned artifacts (250 is very close to 255)
+        const threshold = 250
 
         const isContent = (r: number, g: number, b: number) =>
             r < threshold || g < threshold || b < threshold
@@ -110,9 +111,9 @@ export function usePdfCrop(enabled: boolean): PdfCropResult {
             }
         }
 
-        // Add small padding (2% of dimension)
-        const padX = Math.floor(w * 0.02)
-        const padY = Math.floor(h * 0.02)
+        // No padding at all (0%) for tightest crop
+        const padX = 0
+        const padY = 0
 
         const insets: CropInsets = {
             top: Math.max(0, ((topRow - padY) / h) * 100),
@@ -121,8 +122,8 @@ export function usePdfCrop(enabled: boolean): PdfCropResult {
             left: Math.max(0, ((leftCol - padX) / w) * 100)
         }
 
-        // Only crop if margins are significant (> 3%)
-        const hasCroppable = insets.top > 3 || insets.right > 3 || insets.bottom > 3 || insets.left > 3
+        // Only crop if margins are significant (> 1% to avoid micro-shifts)
+        const hasCroppable = insets.top > 1 || insets.right > 1 || insets.bottom > 1 || insets.left > 1
         if (!hasCroppable) {
             cachedInsets.current = EMPTY_INSETS
             return EMPTY_INSETS

@@ -37,7 +37,6 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
     const currentPageRef = useRef(1)
     const startPageRef = useRef(1)
     const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const basePageDims = useRef({ width: 0, height: 0 })
 
     // Core state
     const [isLoading, setIsLoading] = useState(true)
@@ -63,23 +62,6 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
     const pageStorageKey = `pdf-page-${userId}-${book.id}`
     const percentage = numPages > 0 ? Math.round((currentPage / numPages) * 100) : 0
 
-    // Pinch zoom
-    const {
-        scale, isZoomed, setScale, resetZoom,
-        containerRef: pinchContainerRef, contentRef: pinchContentRef
-    } = usePinchZoom({
-        minScale: 0.5,
-        maxScale: 5,
-        doubleTapScale: 2.5
-    })
-
-    // Margin cropping
-    const { detectCrop, getCropStyle } = usePdfCrop(cropMargins)
-
-    useEffect(() => { currentPageRef.current = currentPage }, [currentPage])
-
-    useAutoSaveBookmark({ bookId: book.id, userId, enabled: preferences.autoSavePosition })
-
     // Auto-hide controls
     const resetHideTimer = useCallback(() => {
         if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
@@ -91,6 +73,71 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         resetHideTimer()
         return () => { if (hideTimerRef.current) clearTimeout(hideTimerRef.current) }
     }, [resetHideTimer])
+
+    // Navigation callbacks used by Swipe
+    const normalizePageForViewMode = useCallback((page: number) => {
+        const bounded = Math.max(1, Math.min(page, numPages))
+        if (viewMode === 'single') return bounded
+        return bounded % 2 === 0 ? Math.max(1, bounded - 1) : bounded
+    }, [numPages, viewMode])
+
+    const goNext = useCallback(() => {
+        const step = viewMode === 'single' ? 1 : 2
+        setCurrentPage(prev => {
+            const next = viewMode === 'comic'
+                ? Math.max(1, prev - step)
+                : Math.min(numPages, prev + step)
+            if (next !== prev) navigator.vibrate?.(10)
+            return next
+        })
+        resetHideTimer()
+    }, [numPages, viewMode, resetHideTimer])
+
+    const goPrev = useCallback(() => {
+        const step = viewMode === 'single' ? 1 : 2
+        setCurrentPage(prev => {
+            const next = viewMode === 'comic'
+                ? Math.min(numPages, prev + step)
+                : Math.max(1, prev - step)
+            if (next !== prev) navigator.vibrate?.(10)
+            return next
+        })
+        resetHideTimer()
+    }, [numPages, viewMode, resetHideTimer])
+
+    // Pinch zoom
+    const {
+        scale, setScale, resetZoom,
+        containerRef: pinchContainerRef, contentRef: pinchContentRef
+    } = usePinchZoom({
+        minScale: 0.5,
+        maxScale: 10,
+        doubleTapScale: 2.5,
+        onSwipeLeft: goNext,   // Swipe Left -> Next Page
+        onSwipeRight: goPrev,  // Swipe Right -> Prev Page
+        onTap: () => {
+            toggleToolbar()
+            resetHideTimer()
+        }
+    })
+
+    // Navigation (extended to reset zoom)
+    const goToPage = useCallback((page: number) => {
+        setCurrentPage(normalizePageForViewMode(page))
+        resetZoom()
+    }, [normalizePageForViewMode, resetZoom])
+
+    // Reset zoom when page changes naturally (via swipe/buttons)
+    useEffect(() => {
+        resetZoom()
+    }, [currentPage, resetZoom])
+
+    // Margin cropping
+    const { detectCrop, getCropStyle } = usePdfCrop(cropMargins)
+
+    useEffect(() => { currentPageRef.current = currentPage }, [currentPage])
+
+    useAutoSaveBookmark({ bookId: book.id, userId, enabled: preferences.autoSavePosition })
 
     // Load PDF
     useEffect(() => {
@@ -137,7 +184,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         const container = pinchContainerRef.current
         if (!container) return 1
 
-        const cw = container.clientWidth - 16 // small padding
+        const cw = container.clientWidth - 16
         const ch = container.clientHeight - 16
 
         switch (zoomPreset) {
@@ -148,11 +195,11 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
             case 'actual':
                 return 1
             case 'custom':
-                return scale
+                return 1 // Custom scale is handled by pinch zoom 'scale'
             default:
                 return cw / pageWidth
         }
-    }, [zoomPreset, scale, pinchContainerRef])
+    }, [zoomPreset, pinchContainerRef])
 
     // Render pages
     useEffect(() => {
@@ -183,11 +230,6 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                     const page = await pdfDocRef.current!.getPage(targetPage)
                     const baseViewport = page.getViewport({ scale: 1 })
 
-                    // Store base dims for preset calculations
-                    if (targetPage === pagesToRender[0]) {
-                        basePageDims.current = { width: baseViewport.width, height: baseViewport.height }
-                    }
-
                     const renderScale = calculateBaseScale(baseViewport.width, baseViewport.height)
                     const viewport = page.getViewport({ scale: renderScale })
 
@@ -206,13 +248,11 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
 
                     await page.render({ canvasContext: context, viewport }).promise
 
-                    // Auto-crop detection on first page
                     if (cropMargins && targetPage === pagesToRender[0]) {
                         detectCrop(canvas)
                     }
                 }
 
-                // Apply crop style to all canvases
                 if (cropMargins) {
                     const cropStyle = getCropStyle()
                     const canvases = pageContainerRef.current?.querySelectorAll('.pdf-page-canvas')
@@ -278,42 +318,6 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         }
     }, [book.id, userId])
 
-    // Navigation
-    const normalizePageForViewMode = useCallback((page: number) => {
-        const bounded = Math.max(1, Math.min(page, numPages))
-        if (viewMode === 'single') return bounded
-        return bounded % 2 === 0 ? Math.max(1, bounded - 1) : bounded
-    }, [numPages, viewMode])
-
-    const goToPage = useCallback((page: number) => {
-        setCurrentPage(normalizePageForViewMode(page))
-        resetZoom()
-    }, [normalizePageForViewMode, resetZoom])
-
-    const goNext = useCallback(() => {
-        const step = viewMode === 'single' ? 1 : 2
-        setCurrentPage(prev => {
-            const next = viewMode === 'comic'
-                ? Math.max(1, prev - step)
-                : Math.min(numPages, prev + step)
-            if (next !== prev) navigator.vibrate?.(10)
-            return next
-        })
-        resetZoom()
-    }, [numPages, viewMode, resetZoom])
-
-    const goPrev = useCallback(() => {
-        const step = viewMode === 'single' ? 1 : 2
-        setCurrentPage(prev => {
-            const next = viewMode === 'comic'
-                ? Math.min(numPages, prev + step)
-                : Math.max(1, prev - step)
-            if (next !== prev) navigator.vibrate?.(10)
-            return next
-        })
-        resetZoom()
-    }, [numPages, viewMode, resetZoom])
-
     // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -328,58 +332,6 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [goPrev, goNext, setScale, scale, onClose])
-
-    // Touch swipe for navigation (only when not zoomed)
-    useEffect(() => {
-        const container = pinchContainerRef.current
-        if (!container || isZoomed) return
-
-        let startX = 0
-        let startY = 0
-        let startTime = 0
-
-        const onStart = (e: TouchEvent) => {
-            if (e.touches.length !== 1) return
-            startX = e.touches[0].clientX
-            startY = e.touches[0].clientY
-            startTime = Date.now()
-        }
-
-        const onEnd = (e: TouchEvent) => {
-            if (e.changedTouches.length === 0) return
-            const touch = e.changedTouches[0]
-            const dx = startX - touch.clientX
-            const dy = Math.abs(startY - touch.clientY)
-            const elapsed = Date.now() - startTime
-
-            const isTap = Math.abs(dx) < 15 && dy < 15 && elapsed < 300
-            if (isTap) {
-                // Center tap → toggle controls
-                const rect = container.getBoundingClientRect()
-                const tapX = touch.clientX - rect.left
-                const centerZone = rect.width * 0.3
-                const centerStart = (rect.width - centerZone) / 2
-                if (tapX >= centerStart && tapX <= centerStart + centerZone) {
-                    toggleToolbar()
-                    resetHideTimer()
-                }
-                return
-            }
-
-            if (Math.abs(dx) > 50 && Math.abs(dx) > dy * 0.7) {
-                if (dx > 0) goNext()
-                else goPrev()
-                resetHideTimer()
-            }
-        }
-
-        container.addEventListener('touchstart', onStart, { passive: true })
-        container.addEventListener('touchend', onEnd, { passive: true })
-        return () => {
-            container.removeEventListener('touchstart', onStart)
-            container.removeEventListener('touchend', onEnd)
-        }
-    }, [isZoomed, goNext, goPrev, toggleToolbar, resetHideTimer, pinchContainerRef])
 
     // Bookmark handlers
     const handleAddBookmark = useCallback(async () => {
@@ -414,11 +366,6 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         setZoomPreset(preset)
         resetZoom()
     }, [resetZoom])
-
-    const handleContainerClick = useCallback(() => {
-        toggleToolbar()
-        resetHideTimer()
-    }, [toggleToolbar, resetHideTimer])
 
     // View mode label
     const viewModeLabels: Record<ViewMode, string> = {
@@ -459,11 +406,10 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
             {/* Main PDF area */}
             {!isLoading && !error && (
                 <div className="pdf-reader-wrapper">
-                    {/* Pinch-zoom container */}
+                    {/* Pinch-zoom container - now handles taps/swipes internally via hooks */}
                     <div
                         ref={pinchContainerRef}
                         className="pdf-pinch-container"
-                        onClick={handleContainerClick}
                     >
                         <div ref={pinchContentRef} className="pdf-pinch-content">
                             <div ref={pageContainerRef} className="pdf-reader-container" />
