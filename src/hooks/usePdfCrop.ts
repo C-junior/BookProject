@@ -1,6 +1,6 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState, useEffect } from 'react'
 
-interface CropInsets {
+export interface CropInsets {
     top: number
     right: number
     bottom: number
@@ -10,7 +10,8 @@ interface CropInsets {
 interface PdfCropResult {
     cropEnabled: boolean
     cropInsets: CropInsets | null
-    detectCrop: (canvas: HTMLCanvasElement) => CropInsets | null
+    detectCrop: (canvas: HTMLCanvasElement) => void
+    resetCrop: () => void
     getCropStyle: () => React.CSSProperties
 }
 
@@ -21,27 +22,36 @@ const EMPTY_INSETS: CropInsets = { top: 0, right: 0, bottom: 0, left: 0 }
  * Returns insets as percentages that can be applied via clip-path.
  */
 export function usePdfCrop(enabled: boolean): PdfCropResult {
-    const cachedInsets = useRef<CropInsets | null>(null)
+    // We use state now to trigger re-renders in parent
+    const [insets, setInsets] = useState<CropInsets | null>(null)
+    const processingRef = useRef(false)
 
-    const detectCrop = useCallback((canvas: HTMLCanvasElement): CropInsets | null => {
-        if (!enabled) {
-            cachedInsets.current = null
-            return null
-        }
+    // Reset when disabled
+    useEffect(() => {
+        if (!enabled) setInsets(null)
+    }, [enabled])
 
-        // Use cached if available
-        if (cachedInsets.current) return cachedInsets.current
+    const resetCrop = useCallback(() => {
+        setInsets(null)
+        processingRef.current = false
+    }, [])
 
+    const detectCrop = useCallback((canvas: HTMLCanvasElement) => {
+        if (!enabled || processingRef.current || insets) return
+
+        processingRef.current = true
         const ctx = canvas.getContext('2d', { willReadFrequently: true })
-        if (!ctx) return null
+        if (!ctx) {
+            processingRef.current = false
+            return
+        }
 
         const w = canvas.width
         const h = canvas.height
 
         // Sample at reduced resolution for performance
-        const sampleStep = Math.max(1, Math.floor(Math.min(w, h) / 200))
-        // Increased threshold to catch light gray scanned artifacts (250 is very close to 255)
-        const threshold = 250
+        const sampleStep = Math.max(1, Math.floor(Math.min(w, h) / 100)) // finer scan
+        const threshold = 250 // strict threshold
 
         const isContent = (r: number, g: number, b: number) =>
             r < threshold || g < threshold || b < threshold
@@ -50,7 +60,8 @@ export function usePdfCrop(enabled: boolean): PdfCropResult {
         try {
             imageData = ctx.getImageData(0, 0, w, h)
         } catch {
-            return null
+            processingRef.current = false
+            return
         }
 
         const data = imageData.data
@@ -111,41 +122,48 @@ export function usePdfCrop(enabled: boolean): PdfCropResult {
             }
         }
 
-        // No padding at all (0%) for tightest crop
-        const padX = 0
-        const padY = 0
-
-        const insets: CropInsets = {
-            top: Math.max(0, ((topRow - padY) / h) * 100),
-            right: Math.max(0, ((w - 1 - rightCol - padX) / w) * 100),
-            bottom: Math.max(0, ((h - 1 - bottomRow - padY) / h) * 100),
-            left: Math.max(0, ((leftCol - padX) / w) * 100)
+        // Calculate percentages
+        const newInsets: CropInsets = {
+            top: parseFloat(((topRow / h) * 100).toFixed(2)),
+            right: parseFloat(((w - 1 - rightCol) / w * 100).toFixed(2)),
+            bottom: parseFloat(((h - 1 - bottomRow) / h * 100).toFixed(2)),
+            left: parseFloat(((leftCol / w) * 100).toFixed(2))
         }
 
-        // Only crop if margins are significant (> 1% to avoid micro-shifts)
-        const hasCroppable = insets.top > 1 || insets.right > 1 || insets.bottom > 1 || insets.left > 1
-        if (!hasCroppable) {
-            cachedInsets.current = EMPTY_INSETS
-            return EMPTY_INSETS
+        // Only update if significant crop found (> 2% total) to avoid jitter
+        const totalCrop = newInsets.top + newInsets.bottom + newInsets.left + newInsets.right
+        if (totalCrop > 2) {
+            setInsets(newInsets)
+        } else {
+            // If insignificant, set to empty to stop re-detecting
+            setInsets(EMPTY_INSETS)
         }
-
-        cachedInsets.current = insets
-        return insets
-    }, [enabled])
+        processingRef.current = false
+    }, [enabled, insets])
 
     const getCropStyle = useCallback((): React.CSSProperties => {
-        if (!enabled || !cachedInsets.current) return {}
-        const { top, right, bottom, left } = cachedInsets.current
+        if (!enabled || !insets) return {}
+        const { top, right, bottom, left } = insets
         if (top === 0 && right === 0 && bottom === 0 && left === 0) return {}
+
+        // Calculate centering transform
+        // We move the canvas so the content center aligns with container center
+        // Shift X = (Right - Left) / 2
+        // Shift Y = (Bottom - Top) / 2
+        const tx = (right - left) / 2
+        const ty = (bottom - top) / 2
+
         return {
-            clipPath: `inset(${top}% ${right}% ${bottom}% ${left}%)`
+            clipPath: `inset(${top}% ${right}% ${bottom}% ${left}%)`,
+            transform: `translate(${tx}%, ${ty}%)`
         }
-    }, [enabled])
+    }, [enabled, insets])
 
     return {
         cropEnabled: enabled,
-        cropInsets: cachedInsets.current,
+        cropInsets: insets,
         detectCrop,
+        resetCrop,
         getCropStyle
     }
 }

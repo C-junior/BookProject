@@ -74,7 +74,10 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         return () => { if (hideTimerRef.current) clearTimeout(hideTimerRef.current) }
     }, [resetHideTimer])
 
-    // Navigation callbacks used by Swipe
+    // Margin cropping
+    const { detectCrop, cropInsets, resetCrop } = usePdfCrop(cropMargins)
+
+    // Navigation callbacks
     const normalizePageForViewMode = useCallback((page: number) => {
         const bounded = Math.max(1, Math.min(page, numPages))
         if (viewMode === 'single') return bounded
@@ -82,6 +85,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
     }, [numPages, viewMode])
 
     const goNext = useCallback(() => {
+        resetCrop()
         const step = viewMode === 'single' ? 1 : 2
         setCurrentPage(prev => {
             const next = viewMode === 'comic'
@@ -91,9 +95,10 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
             return next
         })
         resetHideTimer()
-    }, [numPages, viewMode, resetHideTimer])
+    }, [numPages, viewMode, resetHideTimer, resetCrop])
 
     const goPrev = useCallback(() => {
+        resetCrop()
         const step = viewMode === 'single' ? 1 : 2
         setCurrentPage(prev => {
             const next = viewMode === 'comic'
@@ -103,7 +108,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
             return next
         })
         resetHideTimer()
-    }, [numPages, viewMode, resetHideTimer])
+    }, [numPages, viewMode, resetHideTimer, resetCrop])
 
     // Pinch zoom
     const {
@@ -121,20 +126,15 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         }
     })
 
-    // Navigation (extended to reset zoom)
+    // Navigation
     const goToPage = useCallback((page: number) => {
+        resetCrop()
         setCurrentPage(normalizePageForViewMode(page))
         resetZoom()
-    }, [normalizePageForViewMode, resetZoom])
+    }, [normalizePageForViewMode, resetZoom, resetCrop])
 
-    // Reset zoom when page changes naturally (via swipe/buttons)
-    useEffect(() => {
-        resetZoom()
-    }, [currentPage, resetZoom])
-
-    // Margin cropping
-    const { detectCrop, getCropStyle } = usePdfCrop(cropMargins)
-
+    useEffect(() => { resetZoom() }, [currentPage, resetZoom])
+    useEffect(() => { resetCrop() }, [viewMode, resetCrop])
     useEffect(() => { currentPageRef.current = currentPage }, [currentPage])
 
     useAutoSaveBookmark({ bookId: book.id, userId, enabled: preferences.autoSavePosition })
@@ -179,7 +179,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         }
     }, [book.id, book.fileBlob, pageStorageKey])
 
-    // Calculate fit scale based on preset
+    // Calculate fit scale based on preset AND crop
     const calculateBaseScale = useCallback((pageWidth: number, pageHeight: number): number => {
         const container = pinchContainerRef.current
         if (!container) return 1
@@ -187,19 +187,37 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         const cw = container.clientWidth - 16
         const ch = container.clientHeight - 16
 
+        let base = 1
         switch (zoomPreset) {
             case 'fit-width':
-                return cw / pageWidth
+                base = cw / pageWidth
+                break
             case 'fit-page':
-                return Math.min(cw / pageWidth, ch / pageHeight)
+                base = Math.min(cw / pageWidth, ch / pageHeight)
+                break
             case 'actual':
-                return 1
+                base = 1
+                break
             case 'custom':
-                return 1 // Custom scale is handled by pinch zoom 'scale'
+                base = 1
+                break
             default:
-                return cw / pageWidth
+                base = cw / pageWidth
         }
-    }, [zoomPreset, pinchContainerRef])
+
+        // Apply crop zoom
+        if (cropMargins && cropInsets) {
+            const { left, right } = cropInsets
+            const widthRatio = (100 - left - right) / 100
+            if (widthRatio > 0.1) {
+                base = base / widthRatio
+            }
+        }
+
+        return base
+    }, [zoomPreset, pinchContainerRef, cropMargins, cropInsets])
+
+    useEffect(() => { if (cropInsets) resetZoom() }, [cropInsets, resetZoom])
 
     // Render pages
     useEffect(() => {
@@ -233,35 +251,61 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                     const renderScale = calculateBaseScale(baseViewport.width, baseViewport.height)
                     const viewport = page.getViewport({ scale: renderScale })
 
+                    // Create Frame (The visible viewport of the page)
+                    const pageFrame = document.createElement('div')
+                    pageFrame.className = 'pdf-page-frame'
+                    pageFrame.style.position = 'relative'
+                    pageFrame.style.overflow = 'hidden'
+                    // Apply visual styles to FRAME, as Canvas will be larger and clipped
+                    pageFrame.style.boxShadow = 'var(--shadow-md)'
+                    pageFrame.style.borderRadius = '2px'
+                    pageFrame.style.backgroundColor = 'var(--pdf-page-bg)'
+
                     const canvas = document.createElement('canvas')
-                    canvas.className = 'pdf-page-canvas'
+                    // NO CLASS to avoid CSS max-width conflicts
                     canvas.width = viewport.width
                     canvas.height = viewport.height
+
+                    // Essential for cropping: take canvas out of flow
+                    // Build the FULL canvas cssText from scratch
+                    // (setting individual props then cssText would overwrite them)
+                    let canvasStyle = 'position:absolute;top:0;left:0;transform-origin:0 0;max-width:none;max-height:none;'
+
                     if (contrast !== 100) {
-                        canvas.style.filter = `contrast(${contrast}%)`
+                        canvasStyle += `filter: contrast(${contrast}%);`
                     }
+
+                    if (cropMargins && cropInsets) {
+                        const { left, right, top, bottom } = cropInsets
+                        // 1. Set Frame Size to CONTENT size
+                        const netW = viewport.width * (1 - (left + right) / 100)
+                        const netH = viewport.height * (1 - (top + bottom) / 100)
+
+                        pageFrame.style.width = `${netW}px`
+                        pageFrame.style.height = `${netH}px`
+
+                        // 2. Shift Canvas so content aligns to frame
+                        canvasStyle += `transform: translate(-${left}%, -${top}%);`
+                    } else {
+                        // Full size
+                        pageFrame.style.width = `${viewport.width}px`
+                        pageFrame.style.height = `${viewport.height}px`
+                    }
+
+                    canvas.style.cssText = canvasStyle
 
                     const context = canvas.getContext('2d')
                     if (!context) continue
 
-                    wrapper.appendChild(canvas)
+                    pageFrame.appendChild(canvas)
+                    wrapper.appendChild(pageFrame)
 
                     await page.render({ canvasContext: context, viewport }).promise
 
-                    if (cropMargins && targetPage === pagesToRender[0]) {
+                    // Detect crop on first page
+                    if (cropMargins && !cropInsets && targetPage === pagesToRender[0]) {
                         detectCrop(canvas)
                     }
-                }
-
-                if (cropMargins) {
-                    const cropStyle = getCropStyle()
-                    const canvases = pageContainerRef.current?.querySelectorAll('.pdf-page-canvas')
-                    canvases?.forEach(c => {
-                        const el = c as HTMLElement
-                        if (cropStyle.clipPath) {
-                            el.style.clipPath = cropStyle.clipPath
-                        }
-                    })
                 }
             } catch (err) {
                 console.error('Error rendering page:', err)
@@ -269,7 +313,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         }
 
         renderPages(currentPage)
-    }, [currentPage, contrast, viewMode, numPages, isLoading, zoomPreset, cropMargins, calculateBaseScale, detectCrop, getCropStyle])
+    }, [currentPage, contrast, viewMode, numPages, isLoading, zoomPreset, cropMargins, calculateBaseScale, detectCrop, cropInsets])
 
     // Save progress
     useEffect(() => {

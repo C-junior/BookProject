@@ -108,9 +108,7 @@
     touch-action: none;
     /* Critical: prevent browser zoom */
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    /* NO flex centering here — usePinchZoom handles all positioning via transform */
     -webkit-user-select: none;
     user-select: none;
 }
@@ -118,16 +116,13 @@
 .pdf-pinch-content {
     transform-origin: 0 0;
     will-change: transform;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    /* NO flex centering — usePinchZoom positions this element */
+    display: inline-block;
 }
 
 /* Page rendering container */
 .pdf-reader-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-block;
     padding: var(--space-2);
 }
 
