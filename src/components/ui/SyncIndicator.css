@@ -14,6 +14,18 @@
     transition: all 0.2s ease;
 }
 
+/* Mobile: smaller sync button */
+@media (max-width: 480px) {
+    .sync-indicator {
+        padding: 6px;
+    }
+
+    .sync-icon {
+        width: 16px;
+        height: 16px;
+    }
+}
+
 .sync-indicator:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.1);
 }
