@@ -61,6 +61,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
     const userId = auth.currentUser?.uid || useUserStore.getState().getCurrentUserId()
     const pageStorageKey = `pdf-page-${userId}-${book.id}`
     const percentage = numPages > 0 ? Math.round((currentPage / numPages) * 100) : 0
+    const maxRenderScaleMultiplier = 4
 
     // Auto-hide controls
     const resetHideTimer = useCallback(() => {
@@ -249,7 +250,13 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                     const baseViewport = page.getViewport({ scale: 1 })
 
                     const renderScale = calculateBaseScale(baseViewport.width, baseViewport.height)
-                    const viewport = page.getViewport({ scale: renderScale })
+                    const cssViewport = page.getViewport({ scale: renderScale })
+
+                    // Render at higher backing resolution so zoom remains sharp.
+                    const dpr = window.devicePixelRatio || 1
+                    const zoomBoost = Math.max(1, Math.min(scale, maxRenderScaleMultiplier))
+                    const outputScale = dpr * zoomBoost
+                    const renderViewport = page.getViewport({ scale: renderScale * outputScale })
 
                     // Create Frame (The visible viewport of the page)
                     const pageFrame = document.createElement('div')
@@ -263,13 +270,13 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
 
                     const canvas = document.createElement('canvas')
                     // NO CLASS to avoid CSS max-width conflicts
-                    canvas.width = viewport.width
-                    canvas.height = viewport.height
+                    canvas.width = Math.floor(renderViewport.width)
+                    canvas.height = Math.floor(renderViewport.height)
 
                     // Essential for cropping: take canvas out of flow
                     // Build the FULL canvas cssText from scratch
                     // (setting individual props then cssText would overwrite them)
-                    let canvasStyle = 'position:absolute;top:0;left:0;transform-origin:0 0;max-width:none;max-height:none;'
+                    let canvasStyle = `position:absolute;top:0;left:0;transform-origin:0 0;max-width:none;max-height:none;width:${cssViewport.width}px;height:${cssViewport.height}px;`
 
                     if (contrast !== 100) {
                         canvasStyle += `filter: contrast(${contrast}%);`
@@ -278,8 +285,8 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                     if (cropMargins && cropInsets) {
                         const { left, right, top, bottom } = cropInsets
                         // 1. Set Frame Size to CONTENT size
-                        const netW = viewport.width * (1 - (left + right) / 100)
-                        const netH = viewport.height * (1 - (top + bottom) / 100)
+                        const netW = cssViewport.width * (1 - (left + right) / 100)
+                        const netH = cssViewport.height * (1 - (top + bottom) / 100)
 
                         pageFrame.style.width = `${netW}px`
                         pageFrame.style.height = `${netH}px`
@@ -288,8 +295,8 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                         canvasStyle += `transform: translate(-${left}%, -${top}%);`
                     } else {
                         // Full size
-                        pageFrame.style.width = `${viewport.width}px`
-                        pageFrame.style.height = `${viewport.height}px`
+                        pageFrame.style.width = `${cssViewport.width}px`
+                        pageFrame.style.height = `${cssViewport.height}px`
                     }
 
                     canvas.style.cssText = canvasStyle
@@ -300,7 +307,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
                     pageFrame.appendChild(canvas)
                     wrapper.appendChild(pageFrame)
 
-                    await page.render({ canvasContext: context, viewport }).promise
+                    await page.render({ canvasContext: context, viewport: renderViewport }).promise
 
                     // Detect crop on first page
                     if (cropMargins && !cropInsets && targetPage === pagesToRender[0]) {
@@ -313,7 +320,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         }
 
         renderPages(currentPage)
-    }, [currentPage, contrast, viewMode, numPages, isLoading, zoomPreset, cropMargins, calculateBaseScale, detectCrop, cropInsets])
+    }, [currentPage, contrast, viewMode, numPages, isLoading, zoomPreset, cropMargins, calculateBaseScale, detectCrop, cropInsets, scale])
 
     // Save progress
     useEffect(() => {
