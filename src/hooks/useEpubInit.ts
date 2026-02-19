@@ -44,28 +44,42 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
 
     const getProgressPercentageFromCfi = useCallback((cfi: string): number | null => {
         const locationsApi = (bookRef.current as any)?.locations
-        if (!locationsApi || !cfi) return null
+        if (!locationsApi || !cfi) {
+            console.log('[EPUB] getProgressPercentageFromCfi: no locations API or CFI')
+            return null
+        }
 
+        // Try 1: Use epub.js built-in percentageFromCfi if available
         if (typeof locationsApi.percentageFromCfi === 'function') {
             const pct = locationsApi.percentageFromCfi(cfi)
+            console.log('[EPUB] percentageFromCfi result:', pct)
             if (typeof pct === 'number' && Number.isFinite(pct)) {
+                // epub.js returns 0-1, convert to 0-100
                 return Math.max(0, Math.min(100, Math.round(pct * 100)))
             }
         }
 
+        // Try 2: Use location index from generated locations
         const total = locationsApi._locations?.length
             ?? (typeof locationsApi.total === 'number' ? locationsApi.total : 0)
 
+        console.log('[EPUB] locations total:', total, '_locations length:', locationsApi._locations?.length)
+
         if (total < 2 || typeof locationsApi.locationFromCfi !== 'function') {
+            console.log('[EPUB] Cannot calculate: total < 2 or no locationFromCfi')
             return null
         }
 
         const locationIndex = locationsApi.locationFromCfi(cfi)
+        console.log('[EPUB] locationFromCfi result:', locationIndex)
+
         if (typeof locationIndex !== 'number' || !Number.isFinite(locationIndex) || locationIndex < 0) {
+            console.log('[EPUB] Invalid locationIndex:', locationIndex)
             return null
         }
 
         const percentage = Math.round((locationIndex / (total - 1)) * 100)
+        console.log('[EPUB] Calculated percentage:', percentage, '(locationIndex:', locationIndex, '/ total:', total, ')')
         return Math.max(0, Math.min(100, percentage))
     }, [])
 
@@ -156,13 +170,30 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
                         preferences.fontSize
                     )
 
+                    console.log('[EPUB] Starting location generation with size:', initialPageSize)
+
                     if (typeof locationsApi?.generate === 'function') {
                         await locationsApi.generate(initialPageSize)
-                        locationsGeneratedRef.current = true
+                        
+                        // Verify locations were actually generated
+                        const actualTotal = locationsApi._locations?.length ?? locationsApi.total ?? 0
+                        if (actualTotal > 0) {
+                            locationsGeneratedRef.current = true
+                            console.log('[EPUB] Locations generated successfully, total:', actualTotal)
+                        } else {
+                            console.warn('[EPUB] Locations API returned empty result, using fallback')
+                            locationsGeneratedRef.current = false
+                        }
+                    } else {
+                        console.warn('[EPUB] Locations API not available')
+                        locationsGeneratedRef.current = false
                     }
-                } catch {
+                } catch (err) {
+                    console.error('[EPUB] Failed to generate locations:', err)
                     locationsGeneratedRef.current = false
                 }
+
+                console.log('[EPUB] locationsGeneratedRef.current after generate:', locationsGeneratedRef.current)
 
                 // Render to container
                 const rendition = epubBook.renderTo(containerRef.current!, {
@@ -193,14 +224,57 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
                 // Location changes
                 rendition.on('relocated', (location: { start: { cfi: string; percentage: number } }) => {
                     const cfi = location.start.cfi
+                    
+                    console.log('[EPUB] Relocated event:', {
+                        cfi,
+                        locationsGeneratedRefCurrent: locationsGeneratedRef.current,
+                        nativePercentage: location.start.percentage
+                    })
+
+                    // Try 1: Use generated locations for accurate percentage
                     const cfiBasedPct = locationsGeneratedRef.current
                         ? getProgressPercentageFromCfi(cfi)
                         : null
 
+                    // Try 2: Estimate from CFI structure (spine position) - more reliable than native percentage
+                    // CFI format: epubcfi(/6/4[chap01]!/4/2[p1])
+                    // The second number (4 in this case) is the spine index
+                    let spineFallback: number | null = null
+                    try {
+                        const cfiMatch = cfi.match(/^epubcfi\(\/\d+\/(\d+)/)
+                        if (cfiMatch && bookRef.current?.spine?.length) {
+                            const spineIndex = parseInt(cfiMatch[1], 10)
+                            const spineLength = bookRef.current.spine.length
+                            console.log('[EPUB] Spine fallback:', { spineIndex, spineLength, cfi: cfi.substring(0, 50) })
+                            if (spineIndex >= 0 && spineLength > 1) {
+                                // Spine indices in CFI start at 2 (0=root, 1=package, 2+=spine items)
+                                const adjustedIndex = Math.max(0, spineIndex - 2)
+                                spineFallback = Math.round((adjustedIndex / (spineLength - 1)) * 100)
+                            }
+                        }
+                    } catch (e) {
+                        console.log('[EPUB] Spine fallback error:', e)
+                        // Ignore CFI parsing errors
+                    }
+
+                    // Try 3: Fallback to epub.js native percentage (least reliable - often wrong)
                     const startPct = location.start.percentage
-                    const fallback = Number.isFinite(startPct)
+                    const nativeFallback = Number.isFinite(startPct)
                         ? Math.max(0, Math.min(100, Math.round(startPct * 100)))
-                        : 0
+                        : null
+
+                    // Use best available percentage - prefer spine over native when locations failed
+                    // Order: cfiBasedPct > spineFallback > nativeFallback
+                    // (spine is more reliable than native percentage when locations aren't generated)
+                    const percentage = cfiBasedPct ?? spineFallback ?? nativeFallback ?? 0
+
+                    // Log which method was used (helps debug progress issues)
+                    console.log('[EPUB] Progress calculation:', {
+                        cfiBasedPct,
+                        spineFallback,
+                        nativeFallback,
+                        final: percentage
+                    })
 
                     const locationsApi = (bookRef.current as any)?.locations
                     const totalPages = locationsApi?.total || 0
@@ -209,7 +283,7 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
                         ? locationIndex + 1
                         : 1
 
-                    setLocation(cfi, cfiBasedPct ?? fallback, undefined, currentPage, totalPages)
+                    setLocation(cfi, percentage, undefined, currentPage, totalPages)
                     hideAnnotationMenu()
                 })
 
