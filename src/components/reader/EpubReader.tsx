@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect } from 'react'
+import { useCallback, useRef, useState, useEffect, useMemo } from 'react'
 import { useReaderStore } from '@/stores/readerStore'
 import { useUserStore } from '@/stores/userStore'
 import { useAutoSaveBookmark } from '@/hooks/useAutoSaveBookmark'
@@ -28,13 +28,15 @@ interface EpubReaderProps {
 }
 
 export function EpubReader({ book, onClose }: EpubReaderProps) {
-    const swipeOverlayRef = useRef<HTMLDivElement>(null)
     const currentPercentageRef = useRef(0)
     const sessionIdRef = useRef<number | null>(null)
     const sessionStartPercentageRef = useRef(0)
 
+    // Refs for swipe callbacks (filled after navigation hook initializes)
+    const goNextRef = useRef<() => void>(() => { })
+    const goPrevRef = useRef<() => void>(() => { })
+
     const {
-        percentage,
         showSettings,
         showToc,
         showBookmarks,
@@ -51,20 +53,47 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     const userId = auth.currentUser?.uid || useUserStore.getState().getCurrentUserId()
     const isVerticalScrollMode = preferences.readingMode === 'vertical-scroll'
 
-    // --- Hook: Epub Init (lifecycle, rendition, styles) ---
+    // Swipe animation state
+    const [swipeOffset, setSwipeOffset] = useState(0)
+    const [pageFlipDirection, setPageFlipDirection] = useState<'next' | 'prev' | null>(null)
+
+    const handleSwipeMove = useCallback((deltaX: number) => {
+        const maxOffset = 120
+        setSwipeOffset(Math.max(-maxOffset, Math.min(maxOffset, -deltaX)))
+    }, [])
+
+    const handleSwipeEnd = useCallback(() => {
+        setSwipeOffset(0)
+    }, [])
+
+    // Stable swipe callbacks object for useEpubInit (uses refs to avoid stale closures)
+    const swipeCallbacks = useMemo(() => ({
+        onSwipeLeft: () => goNextRef.current(),
+        onSwipeRight: () => goPrevRef.current(),
+        onSwipeMove: (deltaX: number) => handleSwipeMove(deltaX),
+        onSwipeEnd: () => handleSwipeEnd()
+    }), [handleSwipeMove, handleSwipeEnd])
+
+    // --- Hook: Epub Init (lifecycle, rendition, styles, iframe swipe) ---
     const {
         containerRef,
         renditionRef,
         bookRef,
         isLoading,
         error
-    } = useEpubInit(book, preferences)
+    } = useEpubInit(book, preferences, swipeCallbacks)
 
     // --- Hook: Navigation (next/prev/keyboard) ---
     const { goNext, goPrev, goToHref } = useEpubNavigation({
         renditionRef,
         onClose
     })
+
+    // Keep refs in sync so iframe swipe handlers use the latest goNext/goPrev
+    useEffect(() => {
+        goNextRef.current = goNext
+        goPrevRef.current = goPrev
+    }, [goNext, goPrev])
 
     // --- Hook: Annotations (highlights, bookmarks, dictionary) ---
     const {
@@ -101,19 +130,6 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     // Prevent screen dimming while reading
     useWakeLock()
 
-    // Swipe + page-flip state
-    const [swipeOffset, setSwipeOffset] = useState(0)
-    const [pageFlipDirection, setPageFlipDirection] = useState<'next' | 'prev' | null>(null)
-
-    const handleSwipeMove = useCallback((deltaX: number) => {
-        const maxOffset = 120
-        setSwipeOffset(Math.max(-maxOffset, Math.min(maxOffset, -deltaX)))
-    }, [])
-
-    const handleSwipeEnd = useCallback(() => {
-        setSwipeOffset(0)
-    }, [])
-
     // Wrap goNext/goPrev to trigger page-flip animation on non-swipe turns
     const handleNext = useCallback(async () => {
         setPageFlipDirection('next')
@@ -127,14 +143,16 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         setTimeout(() => setPageFlipDirection(null), 350)
     }, [goPrev])
 
+    // For vertical scroll mode, still use external swipe nav on the container
+    const verticalSwipeRef = useRef<HTMLDivElement>(null)
     useSwipeNavigation({
-        ref: swipeOverlayRef,
+        ref: verticalSwipeRef,
         onSwipeLeft: goNext,
         onSwipeRight: goPrev,
         onTap: toggleToolbar,
         onSwipeMove: handleSwipeMove,
         onSwipeEnd: handleSwipeEnd,
-        disabled: showSettings || showToc || showBookmarks || showSearch || isLoading || !!error || isVerticalScrollMode
+        disabled: showSettings || showToc || showBookmarks || showSearch || isLoading || !!error || !isVerticalScrollMode
     })
 
     // Auto-save progress periodically
@@ -152,8 +170,8 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
     }, [])
 
     useEffect(() => {
-        currentPercentageRef.current = percentage
-    }, [percentage])
+        currentPercentageRef.current = useReaderStore.getState().percentage
+    })
 
     // Track reading sessions for stats
     useEffect(() => {
@@ -209,7 +227,10 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
             )}
 
             <div
-                ref={containerRef}
+                ref={(el) => {
+                    (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+                    (verticalSwipeRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+                }}
                 className={[
                     'epub-reader-container',
                     isVerticalScrollMode ? 'vertical-scroll' : '',
@@ -225,10 +246,6 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                     transition: swipeOffset === 0 ? 'transform 0.35s cubic-bezier(.4,0,.2,1)' : 'none'
                 }}
             />
-
-            {!isLoading && !error && !isVerticalScrollMode && (
-                <div ref={swipeOverlayRef} className="epub-reader-swipe-overlay" />
-            )}
 
             {showSettings && <SettingsPanel />}
 
@@ -265,7 +282,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
 
             {showBookmarkModal && (
                 <BookmarkCreationModal
-                    defaultLabel={`Page ${percentage}%`}
+                    defaultLabel="Bookmark"
                     initialLabel={editingBookmark?.label || ''}
                     initialColor={editingBookmark?.color as BookmarkColor || 'gold'}
                     isEditing={!!editingBookmark}

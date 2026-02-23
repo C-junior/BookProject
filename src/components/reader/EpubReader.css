@@ -122,16 +122,6 @@
     }
 }
 
-/* === SWIPE GESTURE OVERLAY === */
-.epub-reader-swipe-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 4;
-    background: transparent;
-    touch-action: pan-x pan-y;
-    pointer-events: auto;
-}
-
 /* === LOADING STATE === */
 .epub-reader-loading {
     position: absolute;

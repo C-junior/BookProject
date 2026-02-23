@@ -16,7 +16,7 @@ interface BookmarksPanelProps {
 }
 
 export function BookmarksPanel({ bookTitle, bookmarks, highlights = [], onSelect, onDelete, onAddBookmark, onEditBookmark }: BookmarksPanelProps) {
-    const { toggleBookmarks, percentage } = useReaderStore()
+    const { toggleBookmarks } = useReaderStore()
     const [activeTab, setActiveTab] = useState<'bookmarks' | 'highlights'>('bookmarks')
 
     const handleSelect = (cfi: string, annotation?: Annotation) => {
@@ -96,14 +96,13 @@ export function BookmarksPanel({ bookTitle, bookmarks, highlights = [], onSelect
                             </button>
                         )}
 
-                        {/* Add bookmark button - always enabled */}
+                        {/* Add bookmark button */}
                         <button
                             className="bookmarks-add-btn"
                             onClick={onAddBookmark}
                         >
                             <Plus size={18} />
                             Add New Bookmark
-                            <span className="bookmarks-add-position">{percentage}%</span>
                         </button>
 
                         {/* Bookmarks List */}
