@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import { parseBookFile } from '@/services/parsers'
 import { signOut, auth } from '@/services/firebase'
+import { getActiveUserId } from '@/services/auth/session'
 import { uploadBookFile, uploadCoverImage } from '@/services/storage/storageService'
 import {
     getAllCollections,
@@ -74,7 +75,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     } = useLibraryStore()
 
     const { currentUser } = useUserStore()
-    const activeUserId = auth.currentUser?.uid || currentUser?.id || 'default-user'
+    const activeUserId = getActiveUserId(currentUser?.id)
 
     const [showImportModal, setShowImportModal] = useState(false)
     const [showCollectionsManager, setShowCollectionsManager] = useState(false)

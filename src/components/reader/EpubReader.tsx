@@ -9,7 +9,7 @@ import { useEpubNavigation } from '@/hooks/useEpubNavigation'
 import { useEpubAnnotations } from '@/hooks/useEpubAnnotations'
 import { useEpubSearch } from '@/hooks/useEpubSearch'
 import type { Book, BookmarkColor } from '@/types'
-import { auth } from '@/services/firebase'
+import { getActiveUserId } from '@/services/auth/session'
 import { startSession, endSession } from '@/services/storage/db'
 import { ReaderToolbar } from './ReaderToolbar'
 import { SettingsPanel } from './SettingsPanel'
@@ -47,7 +47,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
         toggleToolbar
     } = useReaderStore()
 
-    const userId = auth.currentUser?.uid || useUserStore.getState().getCurrentUserId()
+    const userId = getActiveUserId(useUserStore.getState().getCurrentUserId())
     const isVerticalScrollMode = preferences.readingMode === 'vertical-scroll'
 
     // --- Hook: Epub Init (lifecycle, rendition, styles) ---

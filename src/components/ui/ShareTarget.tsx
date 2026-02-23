@@ -3,6 +3,7 @@ import { parseBookFile } from '@/services/parsers'
 import { useLibraryStore } from '@/stores/libraryStore'
 import { useUserStore } from '@/stores/userStore'
 import { auth } from '@/services/firebase'
+import { getActiveUserId } from '@/services/auth/session'
 import { uploadBookFile, uploadCoverImage } from '@/services/storage/storageService'
 import { updateBook } from '@/services/storage/db'
 import type { Book } from '@/types'
@@ -78,7 +79,7 @@ export function ShareTarget({ onComplete }: ShareTargetProps) {
 
     const importFile = async (file: File) => {
         setMessage(`Importing "${file.name}"...`)
-        const userId = auth.currentUser?.uid || useUserStore.getState().currentUser?.id || 'default-user'
+        const userId = getActiveUserId(useUserStore.getState().currentUser?.id)
 
         const book = await parseBookFile(file)
         book.userId = userId

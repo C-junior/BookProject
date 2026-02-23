@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useUserStore } from '@/stores/userStore'
-import { isFirebaseConfigured, signInWithGoogle, signIn, signUp, onAuthChange, handleRedirectResult } from '@/services/firebase'
+import { isFirebaseConfigured, signInWithGoogle, signIn, signUp } from '@/services/firebase'
 import { Plus } from 'lucide-react'
 import './LoginScreen.css'
 
@@ -25,21 +25,6 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
         loadUsers()
     }, [loadUsers])
 
-    // Listen for Firebase auth state changes
-    useEffect(() => {
-        if (useFirebase) {
-            // Handle redirect result (from COOP fallback flow)
-            handleRedirectResult().catch(console.error)
-
-            const unsubscribe = onAuthChange((user) => {
-                if (user) {
-                    onAuthenticated()
-                }
-            })
-            return () => unsubscribe()
-        }
-    }, [useFirebase, onAuthenticated])
-
     // If using local auth and user is already selected, auto-authenticate
     useEffect(() => {
         if (!useFirebase && currentUser) {
@@ -53,7 +38,7 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
 
         try {
             await signInWithGoogle()
-            // onAuthenticated will be called by auth state listener
+            onAuthenticated()
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Google sign-in failed')
             setIsLoading(false)

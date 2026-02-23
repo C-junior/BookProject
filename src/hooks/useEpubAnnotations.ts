@@ -4,6 +4,13 @@ import { useReaderStore } from '@/stores/readerStore'
 import type { Annotation, HighlightColor, BookmarkColor } from '@/types'
 import { addAnnotation, deleteAnnotation, updateAnnotation } from '@/services/storage/db'
 
+function createAnnotationId(prefix: 'highlight' | 'bookmark'): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return `${prefix}-${crypto.randomUUID()}`
+    }
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
 interface UseEpubAnnotationsParams {
     bookId: string
     userId: string
@@ -89,7 +96,7 @@ export function useEpubAnnotations({
 
         try {
             const highlight: Annotation = {
-                id: `highlight-${Date.now()}`,
+                id: createAnnotationId('highlight'),
                 bookId,
                 userId,
                 type: 'highlight',
@@ -170,7 +177,7 @@ export function useEpubAnnotations({
             }
 
             const newBookmark: Annotation = {
-                id: `bookmark-${Date.now()}`,
+                id: createAnnotationId('bookmark'),
                 bookId,
                 userId,
                 type: 'bookmark',

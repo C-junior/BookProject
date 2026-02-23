@@ -7,7 +7,7 @@ import { usePinchZoom } from '@/hooks/usePinchZoom'
 import { usePdfCrop } from '@/hooks/usePdfCrop'
 import type { Book, Annotation } from '@/types'
 import { addAnnotation, deleteAnnotation, getAnnotationsByType, startSession, endSession } from '@/services/storage/db'
-import { auth } from '@/services/firebase'
+import { getActiveUserId } from '@/services/auth/session'
 import { ReaderToolbar } from './ReaderToolbar'
 import { SettingsPanel } from './SettingsPanel'
 import { BookmarksPanel } from './BookmarksPanel'
@@ -28,6 +28,13 @@ type ViewMode = 'single' | 'double' | 'comic'
 interface PdfReaderProps {
     book: Book
     onClose: () => void
+}
+
+function createBookmarkId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return `bookmark-${crypto.randomUUID()}`
+    }
+    return `bookmark-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 export function PdfReader({ book, onClose }: PdfReaderProps) {
@@ -58,7 +65,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
         setLocation, toggleToolbar, saveCurrentProgress
     } = useReaderStore()
 
-    const userId = auth.currentUser?.uid || useUserStore.getState().getCurrentUserId()
+    const userId = getActiveUserId(useUserStore.getState().getCurrentUserId())
     const pageStorageKey = `pdf-page-${userId}-${book.id}`
     const percentage = numPages > 0 ? Math.round((currentPage / numPages) * 100) : 0
     const maxRenderScaleMultiplier = 4
@@ -387,7 +394,7 @@ export function PdfReader({ book, onClose }: PdfReaderProps) {
     // Bookmark handlers
     const handleAddBookmark = useCallback(async () => {
         const newBookmark: Annotation = {
-            id: `bookmark-${Date.now()}`,
+            id: createBookmarkId(),
             bookId: book.id,
             userId,
             type: 'bookmark',

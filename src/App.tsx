@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react'
+import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { useUserStore } from '@/stores/userStore'
 import { useReaderStore } from '@/stores/readerStore'
 import { LibraryView } from '@/components/library/LibraryView'
@@ -8,7 +8,8 @@ import { SyncErrorToast } from '@/components/ui/SyncErrorToast'
 import { syncOnLogin, syncOnLogout } from '@/services/sync/syncService'
 import { downloadBookFile } from '@/services/storage/storageService'
 import { updateBook } from '@/services/storage/db'
-import { auth } from '@/services/firebase'
+import { auth, isFirebaseConfigured, onAuthChange, handleRedirectResult } from '@/services/firebase'
+import { clearAuthSession, getActiveUserId, getCachedAuthUserId, rememberAuthSession } from '@/services/auth/session'
 import type { Book } from '@/types'
 import './App.css'
 
@@ -23,11 +24,14 @@ function App() {
     const { isReading, currentBook, openBook, closeBook, preferences } = useReaderStore()
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [isInitialized, setIsInitialized] = useState(false)
+    const [isAuthResolved, setIsAuthResolved] = useState(false)
     const [showUpdateToast, setShowUpdateToast] = useState(false)
     const [_downloadingBook, setDownloadingBook] = useState<string | null>(null)
     const [isShareTarget, setIsShareTarget] = useState(
         window.location.pathname === '/share-target'
     )
+    const syncedUserRef = useRef<string | null>(null)
+    const useFirebase = isFirebaseConfigured()
 
     // Initialize app
     useEffect(() => {
@@ -37,6 +41,58 @@ function App() {
         }
         init()
     }, [loadUsers])
+
+    // Bootstrap auth quickly from cached session, then reconcile with Firebase auth state.
+    useEffect(() => {
+        if (!isInitialized) return
+
+        if (!useFirebase) {
+            setIsAuthenticated(true)
+            setIsAuthResolved(true)
+            return
+        }
+
+        const cachedUid = getCachedAuthUserId()
+        if (cachedUid) {
+            setIsAuthenticated(true)
+            setIsAuthResolved(true)
+        }
+
+        handleRedirectResult().catch(console.error)
+
+        const unsubscribe = onAuthChange(async (user) => {
+            if (user) {
+                rememberAuthSession(user.uid)
+                setIsAuthenticated(true)
+
+                if (syncedUserRef.current !== user.uid) {
+                    syncedUserRef.current = user.uid
+                    try {
+                        await syncOnLogin()
+                    } catch (err) {
+                        console.error('Sync on login failed:', err)
+                    }
+                }
+
+                setIsAuthResolved(true)
+                return
+            }
+
+            const canUseOfflineSession = Boolean(getCachedAuthUserId()) && !navigator.onLine
+            if (!canUseOfflineSession) {
+                clearAuthSession()
+                syncOnLogout()
+                syncedUserRef.current = null
+                setIsAuthenticated(false)
+            } else {
+                setIsAuthenticated(true)
+            }
+
+            setIsAuthResolved(true)
+        })
+
+        return () => unsubscribe()
+    }, [isInitialized, useFirebase])
 
     // Apply theme from preferences
     useEffect(() => {
@@ -56,7 +112,7 @@ function App() {
     }
 
     const handleOpenBook = async (book: Book) => {
-        const userId = auth.currentUser?.uid || currentUser?.id || 'default-user'
+        const userId = getActiveUserId(currentUser?.id)
 
         // Cloud-only book: download file first
         if (!book.fileBlob && book.storageUrl) {
@@ -87,10 +143,16 @@ function App() {
 
     const handleAuthenticated = async () => {
         setIsAuthenticated(true)
-        try {
-            await syncOnLogin()
-        } catch (err) {
-            console.error('Sync on login failed:', err)
+        if (!useFirebase) return
+
+        const uid = auth.currentUser?.uid
+        if (uid && syncedUserRef.current !== uid) {
+            syncedUserRef.current = uid
+            try {
+                await syncOnLogin()
+            } catch (err) {
+                console.error('Sync on login failed:', err)
+            }
         }
     }
 
@@ -105,7 +167,7 @@ function App() {
         </div>
     )
 
-    if (!isInitialized) {
+    if (!isInitialized || !isAuthResolved) {
         return loadingFallback
     }
 

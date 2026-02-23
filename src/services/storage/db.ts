@@ -211,11 +211,12 @@ export async function getRecentlyRead(userId: string, limit = 10): Promise<Book[
 // ============================================
 
 export async function addAnnotation(annotation: Annotation): Promise<void> {
-    await db.annotations.add(annotation)
+    await db.annotations.put(annotation)
+    useSyncStore.getState().markDirty('annotations')
 
     // Sync to Firebase if user is authenticated
     const userId = auth.currentUser?.uid
-    if (userId) {
+    if (userId && annotation.userId === userId) {
         try {
             await firebaseSyncAnnotation(userId, {
                 id: annotation.id,
@@ -258,10 +259,32 @@ export async function updateAnnotation(id: string, updates: Partial<Annotation>)
         ...updates,
         updatedAt: new Date()
     })
+    useSyncStore.getState().markDirty('annotations')
+
+    const annotation = await db.annotations.get(id)
+    const userId = auth.currentUser?.uid
+    if (annotation && userId && annotation.userId === userId) {
+        try {
+            await firebaseSyncAnnotation(userId, {
+                id: annotation.id,
+                bookId: annotation.bookId,
+                type: annotation.type,
+                cfiRange: annotation.cfiRange,
+                text: annotation.text || '',
+                note: annotation.note || null,
+                color: annotation.color || 'yellow',
+                label: annotation.label || null
+            })
+        } catch (err) {
+            console.error('Firebase sync failed for updated annotation:', err)
+            useSyncStore.getState().markDirty('annotations')
+        }
+    }
 }
 
 export async function deleteAnnotation(id: string): Promise<void> {
     await db.annotations.delete(id)
+    useSyncStore.getState().markDirty('annotations')
 
     // Delete from Firebase if user is authenticated
     const userId = auth.currentUser?.uid
@@ -285,6 +308,26 @@ export async function upsertAutoSaveBookmark(annotation: Annotation): Promise<vo
         ...annotation,
         updatedAt: new Date()
     })
+    useSyncStore.getState().markDirty('annotations')
+
+    const userId = auth.currentUser?.uid
+    if (userId && annotation.userId === userId) {
+        try {
+            await firebaseSyncAnnotation(userId, {
+                id: annotation.id,
+                bookId: annotation.bookId,
+                type: annotation.type,
+                cfiRange: annotation.cfiRange,
+                text: annotation.text || '',
+                note: annotation.note || null,
+                color: annotation.color || 'yellow',
+                label: annotation.label || null
+            })
+        } catch (err) {
+            console.error('Firebase sync failed for auto-save bookmark:', err)
+            useSyncStore.getState().markDirty('annotations')
+        }
+    }
 }
 
 /**
