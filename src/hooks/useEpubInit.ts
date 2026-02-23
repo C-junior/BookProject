@@ -3,13 +3,6 @@ import ePub, { type Rendition, type NavItem } from 'epubjs'
 import { useReaderStore } from '@/stores/readerStore'
 import type { Book, TocItem, ReaderPreferences } from '@/types'
 
-interface SwipeCallbacks {
-    onSwipeLeft?: () => void
-    onSwipeRight?: () => void
-    onSwipeMove?: (deltaX: number) => void
-    onSwipeEnd?: () => void
-}
-
 interface UseEpubInitResult {
     containerRef: React.RefObject<HTMLDivElement | null>
     renditionRef: React.MutableRefObject<Rendition | null>
@@ -29,11 +22,7 @@ const calculatePageSize = (width: number, height: number, fontSize: number): num
     return Math.max(300, Math.floor((area / charArea) * 0.6))
 }
 
-export function useEpubInit(
-    book: Book,
-    preferences: ReaderPreferences,
-    swipeCallbacks?: SwipeCallbacks
-): UseEpubInitResult {
+export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpubInitResult {
     const containerRef = useRef<HTMLDivElement | null>(null)
     const renditionRef = useRef<Rendition | null>(null)
     const bookRef = useRef<any>(null)
@@ -278,65 +267,6 @@ export function useEpubInit(
                     toggleToolbar()
                     hideAnnotationMenu()
                 })
-
-                // Iframe-level touch swipe detection for paginated mode
-                // The epub.js iframe captures all touch events, so we must
-                // attach swipe listeners directly to the content document.
-                if (!isVerticalScrollMode) {
-                    rendition.hooks.content.register((contents: any) => {
-                        const doc = contents.document as Document
-                        if (!doc) return
-
-                        let touchStart: { x: number; y: number; time: number } | null = null
-
-                        doc.addEventListener('touchstart', (e: TouchEvent) => {
-                            const touch = e.touches[0]
-                            if (touch) {
-                                touchStart = { x: touch.clientX, y: touch.clientY, time: Date.now() }
-                            }
-                        }, { passive: true })
-
-                        doc.addEventListener('touchmove', (e: TouchEvent) => {
-                            if (!touchStart) return
-                            const touch = e.touches[0]
-                            if (!touch) return
-
-                            const deltaX = touchStart.x - touch.clientX
-                            const deltaY = Math.abs(touchStart.y - touch.clientY)
-
-                            if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY) {
-                                swipeCallbacks?.onSwipeMove?.(deltaX)
-                            }
-                        }, { passive: true })
-
-                        doc.addEventListener('touchend', (e: TouchEvent) => {
-                            if (!touchStart) return
-                            const touch = e.changedTouches[0]
-                            if (!touch) {
-                                touchStart = null
-                                swipeCallbacks?.onSwipeEnd?.()
-                                return
-                            }
-
-                            const deltaX = touchStart.x - touch.clientX
-                            const deltaY = Math.abs(touchStart.y - touch.clientY)
-                            const elapsed = Date.now() - touchStart.time
-
-                            const isTap = Math.abs(deltaX) < 15 && deltaY < 15 && elapsed < 300
-
-                            if (!isTap && Math.abs(deltaX) > 50 && Math.abs(deltaX) > deltaY * 0.7) {
-                                if (deltaX > 0) {
-                                    swipeCallbacks?.onSwipeLeft?.()
-                                } else {
-                                    swipeCallbacks?.onSwipeRight?.()
-                                }
-                            }
-
-                            touchStart = null
-                            swipeCallbacks?.onSwipeEnd?.()
-                        }, { passive: true })
-                    })
-                }
 
             } catch (err) {
                 if (isMounted) {
