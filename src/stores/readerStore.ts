@@ -13,6 +13,7 @@ interface ReaderState {
     chapterTitle: string
     currentPage: number
     totalPages: number
+    spinePosition: string
 
     // UI state
     showToolbar: boolean
@@ -42,7 +43,7 @@ interface ReaderState {
     // Actions
     openBook: (book: Book, userId: string) => Promise<void>
     closeBook: () => void
-    setLocation: (location: string, percentage: number, chapterTitle?: string, currentPage?: number, totalPages?: number) => void
+    setLocation: (location: string, percentage: number, chapterTitle?: string, currentPage?: number, totalPages?: number, spinePosition?: string) => void
     saveCurrentProgress: (userId: string) => Promise<void>
 
     toggleToolbar: () => void
@@ -94,6 +95,7 @@ export const useReaderStore = create<ReaderState>()(
             chapterTitle: '',
             currentPage: 1,
             totalPages: 0,
+            spinePosition: '',
 
             showToolbar: false,
             showSettings: false,
@@ -132,7 +134,8 @@ export const useReaderStore = create<ReaderState>()(
                     showSearch: false,
                     annotations: [],
                     currentPage: 1,
-                    totalPages: 0
+                    totalPages: 0,
+                    spinePosition: ''
                 })
 
                 // Load annotations
@@ -149,6 +152,7 @@ export const useReaderStore = create<ReaderState>()(
                     chapterTitle: '',
                     currentPage: 1,
                     totalPages: 0,
+                    spinePosition: '',
                     toc: [],
                     searchQuery: '',
                     searchResults: [],
@@ -157,13 +161,14 @@ export const useReaderStore = create<ReaderState>()(
             },
 
             // Update current reading location
-            setLocation: (location: string, percentage: number, chapterTitle?: string, currentPage?: number, totalPages?: number) => {
+            setLocation: (location: string, percentage: number, chapterTitle?: string, currentPage?: number, totalPages?: number, spinePosition?: string) => {
                 set({
                     currentLocation: location,
                     percentage,
                     ...(chapterTitle !== undefined && { chapterTitle }),
                     ...(currentPage !== undefined && { currentPage }),
-                    ...(totalPages !== undefined && { totalPages })
+                    ...(totalPages !== undefined && { totalPages }),
+                    ...(spinePosition !== undefined && { spinePosition })
                 })
             },
 

@@ -239,7 +239,7 @@ export function EpubReader({ book, onClose }: EpubReaderProps) {
                     bookTitle={book.title}
                     bookmarks={bookmarks}
                     highlights={highlights}
-                    onSelect={handleSelectLocation}
+                    onSelect={(cfi, annotation) => handleSelectLocation(cfi, annotation)}
                     onDelete={handleDeleteAnnotation}
                     onAddBookmark={handleOpenBookmarkModal}
                     onEditBookmark={handleEditBookmark}

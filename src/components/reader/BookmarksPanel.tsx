@@ -9,7 +9,7 @@ interface BookmarksPanelProps {
     bookTitle: string
     bookmarks: Annotation[]
     highlights?: Annotation[]
-    onSelect: (cfi: string) => void
+    onSelect: (cfi: string, annotation?: Annotation) => void
     onDelete: (id: string) => void
     onAddBookmark: () => void
     onEditBookmark?: (bookmark: Annotation) => void
@@ -19,8 +19,8 @@ export function BookmarksPanel({ bookTitle, bookmarks, highlights = [], onSelect
     const { toggleBookmarks, percentage } = useReaderStore()
     const [activeTab, setActiveTab] = useState<'bookmarks' | 'highlights'>('bookmarks')
 
-    const handleSelect = (cfi: string) => {
-        onSelect(cfi)
+    const handleSelect = (cfi: string, annotation?: Annotation) => {
+        onSelect(cfi, annotation)
         toggleBookmarks()
     }
 
@@ -84,7 +84,7 @@ export function BookmarksPanel({ bookTitle, bookmarks, highlights = [], onSelect
                         {autoSaveBookmark && (
                             <button
                                 className="bookmarks-autosave-card"
-                                onClick={() => handleSelect(autoSaveBookmark.cfiRange || '')}
+                                onClick={() => handleSelect(autoSaveBookmark.cfiRange || '', autoSaveBookmark)}
                             >
                                 <div className="bookmarks-autosave-icon">
                                     <Bookmark size={20} fill="currentColor" />
@@ -120,7 +120,7 @@ export function BookmarksPanel({ bookTitle, bookmarks, highlights = [], onSelect
                                         <li key={bookmark.id} className="bookmark-item">
                                             <button
                                                 className="bookmark-link"
-                                                onClick={() => handleSelect(bookmark.cfiRange || '')}
+                                                onClick={() => handleSelect(bookmark.cfiRange || '', bookmark)}
                                             >
                                                 <div className="bookmark-info">
                                                     <div className="bookmark-header-row">

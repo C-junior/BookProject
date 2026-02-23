@@ -24,7 +24,7 @@ interface UseEpubAnnotationsResult {
     handleSaveBookmark: (label: string, color: BookmarkColor) => Promise<void>
     handleCancelBookmarkModal: () => void
     handleDeleteAnnotation: (id: string) => Promise<void>
-    handleSelectLocation: (cfi: string) => Promise<void>
+    handleSelectLocation: (cfi: string, annotation?: Annotation) => Promise<void>
 }
 
 export function useEpubAnnotations({
@@ -43,6 +43,16 @@ export function useEpubAnnotations({
         removeAnnotationFromState,
         hideAnnotationMenu
     } = useReaderStore()
+
+    // Helper to get the live CFI from the rendition (more accurate than the store)
+    const getLiveCfi = useCallback((): string => {
+        try {
+            const loc = renditionRef.current?.currentLocation() as any
+            const cfi = loc?.start?.cfi
+            if (cfi) return cfi
+        } catch { /* fallback below */ }
+        return currentLocation
+    }, [renditionRef, currentLocation])
 
     const [showBookmarkModal, setShowBookmarkModal] = useState(false)
     const [editingBookmark, setEditingBookmark] = useState<Annotation | null>(null)
@@ -140,7 +150,9 @@ export function useEpubAnnotations({
                 updatedAt: new Date()
             })
         } else {
-            if (!currentLocation) return
+            // Capture the live CFI at the exact moment user saves
+            const liveCfi = getLiveCfi()
+            if (!liveCfi) return
 
             // Capture scroll offset in vertical scroll mode for precise restoration
             let note: string | undefined
@@ -162,7 +174,7 @@ export function useEpubAnnotations({
                 bookId,
                 userId,
                 type: 'bookmark',
-                cfiRange: currentLocation,
+                cfiRange: liveCfi,
                 text: `Page ${percentage}%`,
                 color,
                 label,
@@ -177,7 +189,7 @@ export function useEpubAnnotations({
 
         setShowBookmarkModal(false)
         setEditingBookmark(null)
-    }, [bookId, userId, currentLocation, percentage, preferences.readingMode, addAnnotationToState, removeAnnotationFromState, editingBookmark])
+    }, [bookId, userId, getLiveCfi, percentage, preferences.readingMode, addAnnotationToState, removeAnnotationFromState, editingBookmark])
 
     const handleCancelBookmarkModal = useCallback(() => {
         setShowBookmarkModal(false)

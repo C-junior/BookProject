@@ -25,6 +25,7 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
         chapterTitle,
         currentPage,
         totalPages,
+        spinePosition,
         toggleSettings,
         toggleToc,
         toggleSearch,
@@ -32,6 +33,14 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
     } = useReaderStore()
 
     if (!showToolbar) return null
+
+    // Build progress label with reliable fallbacks
+    const getProgressLabel = () => {
+        if (totalPages > 0) return `${currentPage} / ${totalPages}`
+        if (percentage > 0) return `${percentage}%`
+        if (spinePosition) return `Ch. ${spinePosition}`
+        return ''
+    }
 
     return (
         <>
@@ -91,7 +100,7 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
 
                     <div className="reader-toolbar-progress">
                         <span className="reader-toolbar-percentage">
-                            {totalPages > 0 ? `${currentPage} / ${totalPages}` : `${percentage}%`}
+                            {getProgressLabel()}
                         </span>
                     </div>
 
