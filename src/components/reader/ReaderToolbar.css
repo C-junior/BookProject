@@ -99,6 +99,16 @@
     gap: var(--space-1);
 }
 
+/* === PERCENTAGE NAV DISPLAY === */
+.reader-toolbar-percentage-nav {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    min-width: 45px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
 /* === BOTTOM TOOLBAR NAVIGATION === */
 .reader-toolbar-nav {
     display: flex;

@@ -6,7 +6,6 @@ import {
     ChevronRight,
     Settings,
     List,
-    Search,
     Bookmark
 } from 'lucide-react'
 import './ReaderToolbar.css'
@@ -24,8 +23,8 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
         chapterTitle,
         toggleSettings,
         toggleToc,
-        toggleSearch,
-        toggleBookmarks
+        toggleBookmarks,
+        percentage
     } = useReaderStore()
 
     if (!showToolbar) return null
@@ -50,13 +49,6 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
                 </div>
 
                 <div className="reader-toolbar-actions">
-                    <button
-                        className="reader-toolbar-button"
-                        onClick={toggleSearch}
-                        aria-label="Search in book"
-                    >
-                        <Search size={20} />
-                    </button>
                     <button
                         className="reader-toolbar-button"
                         onClick={toggleBookmarks}
@@ -85,6 +77,8 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
                     >
                         <ChevronLeft size={24} />
                     </button>
+
+                    <span className="reader-toolbar-percentage-nav">{percentage}%</span>
 
                     <button
                         className="reader-toolbar-nav-button"

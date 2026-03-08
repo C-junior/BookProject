@@ -25,7 +25,8 @@ import {
     Clock,
     ChevronRight,
     ChartColumnBig,
-    Sparkles
+    Sparkles,
+    ExternalLink
 } from 'lucide-react'
 import { parseBookFile } from '@/services/parsers'
 import { signOut, auth } from '@/services/firebase'
@@ -414,6 +415,17 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                         </div>
                     </div>
                     <div className="library-header-actions">
+                        <a
+                            href="https://crhonicles-of-synthborn.vercel.app/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="library-website-btn"
+                            aria-label="Visit book website"
+                            title="Visit Chronicles of Synthborn"
+                        >
+                            <ExternalLink size={18} />
+                            <span className="library-website-label">Website</span>
+                        </a>
                         <Button
                             variant="secondary"
                             leftIcon={<ChartColumnBig size={18} />}

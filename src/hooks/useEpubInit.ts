@@ -22,6 +22,13 @@ const calculatePageSize = (width: number, height: number, fontSize: number): num
     return Math.max(300, Math.floor((area / charArea) * 0.6))
 }
 
+interface SpineWordEntry {
+    spineIndex: number
+    href: string
+    wordCount: number
+    cumulativeWords: number
+}
+
 export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpubInitResult {
     const containerRef = useRef<HTMLDivElement | null>(null)
     const renditionRef = useRef<Rendition | null>(null)
@@ -30,6 +37,8 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const locationsGeneratedRef = useRef(false)
+    const wordCountMapRef = useRef<SpineWordEntry[]>([])
+    const totalWordCountRef = useRef(0)
 
     const {
         currentLocation,
@@ -145,7 +154,7 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
 
                 bookRef.current = epubBook
 
-                // Generate location map for progress & page counting
+                // Generate location map for progress & page counting (legacy fallback)
                 try {
                     const locationsApi = (epubBook as any).locations
                     const initialPageSize = calculatePageSize(
@@ -164,6 +173,51 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
                 } catch (err) {
                     console.error('[EPUB] Failed to generate locations:', err)
                     locationsGeneratedRef.current = false
+                }
+
+                // Word-count-based progress: walk all spine items and count words
+                try {
+                    await epubBook.loaded.spine
+                    const spine = (epubBook as any).spine
+                    const entries: SpineWordEntry[] = []
+                    let cumulative = 0
+
+                    if (spine && typeof spine.each === 'function') {
+                        const spineItems: any[] = []
+                        spine.each((item: any) => spineItems.push(item))
+
+                        for (let i = 0; i < spineItems.length; i++) {
+                            const item = spineItems[i]
+                            let wordCount = 0
+                            try {
+                                await item.load(epubBook.load.bind(epubBook))
+                                const doc = item.document as Document | undefined
+                                if (doc) {
+                                    const text = doc.body?.textContent || ''
+                                    wordCount = text.split(/\s+/).filter(Boolean).length
+                                }
+                                // Unload to free memory
+                                if (typeof item.unload === 'function') item.unload()
+                            } catch {
+                                // Some spine items may fail to load (images, etc), skip
+                            }
+                            entries.push({
+                                spineIndex: item.index ?? i,
+                                href: item.href || '',
+                                wordCount,
+                                cumulativeWords: cumulative
+                            })
+                            cumulative += wordCount
+                        }
+                    }
+
+                    wordCountMapRef.current = entries
+                    totalWordCountRef.current = cumulative
+                    console.log(`[EPUB] Word count map built: ${entries.length} sections, ${cumulative} total words`)
+                } catch (err) {
+                    console.error('[EPUB] Failed to build word count map:', err)
+                    wordCountMapRef.current = []
+                    totalWordCountRef.current = 0
                 }
 
                 // Render to container
@@ -196,20 +250,51 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
                 rendition.on('relocated', (location: { start: { cfi: string; percentage: number } }) => {
                     const cfi = location.start.cfi
 
-                    // Try 1: Use generated locations for accurate percentage
-                    const cfiBasedPct = locationsGeneratedRef.current
-                        ? getProgressPercentageFromCfi(cfi)
-                        : null
+                    // PRIMARY: Word-count-based percentage
+                    let percentage: number | null = null
+                    const wordMap = wordCountMapRef.current
+                    const totalWords = totalWordCountRef.current
 
-                    // Try 2: Fallback to epub.js native percentage
-                    const startPct = location.start.percentage
-                    const nativeFallback = Number.isFinite(startPct)
-                        ? Math.max(0, Math.min(100, Math.round(startPct * 100)))
-                        : null
+                    if (wordMap.length > 0 && totalWords > 0) {
+                        try {
+                            // Parse the spine index from the CFI
+                            // CFI format: epubcfi(/6/N!...) where N is the spine position
+                            const cfiMatch = cfi.match(/^epubcfi\(\/\d+\/(\d+)/)
+                            if (cfiMatch) {
+                                const rawSpinePos = parseInt(cfiMatch[1], 10)
+                                // epub.js uses 1-based even positions: /6/2 = first, /6/4 = second, etc.
+                                const spineIdx = Math.max(0, Math.floor((rawSpinePos - 2) / 2))
 
-                    const percentage = cfiBasedPct ?? nativeFallback ?? 0
+                                const entry = wordMap[spineIdx]
+                                if (entry) {
+                                    // Use epub.js within-chapter percentage as position ratio
+                                    const withinChapterRatio = Number.isFinite(location.start.percentage)
+                                        ? Math.max(0, Math.min(1, location.start.percentage))
+                                        : 0
 
-                    // Track spine position for chapter-based fallback display
+                                    const wordsRead = entry.cumulativeWords + (entry.wordCount * withinChapterRatio)
+                                    percentage = Math.max(0, Math.min(100, Math.round((wordsRead / totalWords) * 100)))
+                                }
+                            }
+                        } catch {
+                            // Fallback below
+                        }
+                    }
+
+                    // FALLBACK 1: Generated locations
+                    if (percentage === null && locationsGeneratedRef.current) {
+                        percentage = getProgressPercentageFromCfi(cfi)
+                    }
+
+                    // FALLBACK 2: epub.js native percentage
+                    if (percentage === null) {
+                        const startPct = location.start.percentage
+                        percentage = Number.isFinite(startPct)
+                            ? Math.max(0, Math.min(100, Math.round(startPct * 100)))
+                            : 0
+                    }
+
+                    // Track spine position for chapter-based display
                     let spinePosition = ''
                     try {
                         const cfiMatch = cfi.match(/^epubcfi\(\/\d+\/(\d+)/)

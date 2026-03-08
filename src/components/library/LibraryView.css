@@ -128,6 +128,88 @@
     }
 }
 
+/* === WEBSITE BUTTON — Premium Glow Style === */
+.library-website-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 16px;
+    height: var(--touch-target-comfortable);
+    border: none;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+    background-size: 200% 200%;
+    color: #fff;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.3px;
+    text-decoration: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    animation: websiteBtnShimmer 3s ease-in-out infinite;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.library-website-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.25) 0%,
+            rgba(255, 255, 255, 0) 50%,
+            rgba(255, 255, 255, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.library-website-btn:hover {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow:
+        0 4px 20px rgba(59, 130, 246, 0.45),
+        0 0 30px rgba(139, 92, 246, 0.2);
+    color: #fff;
+}
+
+.library-website-btn:hover::before {
+    opacity: 1;
+}
+
+.library-website-btn:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 1px 8px rgba(59, 130, 246, 0.3);
+}
+
+.library-website-label {
+    display: inline;
+}
+
+@keyframes websiteBtnShimmer {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+@media (max-width: 640px) {
+    .library-website-label {
+        display: none;
+    }
+
+    .library-website-btn {
+        padding: 0 var(--space-3);
+    }
+}
+
 .library-logout-btn {
     display: flex;
     align-items: center;
