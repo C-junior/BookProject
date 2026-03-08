@@ -61,41 +61,51 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
 
             {/* Bottom toolbar */}
             <footer className="reader-toolbar reader-toolbar-bottom">
-                <button
-                    className="reader-toolbar-button"
-                    onClick={toggleToc}
-                    aria-label="Table of contents"
-                >
-                    <List size={20} />
-                </button>
-
-                <div className="reader-toolbar-nav">
-                    <button
-                        className="reader-toolbar-nav-button"
-                        onClick={onPrev}
-                        aria-label="Previous page"
-                    >
-                        <ChevronLeft size={24} />
-                    </button>
-
-                    <span className="reader-toolbar-percentage-nav">{percentage}%</span>
-
-                    <button
-                        className="reader-toolbar-nav-button"
-                        onClick={onNext}
-                        aria-label="Next page"
-                    >
-                        <ChevronRight size={24} />
-                    </button>
+                {/* Progress bar as top border */}
+                <div className="reader-toolbar-progress-track">
+                    <div
+                        className="reader-toolbar-progress-fill"
+                        style={{ width: `${Math.min(Math.max(percentage, 0), 100)}%` }}
+                    />
                 </div>
 
-                <button
-                    className="reader-toolbar-button"
-                    onClick={toggleSettings}
-                    aria-label="Reader settings"
-                >
-                    <Settings size={20} />
-                </button>
+                <div className="reader-toolbar-bottom-row">
+                    <button
+                        className="reader-toolbar-button"
+                        onClick={toggleToc}
+                        aria-label="Table of contents"
+                    >
+                        <List size={20} />
+                    </button>
+
+                    <div className="reader-toolbar-nav">
+                        <button
+                            className="reader-toolbar-nav-button"
+                            onClick={onPrev}
+                            aria-label="Previous page"
+                        >
+                            <ChevronLeft size={24} />
+                        </button>
+
+                        <span className="reader-toolbar-progress-label">{percentage}%</span>
+
+                        <button
+                            className="reader-toolbar-nav-button"
+                            onClick={onNext}
+                            aria-label="Next page"
+                        >
+                            <ChevronRight size={24} />
+                        </button>
+                    </div>
+
+                    <button
+                        className="reader-toolbar-button"
+                        onClick={toggleSettings}
+                        aria-label="Reader settings"
+                    >
+                        <Settings size={20} />
+                    </button>
+                </div>
             </footer>
         </>
     )

@@ -25,8 +25,7 @@ import {
     Clock,
     ChevronRight,
     ChartColumnBig,
-    Sparkles,
-    ExternalLink
+    Sparkles
 } from 'lucide-react'
 import { parseBookFile } from '@/services/parsers'
 import { signOut, auth } from '@/services/firebase'
@@ -415,17 +414,6 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                         </div>
                     </div>
                     <div className="library-header-actions">
-                        <a
-                            href="https://crhonicles-of-synthborn.vercel.app/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="library-website-btn"
-                            aria-label="Visit book website"
-                            title="Visit Chronicles of Synthborn"
-                        >
-                            <ExternalLink size={18} />
-                            <span className="library-website-label">Website</span>
-                        </a>
                         <Button
                             variant="secondary"
                             leftIcon={<ChartColumnBig size={18} />}
@@ -552,6 +540,21 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
 
             {/* Content */}
             <main className="library-content">
+                {/* Book Website Button */}
+                <a
+                    href="https://crhonicles-of-synthborn.vercel.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="library-website-promo-btn"
+                    aria-label="Visit Synthborne website"
+                    title="Visit Chronicles of Synthborn"
+                >
+                    <div className="library-website-btn-content">
+                        <span className="library-website-title">SYNTHBORNE</span>
+                        <span className="library-website-subtitle">Explore the world behind the book →</span>
+                    </div>
+                </a>
+
                 {/* Continue Reading Hero */}
                 {lastReadBook && !isLoading && !error && (
                     <section className="library-hero" onClick={() => onOpenBook(lastReadBook)}>
