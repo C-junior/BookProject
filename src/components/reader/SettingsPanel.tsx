@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { useReaderStore } from '@/stores/readerStore'
 import { X, Sun, Moon, BookOpen, ScrollText, Type, AlignLeft, AlignJustify, Leaf } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import './SettingsPanel.css'
 
 const FONT_FAMILIES = [
@@ -22,17 +23,18 @@ const THEMES = [
 
 export function SettingsPanel() {
     const { preferences, updatePreference, toggleSettings } = useReaderStore()
+    const { t } = useTranslation()
 
     return (
         <div className="settings-panel">
             <div className="settings-panel-content">
                 {/* Header */}
                 <div className="settings-header">
-                    <h2 className="settings-title">Reading Settings</h2>
+                    <h2 className="settings-title">{t('settings.readingSettings')}</h2>
                     <button
                         className="settings-close"
                         onClick={toggleSettings}
-                        aria-label="Close settings"
+                        aria-label={t('settings.closeSettings')}
                     >
                         <X size={20} />
                     </button>
@@ -40,7 +42,7 @@ export function SettingsPanel() {
 
                 {/* Theme */}
                 <div className="settings-section">
-                    <label className="settings-label">Theme</label>
+                    <label className="settings-label">{t('settings.theme')}</label>
                     <div className="settings-theme-grid">
                         {THEMES.map(theme => (
                             <button
@@ -50,7 +52,7 @@ export function SettingsPanel() {
                                 style={{ '--theme-color': theme.color } as CSSProperties}
                             >
                                 <span className="settings-theme-preview" />
-                                <span className="settings-theme-label">{theme.label}</span>
+                                <span className="settings-theme-label">{t(`settings.theme_${theme.value}`)}</span>
                             </button>
                         ))}
                     </div>
@@ -58,21 +60,21 @@ export function SettingsPanel() {
 
                 {/* Reading Mode (EPUB) */}
                 <div className="settings-section">
-                    <label className="settings-label">Reading Mode (EPUB)</label>
+                    <label className="settings-label">{t('settings.readingMode')}</label>
                     <div className="settings-align-buttons">
                         <button
                             className={`settings-align-button ${preferences.readingMode !== 'vertical-scroll' ? 'active' : ''}`}
                             onClick={() => updatePreference('readingMode', 'paginated')}
-                            aria-label="Paginated mode"
-                            title="Paginated"
+                            aria-label={t('settings.readingMode_paginated')}
+                            title={t('settings.readingMode_paginated')}
                         >
                             <BookOpen size={20} />
                         </button>
                         <button
                             className={`settings-align-button ${preferences.readingMode === 'vertical-scroll' ? 'active' : ''}`}
                             onClick={() => updatePreference('readingMode', 'vertical-scroll')}
-                            aria-label="Vertical scroll mode"
-                            title="Vertical Scroll"
+                            aria-label={t('settings.readingMode_verticalScroll')}
+                            title={t('settings.readingMode_verticalScroll')}
                         >
                             <ScrollText size={20} />
                         </button>
@@ -82,7 +84,7 @@ export function SettingsPanel() {
                 {/* Font Size */}
                 <div className="settings-section">
                     <div className="settings-label-row">
-                        <label className="settings-label">Font Size</label>
+                        <label className="settings-label">{t('settings.fontSize')}</label>
                         <span className="settings-value">{preferences.fontSize}px</span>
                     </div>
                     <div className="settings-slider-row">
@@ -104,7 +106,7 @@ export function SettingsPanel() {
                 <div className="settings-section">
                     <label className="settings-label">
                         <Type size={16} />
-                        Font Family
+                        {t('settings.fontFamily')}
                     </label>
                     <div className="settings-font-grid">
                         {FONT_FAMILIES.map(font => (
@@ -114,7 +116,7 @@ export function SettingsPanel() {
                                 onClick={() => updatePreference('fontFamily', font.value)}
                                 style={{ fontFamily: font.value }}
                             >
-                                {font.label}
+                                {font.value === 'system-ui' ? t('settings.fontFamily_system') : font.label}
                             </button>
                         ))}
                     </div>
@@ -123,7 +125,7 @@ export function SettingsPanel() {
                 {/* Line Height */}
                 <div className="settings-section">
                     <div className="settings-label-row">
-                        <label className="settings-label">Line Spacing</label>
+                        <label className="settings-label">{t('settings.lineSpacing')}</label>
                         <span className="settings-value">{preferences.lineHeight.toFixed(1)}</span>
                     </div>
                     <input
@@ -140,7 +142,7 @@ export function SettingsPanel() {
                 {/* Margins */}
                 <div className="settings-section">
                     <div className="settings-label-row">
-                        <label className="settings-label">Margins</label>
+                        <label className="settings-label">{t('settings.margins')}</label>
                         <span className="settings-value">{preferences.margins}px</span>
                     </div>
                     <input
@@ -156,19 +158,19 @@ export function SettingsPanel() {
 
                 {/* Text Align */}
                 <div className="settings-section">
-                    <label className="settings-label">Text Alignment</label>
+                    <label className="settings-label">{t('settings.textAlignment')}</label>
                     <div className="settings-align-buttons">
                         <button
                             className={`settings-align-button ${preferences.textAlign === 'left' ? 'active' : ''}`}
                             onClick={() => updatePreference('textAlign', 'left')}
-                            aria-label="Align left"
+                            aria-label={t('settings.textAlignment_left')}
                         >
                             <AlignLeft size={20} />
                         </button>
                         <button
                             className={`settings-align-button ${preferences.textAlign === 'justify' ? 'active' : ''}`}
                             onClick={() => updatePreference('textAlign', 'justify')}
-                            aria-label="Justify"
+                            aria-label={t('settings.textAlignment_justify')}
                         >
                             <AlignJustify size={20} />
                         </button>
@@ -178,7 +180,7 @@ export function SettingsPanel() {
                 {/* Brightness */}
                 <div className="settings-section">
                     <div className="settings-label-row">
-                        <label className="settings-label">Brightness</label>
+                        <label className="settings-label">{t('settings.brightness')}</label>
                         <span className="settings-value">{preferences.brightness}%</span>
                     </div>
                     <input
@@ -196,8 +198,8 @@ export function SettingsPanel() {
                 <div className="settings-section">
                     <div className="settings-toggle-row">
                         <div className="settings-toggle-info">
-                            <label className="settings-label">Auto-save Position</label>
-                            <span className="settings-hint">Resume where you left off</span>
+                            <label className="settings-label">{t('settings.autoSave')}</label>
+                            <span className="settings-hint">{t('settings.autoSave_hint')}</span>
                         </div>
                         <button
                             className={`settings-toggle ${preferences.autoSavePosition ? 'active' : ''}`}

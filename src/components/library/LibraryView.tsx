@@ -25,10 +25,12 @@ import {
     Clock,
     ChevronRight,
     ChartColumnBig,
-    Sparkles
+    Sparkles,
+    Globe
 } from 'lucide-react'
 import { parseBookFile } from '@/services/parsers'
 import { signOut, auth } from '@/services/firebase'
+import { useTranslation } from 'react-i18next'
 import { getActiveUserId } from '@/services/auth/session'
 import { uploadBookFile, uploadCoverImage } from '@/services/storage/storageService'
 import {
@@ -76,6 +78,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
 
     const { currentUser } = useUserStore()
     const activeUserId = getActiveUserId(currentUser?.id)
+    const { t, i18n } = useTranslation()
 
     const [showImportModal, setShowImportModal] = useState(false)
     const [showCollectionsManager, setShowCollectionsManager] = useState(false)
@@ -368,8 +371,8 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     const smartCollections = [
         { id: 'smart:epub', label: 'EPUB' },
         { id: 'smart:pdf', label: 'PDF' },
-        { id: 'smart:cloud', label: 'Nuvem' },
-        { id: 'smart:recent', label: 'Recentes' }
+        { id: 'smart:cloud', label: t('library.smartCollectionCloud') },
+        { id: 'smart:recent', label: t('library.smartCollectionRecent') }
     ]
 
     const booksForDisplay = filteredBooks.filter((book) => {
@@ -409,18 +412,28 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                         <div className="library-greeting">
                             <h1 className="library-title">Codex</h1>
                             <p className="library-subtitle">
-                                {currentUser ? `Welcome back, ${currentUser.name}` : 'Your Digital Library'}
+                                {currentUser ? `Welcome back, ${currentUser.name}` : t('library.yourDigitalLibrary')}
                             </p>
                         </div>
                     </div>
                     <div className="library-header-actions">
                         <Button
                             variant="secondary"
+                            leftIcon={<Globe size={18} />}
+                            className="library-action-btn library-action-btn-icon"
+                            onClick={() => i18n.changeLanguage(i18n.language === 'pt' ? 'en' : 'pt')}
+                            aria-label={t('library.toggleLanguage')}
+                            title={t('library.toggleLanguage')}
+                        >
+                            {i18n.language === 'pt' ? 'EN' : 'PT'}
+                        </Button>
+                        <Button
+                            variant="secondary"
                             leftIcon={<ChartColumnBig size={18} />}
                             className="library-action-btn library-action-btn-icon"
                             onClick={() => setShowStatsModal(true)}
-                            aria-label="Open reading statistics"
-                            title="Reading statistics"
+                            aria-label={t('library.openReadingStatistics')}
+                            title={t('library.openReadingStatistics')}
                         >
                         </Button>
                         <Button
@@ -428,8 +441,8 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                             leftIcon={<FolderOpen size={18} />}
                             className="library-action-btn library-action-btn-icon"
                             onClick={() => setShowCollectionsManager(true)}
-                            aria-label="Open collections"
-                            title="Collections"
+                            aria-label={t('library.openCollections')}
+                            title={t('library.openCollections')}
                         >
                         </Button>
                         <Button
@@ -438,13 +451,13 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                             className="library-action-btn library-action-btn-primary"
                             onClick={() => setShowImportModal(true)}
                         >
-                            Add Book
+                            {t('library.addBook')}
                         </Button>
                         <SyncIndicator />
                         <button
                             className="library-logout-btn"
                             onClick={handleLogout}
-                            title="Sign Out"
+                            title={t('library.signOut')}
                         >
                             <LogOut size={20} />
                         </button>
@@ -457,7 +470,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                         <Search size={18} className="library-search-icon" />
                         <input
                             type="text"
-                            placeholder="Search books..."
+                            placeholder={t('library.searchPlaceholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="library-search-input"
@@ -472,10 +485,10 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                                 className="library-sort-select"
                             >
-                                <option value="addedAt">Date Added</option>
-                                <option value="lastReadAt">Last Read</option>
-                                <option value="title">Title</option>
-                                <option value="author">Author</option>
+                                <option value="addedAt">{t('library.sortByDateAdded')}</option>
+                                <option value="lastReadAt">{t('library.sortByLastRead')}</option>
+                                <option value="title">{t('library.sortByTitle')}</option>
+                                <option value="author">{t('library.sortByAuthor')}</option>
                             </select>
                         </div>
 
@@ -483,14 +496,14 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                             <button
                                 className={`library-view-button ${viewMode === 'grid' ? 'active' : ''}`}
                                 onClick={() => setViewMode('grid')}
-                                aria-label="Grid view"
+                                aria-label={t('library.gridView')}
                             >
                                 <Grid3X3 size={18} />
                             </button>
                             <button
                                 className={`library-view-button ${viewMode === 'list' ? 'active' : ''}`}
                                 onClick={() => setViewMode('list')}
-                                aria-label="List view"
+                                aria-label={t('library.listView')}
                             >
                                 <List size={18} />
                             </button>
@@ -506,7 +519,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                             setSelectedSmartCollection(null)
                         }}
                     >
-                        All
+                        {t('library.allBooks')}
                     </button>
                     {collections.map((col) => (
                         <button
@@ -574,10 +587,10 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                         <div className="library-hero-info">
                             <div className="library-hero-label">
                                 <Clock size={14} />
-                                <span>Continue Reading</span>
+                                <span>{t('library.continueReading')}</span>
                             </div>
                             <h2 className="library-hero-title">{lastReadBook.title}</h2>
-                            <p className="library-hero-author">{lastReadBook.author || 'Unknown Author'}</p>
+                            <p className="library-hero-author">{lastReadBook.author || t('library.unknownAuthor')}</p>
                             <div className="library-hero-progress">
                                 <div className="library-hero-progress-track">
                                     <div
@@ -586,11 +599,11 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                                     />
                                 </div>
                                 <span className="library-hero-progress-text">
-                                    {progressMap[lastReadBook.id] || 0}% complete
+                                    {progressMap[lastReadBook.id] || 0}% {t('library.complete')}
                                 </span>
                             </div>
                             <div className="library-hero-cta">
-                                <span>Resume</span>
+                                <span>{t('library.resume')}</span>
                                 <ChevronRight size={18} />
                             </div>
                         </div>
@@ -603,19 +616,19 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                     <div className="library-error">
                         <p>{error}</p>
                         <Button variant="secondary" onClick={() => loadBooks(activeUserId)}>
-                            Try Again
+                            {t('library.tryAgain')}
                         </Button>
                     </div>
                 ) : booksForDisplay.length === 0 ? (
                     <div className="library-empty">
                         <BookOpen size={64} className="library-empty-icon" />
                         <h2 className="library-empty-title">
-                            {books.length === 0 ? 'Your library is empty' : 'No books found'}
+                            {books.length === 0 ? t('library.empty_noBooks_title') : t('library.empty_noSearchResults_title')}
                         </h2>
                         <p className="library-empty-text">
                             {books.length === 0
-                                ? 'Add your first book to get started reading!'
-                                : 'Try a different search term'}
+                                ? t('library.empty_noBooks_desc')
+                                : t('library.empty_noSearchResults_desc')}
                         </p>
                         {books.length === 0 && (
                             <Button
@@ -623,7 +636,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                                 leftIcon={<Plus size={18} />}
                                 onClick={() => setShowImportModal(true)}
                             >
-                                Add Your First Book
+                                {t('library.addYourFirstBook')}
                             </Button>
                         )}
                     </div>
@@ -649,7 +662,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             <Modal
                 isOpen={showImportModal}
                 onClose={() => setShowImportModal(false)}
-                title="Add Books"
+                title={t('library.addBooksModalTitle')}
                 size="md"
             >
                 <div className="import-modal-content">
@@ -659,14 +672,14 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                     />
 
                     <div className="import-url-divider">
-                        <span>or import from URL</span>
+                        <span>{t('library.orImportFromUrl')}</span>
                     </div>
 
                     <div className="import-url-row">
                         <Link2 size={18} className="import-url-icon" />
                         <input
                             type="url"
-                            placeholder="Paste EPUB or PDF link..."
+                            placeholder={t('library.pasteLinkPlaceholder')}
                             value={importUrl}
                             onChange={(e) => setImportUrl(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleUrlImport()}
@@ -678,14 +691,14 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                             onClick={handleUrlImport}
                             disabled={!importUrl.trim() || urlImporting}
                         >
-                            {urlImporting ? 'Importing...' : 'Import'}
+                            {urlImporting ? t('library.importing') : t('library.import')}
                         </Button>
                     </div>
 
                     {(importLoading || urlImporting) && (
                         <div className="import-loading">
                             <Loader2 size={20} className="library-spinner" />
-                            <span>Importing...</span>
+                            <span>{t('library.importing')}...</span>
                         </div>
                     )}
 
@@ -701,24 +714,22 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             <Modal
                 isOpen={!!deleteConfirm}
                 onClose={() => setDeleteConfirm(null)}
-                title={canRemoveLocalOnly ? 'Remove Book' : 'Delete Book'}
+                title={canRemoveLocalOnly ? t('library.removeBookModalTitle') : t('library.deleteBookModalTitle')}
                 size="sm"
             >
                 <div className="delete-modal-content">
                     <p>
                         {canRemoveLocalOnly ? (
                             <>
-                                Choose how to remove <strong>{deleteConfirm?.title}</strong>:
+                                {t('library.removeBookConfirmationPrompt', { title: deleteConfirm?.title })}
                             </>
                         ) : isCloudOnlyDelete ? (
                             <>
-                                Delete <strong>{deleteConfirm?.title}</strong> from your cloud account?
-                                This removes it permanently from all devices.
+                                {t('library.deleteCloudBookConfirmationPrompt', { title: deleteConfirm?.title })}
                             </>
                         ) : (
                             <>
-                                Are you sure you want to delete <strong>{deleteConfirm?.title}</strong>?
-                                This action cannot be undone.
+                                {t('library.deleteBookConfirmationPrompt', { title: deleteConfirm?.title })}
                             </>
                         )}
                     </p>
@@ -727,7 +738,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                             variant="secondary"
                             onClick={() => setDeleteConfirm(null)}
                         >
-                            Cancel
+                            {t('library.cancel')}
                         </Button>
                         {canRemoveLocalOnly ? (
                             <>
@@ -735,13 +746,13 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                                     variant="secondary"
                                     onClick={handleRemoveFromDevice}
                                 >
-                                    Remove from Device
+                                    {t('library.removeFromDevice')}
                                 </Button>
                                 <Button
                                     variant="danger"
                                     onClick={handleDeleteBook}
                                 >
-                                    Delete Permanently
+                                    {t('library.deletePermanently')}
                                 </Button>
                             </>
                         ) : (
@@ -749,7 +760,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                                 variant="danger"
                                 onClick={handleDeleteBook}
                             >
-                                Delete
+                                {t('library.delete')}
                             </Button>
                         )}
                     </div>

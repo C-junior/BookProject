@@ -8,6 +8,7 @@ import {
     List,
     Bookmark
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import './ReaderToolbar.css'
 
 interface ReaderToolbarProps {
@@ -26,6 +27,7 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
         toggleBookmarks,
         percentage
     } = useReaderStore()
+    const { t } = useTranslation()
 
     if (!showToolbar) return null
 
@@ -36,7 +38,8 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
                 <button
                     className="reader-toolbar-button"
                     onClick={onClose}
-                    aria-label="Back to library"
+                    aria-label={t('reader.backToLibrary')}
+                    title={t('reader.backToLibrary')}
                 >
                     <ArrowLeft size={20} />
                 </button>
@@ -52,7 +55,8 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
                     <button
                         className="reader-toolbar-button"
                         onClick={toggleBookmarks}
-                        aria-label="Bookmarks"
+                        aria-label={t('reader.bookmarks')}
+                        title={t('reader.bookmarks')}
                     >
                         <Bookmark size={20} />
                     </button>
@@ -73,7 +77,8 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
                     <button
                         className="reader-toolbar-button"
                         onClick={toggleToc}
-                        aria-label="Table of contents"
+                        aria-label={t('reader.tableOfContents')}
+                        title={t('reader.tableOfContents')}
                     >
                         <List size={20} />
                     </button>
@@ -82,7 +87,8 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
                         <button
                             className="reader-toolbar-nav-button"
                             onClick={onPrev}
-                            aria-label="Previous page"
+                            aria-label={t('reader.previousPage')}
+                            title={t('reader.previousPage')}
                         >
                             <ChevronLeft size={24} />
                         </button>
@@ -92,7 +98,8 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
                         <button
                             className="reader-toolbar-nav-button"
                             onClick={onNext}
-                            aria-label="Next page"
+                            aria-label={t('reader.nextPage')}
+                            title={t('reader.nextPage')}
                         >
                             <ChevronRight size={24} />
                         </button>
@@ -101,7 +108,8 @@ export function ReaderToolbar({ book, onClose, onPrev, onNext }: ReaderToolbarPr
                     <button
                         className="reader-toolbar-button"
                         onClick={toggleSettings}
-                        aria-label="Reader settings"
+                        aria-label={t('reader.readerSettings')}
+                        title={t('reader.readerSettings')}
                     >
                         <Settings size={20} />
                     </button>
