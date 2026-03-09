@@ -30,7 +30,7 @@ function App() {
     const [isShareTarget, setIsShareTarget] = useState(() => {
         if (window.location.pathname === '/share-target') return true
         const params = new URLSearchParams(window.location.search)
-        return params.has('url')
+        if (params.has('url')) { sessionStorage.setItem('pendingShareUrl', params.get('url')!); return true; }; return !!sessionStorage.getItem('pendingShareUrl')
     })
     const syncedUserRef = useRef<string | null>(null)
     const useFirebase = isFirebaseConfigured()
@@ -246,3 +246,4 @@ function App() {
 }
 
 export default App
+

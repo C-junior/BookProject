@@ -29,8 +29,9 @@ export function ShareTarget({ onComplete }: ShareTargetProps) {
             const params = url.searchParams
 
             // Check for shared text (URL)
-            const sharedUrl = params.get('url') || params.get('text')
+            let sharedUrl = params.get('url') || params.get('text') || sessionStorage.getItem('pendingShareUrl');
             if (sharedUrl && (sharedUrl.endsWith('.epub') || sharedUrl.endsWith('.pdf'))) {
+                sessionStorage.removeItem('pendingShareUrl');
                 setMessage('Downloading shared book...')
                 const res = await fetch(sharedUrl)
                 if (!res.ok) throw new Error(`Download failed (${res.status})`)
@@ -127,3 +128,4 @@ export function ShareTarget({ onComplete }: ShareTargetProps) {
         </div>
     )
 }
+
