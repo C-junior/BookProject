@@ -27,9 +27,11 @@ function App() {
     const [isAuthResolved, setIsAuthResolved] = useState(false)
     const [showUpdateToast, setShowUpdateToast] = useState(false)
     const [_downloadingBook, setDownloadingBook] = useState<string | null>(null)
-    const [isShareTarget, setIsShareTarget] = useState(
-        window.location.pathname === '/share-target'
-    )
+    const [isShareTarget, setIsShareTarget] = useState(() => {
+        if (window.location.pathname === '/share-target') return true
+        const params = new URLSearchParams(window.location.search)
+        return params.has('url')
+    })
     const syncedUserRef = useRef<string | null>(null)
     const useFirebase = isFirebaseConfigured()
 
