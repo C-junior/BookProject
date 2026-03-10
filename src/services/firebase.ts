@@ -171,7 +171,6 @@ const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 const PRO_ADMIN_EMAILS: string[] = [
     // Add test account emails here, e.g.:
     // 'your-email@gmail.com',
-    'inglescursoone@gmail.com',
     'paulamartinsz1996@gmail.com',
     'aicristovao88@gmail.com'
 ]
