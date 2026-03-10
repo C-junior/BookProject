@@ -118,6 +118,7 @@ export interface UserProfile {
     avatar?: string
     createdAt: Date
     preferences: ReaderPreferences
+    isPro?: boolean
 }
 
 export interface ReaderPreferences {
@@ -193,3 +194,4 @@ export interface UploadProgress {
     status: 'pending' | 'processing' | 'complete' | 'error'
     error?: string
 }
+

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { CheckoutButton } from '../subscription/CheckoutButton'
 import { parseBookFile } from '@/services/parsers'
 import { useLibraryStore } from '@/stores/libraryStore'
 import { useUserStore } from '@/stores/userStore'
@@ -17,6 +18,8 @@ interface ShareTargetProps {
 export function ShareTarget({ onComplete }: ShareTargetProps) {
     const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing')
     const [message, setMessage] = useState('Processing shared file...')
+    const [showCheckout, setShowCheckout] = useState(false)
+    const [pendingUrl, setPendingUrl] = useState<string | null>(null)
     const { addNewBook } = useLibraryStore()
 
     useEffect(() => {
@@ -31,6 +34,18 @@ export function ShareTarget({ onComplete }: ShareTargetProps) {
             // Check for shared text (URL)
             let sharedUrl = params.get('url') || params.get('text') || sessionStorage.getItem('pendingShareUrl');
             if (sharedUrl && (sharedUrl.endsWith('.epub') || sharedUrl.endsWith('.pdf'))) {
+                const currentUser = useUserStore.getState().currentUser
+                const isPremiumBook = sharedUrl.includes('Chronicles_of_Synthborne')
+
+                if (isPremiumBook && !currentUser?.isPro) {
+                    sessionStorage.setItem('pendingShareUrl', sharedUrl)
+                    setStatus('error')
+                    setMessage('"Chronicles of Synthborne" is a Premium book. You need a Pro subscription to add it to your library.')
+                    setPendingUrl(sharedUrl)
+                    setShowCheckout(true)
+                    return
+                }
+
                 sessionStorage.removeItem('pendingShareUrl');
                 setMessage('Downloading shared book...')
                 const res = await fetch(sharedUrl)
@@ -120,10 +135,13 @@ export function ShareTarget({ onComplete }: ShareTargetProps) {
                 {status === 'success' && (
                     <CheckCircle size={40} className="share-target-success" />
                 )}
-                {status === 'error' && (
+                {status === 'error' && !showCheckout && (
                     <AlertCircle size={40} className="share-target-error" />
                 )}
                 <p className="share-target-message">{message}</p>
+                {status === 'error' && showCheckout && (
+                    <CheckoutButton targetUrl={pendingUrl || undefined} />
+                )}
             </div>
         </div>
     )

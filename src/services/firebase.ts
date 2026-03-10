@@ -161,6 +161,7 @@ interface UserProfileData {
         fontSize: number
         fontFamily: string
     }
+    isPro?: boolean
 }
 
 /**
