@@ -423,7 +423,12 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                     <div className="library-brand">
                         <img src="/codex_logo.png" alt="Codex Logo" className="library-logo" />
                         <div className="library-greeting">
-                            <h1 className="library-title">Codex</h1>
+                            <div className="library-title-container">
+                                <h1 className="library-title">Codex</h1>
+                                {currentUser?.isPro && (
+                                    <span className="library-pro-badge">PRO</span>
+                                )}
+                            </div>
                             <p className="library-subtitle">
                                 {currentUser ? `Welcome back, ${currentUser.name}` : t('library.yourDigitalLibrary')}
                             </p>
