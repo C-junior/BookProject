@@ -352,9 +352,11 @@ export function BookCard({ book, progress, collections, onOpen, onDelete, onAddT
 export default BookCard
 
 function isInvalidBlobCoverUrl(url: string): boolean {
-    if (!url.startsWith('blob:')) return false
-    const hasCurrentOrigin = url.includes(window.location.origin)
-    return !hasCurrentOrigin
+    // Blob URLs from previous sessions persist in IndexedDB as strings but are 
+    // immediately invalidated by the browser on reload. Reject them all so we 
+    // fall back to the actual CoverBlob, Data URL, or Cloud Storage URL.
+    if (url.startsWith('blob:')) return true
+    return false
 }
 
 async function compressCoverImage(file: File): Promise<Blob> {
