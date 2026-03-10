@@ -1,6 +1,6 @@
 .trial-banner {
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    padding: 0.625rem 1rem;
+    border-radius: 10px;
     margin-bottom: 1rem;
 }
 
@@ -10,31 +10,56 @@
 }
 
 .trial-banner--expired {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.04));
+    border: 1px solid rgba(239, 68, 68, 0.15);
 }
 
 .trial-banner-content {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    gap: 0.625rem;
 }
 
-.trial-banner--active .trial-banner-content svg {
+.trial-banner--active .trial-banner-content>svg {
     color: #f59e0b;
     flex-shrink: 0;
 }
 
-.trial-banner--expired .trial-banner-content svg {
+.trial-banner--expired .trial-banner-content>svg {
     color: #ef4444;
     flex-shrink: 0;
 }
 
 .trial-banner-text {
     color: var(--text-secondary, #ccc);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
+    line-height: 1.4;
     flex: 1;
+    min-width: 0;
+}
+
+.trial-banner-actions {
+    flex-shrink: 0;
+}
+
+.trial-banner-upgrade-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    background: var(--accent-color, #6366f1);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+}
+
+.trial-banner-upgrade-btn:hover {
+    background: var(--accent-hover, #4f46e5);
 }
 
 .trial-banner-dismiss {
@@ -43,20 +68,11 @@
     color: var(--text-secondary, #888);
     cursor: pointer;
     padding: 0.25rem;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
+    flex-shrink: 0;
     transition: color 0.2s;
 }
 
 .trial-banner-dismiss:hover {
     color: var(--text-primary, #fff);
-}
-
-/* Adjust CheckoutButton inside the banner to be compact */
-.trial-banner .checkout-container {
-    margin-top: 0;
-}
-
-.trial-banner .checkout-btn {
-    padding: 0.4rem 1rem;
-    font-size: 0.8rem;
 }

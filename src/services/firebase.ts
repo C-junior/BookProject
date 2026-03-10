@@ -167,13 +167,22 @@ interface UserProfileData {
 
 const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
+// Admin emails that always have Pro access (for testing)
+const PRO_ADMIN_EMAILS: string[] = [
+    // Add test account emails here, e.g.:
+    // 'your-email@gmail.com',
+]
+
 /**
  * Determine if a user has Pro access:
+ * - Admin whitelist email
  * - Paid subscriber (isPro === true via Stripe webhook), OR
  * - Active 7-day trial (trialStartDate within last 7 days)
  */
 export function isUserPro(profile: UserProfileData | null): boolean {
     if (!profile) return false
+    // Admin whitelist — always Pro
+    if (profile.email && PRO_ADMIN_EMAILS.includes(profile.email)) return true
     if (profile.isPro) return true
 
     // Check if trial is still active
