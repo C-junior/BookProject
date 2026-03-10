@@ -8,7 +8,7 @@ import { SyncErrorToast } from '@/components/ui/SyncErrorToast'
 import { syncOnLogin, syncOnLogout } from '@/services/sync/syncService'
 import { downloadBookFile } from '@/services/storage/storageService'
 import { updateBook } from '@/services/storage/db'
-import { auth, isFirebaseConfigured, onAuthChange, handleRedirectResult, getUserProfile } from '@/services/firebase'
+import { auth, isFirebaseConfigured, onAuthChange, handleRedirectResult, getUserProfile, isUserPro } from '@/services/firebase'
 import { clearAuthSession, getActiveUserId, getCachedAuthUserId, rememberAuthSession } from '@/services/auth/session'
 import type { Book } from '@/types'
 import './App.css'
@@ -71,8 +71,8 @@ function App() {
                     syncedUserRef.current = user.uid
                     try {
                         const fbProfile = await getUserProfile(user.uid)
-                        if (fbProfile && 'isPro' in fbProfile) {
-                            useUserStore.setState((state) => ({ currentUser: state.currentUser ? { ...state.currentUser, isPro: fbProfile.isPro } : null }))
+                        if (fbProfile) {
+                            useUserStore.setState((state) => ({ currentUser: state.currentUser ? { ...state.currentUser, isPro: isUserPro(fbProfile) } : null }))
                         }
                         await syncOnLogin()
                     } catch (err) {
@@ -250,5 +250,6 @@ function App() {
 }
 
 export default App
+
 
 

@@ -119,6 +119,7 @@ export interface UserProfile {
     createdAt: Date
     preferences: ReaderPreferences
     isPro?: boolean
+    trialStartDate?: Date
 }
 
 export interface ReaderPreferences {
@@ -194,4 +195,5 @@ export interface UploadProgress {
     status: 'pending' | 'processing' | 'complete' | 'error'
     error?: string
 }
+
 

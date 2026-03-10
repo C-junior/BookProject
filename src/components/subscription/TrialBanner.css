@@ -1,0 +1,62 @@
+.trial-banner {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.trial-banner--active {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.trial-banner--expired {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.trial-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.trial-banner--active .trial-banner-content svg {
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+.trial-banner--expired .trial-banner-content svg {
+    color: #ef4444;
+    flex-shrink: 0;
+}
+
+.trial-banner-text {
+    color: var(--text-secondary, #ccc);
+    font-size: 0.875rem;
+    flex: 1;
+}
+
+.trial-banner-dismiss {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+    padding: 0.25rem;
+    font-size: 0.875rem;
+    transition: color 0.2s;
+}
+
+.trial-banner-dismiss:hover {
+    color: var(--text-primary, #fff);
+}
+
+/* Adjust CheckoutButton inside the banner to be compact */
+.trial-banner .checkout-container {
+    margin-top: 0;
+}
+
+.trial-banner .checkout-btn {
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+}

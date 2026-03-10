@@ -41,6 +41,8 @@ import {
     getReadingStatsDetailed,
     updateBook as updateBookInDb
 } from '@/services/storage/db'
+import { TrialBanner } from '@/components/subscription/TrialBanner'
+import { UpgradePrompt } from '@/components/subscription/UpgradePrompt'
 import './LibraryView.css'
 
 interface LibraryViewProps {
@@ -98,6 +100,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
 
     // Onboarding state
     const [showOnboarding, setShowOnboarding] = useState(false)
+    const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
 
     // Check if user is first-time (needs onboarding)
     useEffect(() => {
@@ -185,7 +188,12 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             }
             setShowImportModal(false)
         } catch (err) {
-            setImportError(err instanceof Error ? err.message : 'Failed to import book')
+            if (err instanceof Error && err.message === 'BOOK_LIMIT_REACHED') {
+                setShowImportModal(false)
+                setShowUpgradePrompt(true)
+            } else {
+                setImportError(err instanceof Error ? err.message : 'Failed to import book')
+            }
         } finally {
             setImportLoading(false)
         }
@@ -214,7 +222,12 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             setImportUrl('')
             setShowImportModal(false)
         } catch (err) {
-            setImportError(err instanceof Error ? err.message : 'Failed to import from URL')
+            if (err instanceof Error && err.message === 'BOOK_LIMIT_REACHED') {
+                setShowImportModal(false)
+                setShowUpgradePrompt(true)
+            } else {
+                setImportError(err instanceof Error ? err.message : 'Failed to import from URL')
+            }
         } finally {
             setUrlImporting(false)
         }
@@ -553,6 +566,9 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
 
             {/* Content */}
             <main className="library-content">
+                {/* Trial Banner */}
+                <TrialBanner />
+
                 {/* Book Website Button */}
                 <a
                     href="https://crhonicles-of-synthborn.vercel.app/"
@@ -825,6 +841,14 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                 <OnboardingTour
                     onComplete={handleOnboardingComplete}
                     onSkip={handleOnboardingSkip}
+                />
+            )}
+
+            {/* Upgrade Prompt Modal */}
+            {showUpgradePrompt && (
+                <UpgradePrompt
+                    reason="book_limit"
+                    onClose={() => setShowUpgradePrompt(false)}
                 />
             )}
         </div>

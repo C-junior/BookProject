@@ -1,0 +1,106 @@
+.upgrade-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.upgrade-modal {
+    background: var(--bg-primary, #1a1a2e);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    animation: upgradeSlideIn 0.3s ease;
+}
+
+@keyframes upgradeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.upgrade-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: color 0.2s;
+}
+
+.upgrade-close:hover {
+    color: var(--text-primary, #fff);
+}
+
+.upgrade-icon {
+    color: #f59e0b;
+    margin-bottom: 1rem;
+}
+
+.upgrade-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary, #fff);
+    margin: 0 0 0.5rem;
+}
+
+.upgrade-desc {
+    color: var(--text-secondary, #aaa);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0 0 1.25rem;
+}
+
+.upgrade-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.upgrade-feature {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary, #ccc);
+    font-size: 0.9rem;
+    justify-content: center;
+}
+
+.upgrade-feature svg {
+    color: #f59e0b;
+}
+
+.upgrade-dismiss {
+    display: block;
+    margin: 0.75rem auto 0;
+    background: none;
+    border: none;
+    color: var(--text-secondary, #888);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.upgrade-dismiss:hover {
+    color: var(--text-primary, #fff);
+}

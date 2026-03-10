@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Book } from '@/types'
 import { getAllBooks, addBook, deleteBook, updateBook } from '@/services/storage/db'
+import { useUserStore } from '@/stores/userStore'
+
+export const FREE_BOOK_LIMIT = 3
 
 interface LibraryState {
     // State
@@ -103,6 +106,15 @@ export const useLibraryStore = create<LibraryState>()(
             },
 
             addNewBook: async (book: Book) => {
+                // Enforce free-tier book limit
+                const currentUser = useUserStore.getState().currentUser
+                const { books } = get()
+                if (!currentUser?.isPro && books.length >= FREE_BOOK_LIMIT) {
+                    const err = new Error('BOOK_LIMIT_REACHED')
+                    set({ error: err.message, isLoading: false })
+                    throw err
+                }
+
                 set({ isLoading: true, error: null })
                 try {
                     await addBook(book)

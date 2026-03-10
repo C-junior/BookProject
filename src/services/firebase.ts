@@ -156,12 +156,64 @@ interface UserProfileData {
     photoURL: string | null
     createdAt: unknown
     lastLoginAt: unknown
+    trialStartDate?: unknown
     preferences?: {
         theme: 'light' | 'dark' | 'sepia' | 'mint' | 'warm'
         fontSize: number
         fontFamily: string
     }
     isPro?: boolean
+}
+
+const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+
+/**
+ * Determine if a user has Pro access:
+ * - Paid subscriber (isPro === true via Stripe webhook), OR
+ * - Active 7-day trial (trialStartDate within last 7 days)
+ */
+export function isUserPro(profile: UserProfileData | null): boolean {
+    if (!profile) return false
+    if (profile.isPro) return true
+
+    // Check if trial is still active
+    if (profile.trialStartDate) {
+        let trialStart: Date
+        if (profile.trialStartDate instanceof Date) {
+            trialStart = profile.trialStartDate
+        } else if (typeof profile.trialStartDate === 'object' && profile.trialStartDate !== null && typeof (profile.trialStartDate as any).toDate === 'function') {
+            trialStart = (profile.trialStartDate as any).toDate()
+        } else if (typeof profile.trialStartDate === 'string' || typeof profile.trialStartDate === 'number') {
+            trialStart = new Date(profile.trialStartDate)
+        } else {
+            return false
+        }
+        return (Date.now() - trialStart.getTime()) < TRIAL_DURATION_MS
+    }
+
+    return false
+}
+
+/**
+ * Get the number of trial days remaining (0 if expired or no trial)
+ */
+export function getTrialDaysRemaining(profile: UserProfileData | null): number {
+    if (!profile || profile.isPro || !profile.trialStartDate) return 0
+
+    let trialStart: Date
+    if (profile.trialStartDate instanceof Date) {
+        trialStart = profile.trialStartDate
+    } else if (typeof profile.trialStartDate === 'object' && profile.trialStartDate !== null && typeof (profile.trialStartDate as any).toDate === 'function') {
+        trialStart = (profile.trialStartDate as any).toDate()
+    } else if (typeof profile.trialStartDate === 'string' || typeof profile.trialStartDate === 'number') {
+        trialStart = new Date(profile.trialStartDate)
+    } else {
+        return 0
+    }
+
+    const elapsed = Date.now() - trialStart.getTime()
+    const remaining = TRIAL_DURATION_MS - elapsed
+    return remaining > 0 ? Math.ceil(remaining / (24 * 60 * 60 * 1000)) : 0
 }
 
 /**
@@ -172,7 +224,7 @@ async function createOrUpdateUserProfile(user: User): Promise<void> {
     const userSnap = await getDoc(userRef)
 
     if (!userSnap.exists()) {
-        // Create new user profile
+        // Create new user profile with 7-day trial
         const userData: UserProfileData = {
             uid: user.uid,
             email: user.email,
@@ -180,6 +232,7 @@ async function createOrUpdateUserProfile(user: User): Promise<void> {
             photoURL: user.photoURL,
             createdAt: serverTimestamp(),
             lastLoginAt: serverTimestamp(),
+            trialStartDate: serverTimestamp(),
             preferences: {
                 theme: 'dark',
                 fontSize: 16,
