@@ -121,19 +121,33 @@ Complete visual overhauls that change the **entire face of the app** — not jus
 | 🎮 **Pixel / Retro Gaming** | Fun, nostalgic | 8-bit styled elements, pixel fonts, chiptune-inspired borders |
 | ☕ **Minimal / Zen** | Clean, distraction-free | Pure whitespace, ultra-thin borders, muted tones |
 
-**Access Model:**
+**Access Model — Hybrid Shop:**
 
 | Tier | What You Get |
 | :--- | :--- |
 | **Free** | Default Codex skin only |
-| **Pro** | All skins unlocked + future skin drops included |
+| **Pro** | 2–3 exclusive skins included (e.g., Cyberpunk + Minimal Zen) + **30% discount** on all store purchases |
+| **Store (anyone)** | Individual skins available for one-time purchase ($0.99–$2.99 each) |
+
+**Pricing Strategy:**
+
+| Skin Type | Free User Price | Pro User Price |
+| :--- | :--- | :--- |
+| **Basic Skins** (Vintage, Minimal) | $0.99 | Free (included with Pro) |
+| **Premium Skins** (Hogwarts, Cyberpunk, Anime) | $1.99 | $1.39 (30% off) |
+| **Limited Edition / Seasonal** | $2.99 | $1.99 (33% off) |
+| **Skin Bundles** (3-pack, 5-pack) | $4.99 / $7.99 | $2.99 / $4.99 |
+
+> [!TIP]
+> This hybrid model creates **two revenue streams from one feature**: recurring (Pro subscription) + transactional (skin purchases). Pro users feel rewarded with discounts and freebies, while free users can still buy individual skins without committing to a subscription.
 
 **Implementation Approach:**
 1. Each skin = a CSS file with `--skin-*` variables + optional background assets + optional micro-animation overrides.
-2. Skin definitions stored in Firestore (`skins` collection): [id](file:///d:/dev/BookProject/src/components/library/BookCard.tsx#32-37), [name](file:///d:/dev/BookProject/src/services/parsers/index.ts#39-58), `category`, `cssVariables`, `backgroundImage`, `isPremium`, `previewScreenshot`.
+2. Skin definitions stored in Firestore (`skins` collection): [id](file:///d:/dev/BookProject/src/components/library/BookCard.tsx#32-37), [name](file:///d:/dev/BookProject/src/services/parsers/index.ts#39-58), `category`, `cssVariables`, `backgroundImage`, `price`, `proPrice`, `includedInPro`, `previewScreenshot`.
 3. A new **"Theme Store" tab** in Settings or a dedicated page accessible from the library.
 4. Skin previews shown as **live screenshots** or **interactive mini-previews** — user sees the library rendered in each skin before applying.
-5. Active skin stored in user preferences → applied via `data-skin` attribute on `<html>`.
+5. Purchases via Stripe (one-time payment). Purchased skins stored in user profile (`purchasedSkins: string[]`).
+6. Active skin stored in user preferences → applied via `data-skin` attribute on `<html>`.
 
 **Why This Is a Great Idea:**
 
@@ -168,13 +182,19 @@ These are parked for later but represent strong growth opportunities.
 ┌─────────────────────────────────────────────────────────┐
 │                    CODEX REVENUE STREAMS                │
 ├──────────────────┬──────────────────────────────────────┤
-│ Pro Subscription │ $X/month — Unlocks everything:       │
+│ Pro Subscription │ $X/month — Unlocks:                  │
 │                  │ • Unlimited books                    │
 │                  │ • Cloud Sync                         │
 │                  │ • All premium reader themes          │
-│                  │ • All app skins (Hogwarts, Cyber..)  │
+│                  │ • 2-3 included app skins             │
+│                  │ • 30% discount on skin store         │
 │                  │ • Chronicles of Synthborne (free)    │
 │                  │ • Future: Stats, TTS, Export         │
+├──────────────────┼──────────────────────────────────────┤
+│ Skin Store       │ Individual skins: $0.99–$2.99 each   │
+│                  │ Bundles: $4.99–$7.99                 │
+│                  │ Seasonal/Limited drops quarterly     │
+│                  │ (Available to ALL users)             │
 ├──────────────────┼──────────────────────────────────────┤
 │ One-Time Content │ Chronicles of Synthborne: $2.99      │
 │                  │ (book only, no Pro required)         │
