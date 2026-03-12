@@ -1,3 +1,7 @@
+import { config as dotenvConfig } from 'dotenv';
+import { resolve } from 'path';
+dotenvConfig({ path: resolve(process.cwd(), '.env.local') });
+
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import * as admin from 'firebase-admin';
