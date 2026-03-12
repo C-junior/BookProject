@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Crown, Clock } from 'lucide-react'
-import { getUserProfile, getTrialDaysRemaining } from '@/services/firebase'
+import { getUserProfile, getTrialDaysRemaining, isUserPermanentlyPro } from '@/services/firebase'
 import { auth } from '@/services/firebase'
 import { useUserStore } from '@/stores/userStore'
 import './TrialBanner.css'
@@ -19,7 +19,7 @@ export function TrialBanner() {
             const profile = await getUserProfile(uid)
             if (!profile) return
 
-            if (profile.isPro) {
+            if (isUserPermanentlyPro(profile)) {
                 setIsPaidPro(true)
                 return
             }

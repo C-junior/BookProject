@@ -60,6 +60,7 @@ export const useUserStore = create<UserState>()(
                     const { currentUser } = get()
                     const currentUserId = currentUser?.id || DEFAULT_USER_ID
                     const user = users.find(u => u.id === currentUserId) || users[0]
+                    if (user && currentUser?.isPro !== undefined) user.isPro = currentUser.isPro
 
                     set({
                         users,

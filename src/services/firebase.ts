@@ -206,6 +206,16 @@ export function isUserPro(profile: UserProfileData | null): boolean {
 }
 
 /**
+ * Check if the user is a permanent Pro (either paid or admin whitelist)
+ */
+export function isUserPermanentlyPro(profile: UserProfileData | null): boolean {
+    if (!profile) return false
+    if (profile.email && PRO_ADMIN_EMAILS.includes(profile.email)) return true
+    if (profile.isPro) return true
+    return false
+}
+
+/**
  * Get the number of trial days remaining (0 if expired or no trial)
  */
 export function getTrialDaysRemaining(profile: UserProfileData | null): number {
