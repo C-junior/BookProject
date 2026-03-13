@@ -172,7 +172,8 @@ const PRO_ADMIN_EMAILS: string[] = [
     // Add test account emails here, e.g.:
     // 'your-email@gmail.com',
     'paulamartinsz1996@gmail.com',
-    'aicristovao88@gmail.com'
+    'aicristovao88@gmail.com',
+    "dkjunior13@gmail.com"
 ]
 
 /**
