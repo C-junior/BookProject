@@ -41,16 +41,16 @@
 }
 
 .sync-icon.synced {
-    color: var(--accent-primary, #14b8a6);
+    color: var(--color-accent-primary, #14b8a6);
 }
 
 .sync-icon.syncing {
-    color: var(--text-secondary, #94a3b8);
+    color: var(--color-text-secondary, #94a3b8);
     animation: spin 1s linear infinite;
 }
 
 .sync-icon.offline {
-    color: var(--text-muted, #64748b);
+    color: var(--color-text-tertiary, #64748b);
 }
 
 .sync-icon.error {
@@ -58,7 +58,7 @@
 }
 
 .sync-icon.pending {
-    color: var(--accent-secondary, #d4af37);
+    color: var(--color-warm, #d4af37);
 }
 
 /* Spinning animation */
@@ -87,8 +87,8 @@
     min-width: 14px;
     height: 14px;
     padding: 0 4px;
-    background: var(--accent-secondary, #d4af37);
-    color: var(--bg-primary, #0a1628);
+    background: var(--color-warm, #d4af37);
+    color: var(--color-text-inverse, #0a1628);
     font-size: 10px;
     font-weight: 600;
     border-radius: 7px;

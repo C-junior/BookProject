@@ -367,8 +367,13 @@ h6 {
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
 }
 
-[data-skin="magic"] .nav-item.active {
+[data-skin="magic"] .bottom-nav-item.active {
   color: var(--color-accent-primary);
+  background: rgba(212, 175, 55, 0.14);
+}
+
+[data-skin="magic"] .bottom-nav-item.active svg {
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.3));
 }
 
 /* ---------- Base Styles ---------- */

@@ -25,7 +25,7 @@ const ShareTarget = lazy(() => import('@/components/ui/ShareTarget').then(m => (
 
 function App() {
     const { loadUsers, currentUser } = useUserStore()
-    const { isReading, currentBook, openBook, closeBook, preferences } = useReaderStore()
+    const { isReading, currentBook, openBook, closeBook, preferences, setPreferences } = useReaderStore()
     const { activeTab } = useNavigationStore()
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [isInitialized, setIsInitialized] = useState(false)
@@ -105,15 +105,23 @@ function App() {
         return () => unsubscribe()
     }, [isInitialized, useFirebase])
 
-    // Apply theme and skin from preferences
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', preferences.theme)
-        if (preferences.skin === 'magic') {
+        if (currentUser?.preferences) {
+            setPreferences(currentUser.preferences)
+        }
+    }, [currentUser?.preferences, setPreferences])
+
+    // Apply theme and skin from the active user's saved preferences
+    useEffect(() => {
+        const appliedPreferences = currentUser?.preferences ?? preferences
+
+        document.documentElement.setAttribute('data-theme', appliedPreferences.theme)
+        if (appliedPreferences.skin === 'magic') {
              document.documentElement.setAttribute('data-skin', 'magic')
         } else {
              document.documentElement.removeAttribute('data-skin')
         }
-    }, [preferences.theme, preferences.skin])
+    }, [currentUser?.preferences, preferences])
 
     // Listen for service worker update events
     useEffect(() => {

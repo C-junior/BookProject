@@ -585,7 +585,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                 >
                     <div className="library-website-btn-content">
                         <span className="library-website-title">SYNTHBORNE</span>
-                        <span className="library-website-subtitle">Explore the world behind the book →</span>
+                        <span className="library-website-subtitle">Explore the world behind the book {'->'}</span>
                     </div>
                 </a>
 

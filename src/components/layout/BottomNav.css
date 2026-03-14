@@ -30,23 +30,24 @@
     background: transparent;
     border: none;
     cursor: pointer;
-    color: var(--text-muted);
+    color: var(--color-text-tertiary);
     transition: all 0.2s ease;
     padding: 8px 16px;
     border-radius: 12px;
 }
 
 .bottom-nav-item:hover {
-    color: var(--text-primary);
+    color: var(--color-text-primary);
     background: rgba(255, 255, 255, 0.03);
 }
 
 .bottom-nav-item.active {
-    color: var(--primary);
+    color: var(--color-accent-primary);
+    background: var(--color-accent-muted);
 }
 
 .bottom-nav-item.active svg {
-    filter: drop-shadow(0 0 8px rgba(118, 71, 235, 0.5));
+    filter: drop-shadow(0 0 8px var(--color-accent-glow));
 }
 
 .bottom-nav-label {
