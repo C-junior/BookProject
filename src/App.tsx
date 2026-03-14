@@ -249,6 +249,12 @@ function App() {
                 {activeTab === 'store' && (
                     <StoreView />
                 )}
+                {activeTab === 'skins' && (
+                    <div style={{ padding: '80px 20px', textAlign: 'center' }}>
+                        <h2>Skins & Customization</h2>
+                        <p style={{ color: 'var(--text-muted)' }}>More customizations will be added here later.</p>
+                    </div>
+                )}
                 {activeTab === 'settings' && (
                     <div style={{ padding: '80px 20px', textAlign: 'center' }}>
                         <h2>Settings</h2>

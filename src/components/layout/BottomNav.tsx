@@ -1,4 +1,4 @@
-import { Library, ShoppingBag, Settings } from 'lucide-react'
+import { Library, ShoppingBag, Settings, Palette } from 'lucide-react'
 import { useNavigationStore } from '@/stores/navigationStore'
 import { useTranslation } from 'react-i18next'
 import './BottomNav.css'
@@ -26,6 +26,15 @@ export function BottomNav() {
                 >
                     <ShoppingBag size={24} />
                     <span className="bottom-nav-label">Store</span>
+                </button>
+
+                <button
+                    className={`bottom-nav-item ${activeTab === 'skins' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('skins')}
+                    aria-label={t('nav.skins') || 'Skins'}
+                >
+                    <Palette size={24} />
+                    <span className="bottom-nav-label">Skins</span>
                 </button>
 
                 <button
