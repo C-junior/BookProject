@@ -124,7 +124,7 @@ export interface UserProfile {
 
 export interface ReaderPreferences {
     theme: 'light' | 'dark' | 'sepia' | 'mint' | 'warm' | 'custom'
-    skin?: 'default' | 'magic'
+    skin?: 'default' | 'magic' | 'sakura'
     readingMode: 'paginated' | 'vertical-scroll'
     customTheme?: CustomTheme
     fontFamily: string

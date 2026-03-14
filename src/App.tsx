@@ -114,10 +114,11 @@ function App() {
     // Apply theme and skin from the active user's saved preferences
     useEffect(() => {
         const appliedPreferences = currentUser?.preferences ?? preferences
+        const activeSkin = appliedPreferences.skin
 
         document.documentElement.setAttribute('data-theme', appliedPreferences.theme)
-        if (appliedPreferences.skin === 'magic') {
-             document.documentElement.setAttribute('data-skin', 'magic')
+        if (activeSkin && activeSkin !== 'default') {
+             document.documentElement.setAttribute('data-skin', activeSkin)
         } else {
              document.documentElement.removeAttribute('data-skin')
         }

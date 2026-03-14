@@ -1,5 +1,5 @@
 import { useUserStore } from '@/stores/userStore'
-import { Check, Sparkles, Monitor } from 'lucide-react'
+import { Check, Sparkles, Monitor, Flower2 } from 'lucide-react'
 import './SkinsView.css'
 
 export function SkinsView() {
@@ -9,7 +9,7 @@ export function SkinsView() {
 
     const currentSkin = currentUser.preferences.skin || 'default'
 
-    const handleSelectSkin = async (skin: 'default' | 'magic') => {
+    const handleSelectSkin = async (skin: 'default' | 'magic' | 'sakura') => {
         await updateCurrentUserPreferences({ skin })
     }
 
@@ -52,6 +52,24 @@ export function SkinsView() {
                         <h3>Magic</h3>
                         <p>Mystical theme with a starry background</p>
                         {currentSkin === 'magic' && (
+                            <div className="active-badge">
+                                <Check size={14} /> Active
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div
+                    className={`skin-card ${currentSkin === 'sakura' ? 'active' : ''}`}
+                    onClick={() => handleSelectSkin('sakura')}
+                >
+                    <div className="skin-preview sakura-preview">
+                        <Flower2 className="skin-icon" />
+                    </div>
+                    <div className="skin-info">
+                        <h3>Sakura</h3>
+                        <p>Soft cherry blossom theme with warm paper and pink accents</p>
+                        {currentSkin === 'sakura' && (
                             <div className="active-badge">
                                 <Check size={14} /> Active
                             </div>

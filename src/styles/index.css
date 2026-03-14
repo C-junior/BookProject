@@ -349,8 +349,49 @@ h6 {
   --shadow-gold: 0 0 15px var(--color-accent-glow);
 }
 
+[data-skin="sakura"] {
+  background-image:
+    linear-gradient(180deg, rgba(255, 249, 243, 0.72) 0%, rgba(255, 244, 238, 0.68) 100%),
+    url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/sakura-bg-skin.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+
+  --color-bg-primary: rgba(255, 247, 242, 0.88);
+  --color-bg-secondary: rgba(255, 240, 235, 0.9);
+  --color-bg-tertiary: rgba(125, 92, 96, 0.92);
+  --color-bg-elevated: rgba(255, 248, 244, 0.93);
+  --color-bg-glass: rgba(255, 249, 246, 0.72);
+
+  --color-text-primary: #2f1f24;
+  --color-text-secondary: #6a4e58;
+  --color-text-tertiary: #9d7e86;
+  --color-text-inverse: #fff7f3;
+
+  --color-accent-primary: #c15378;
+  --color-accent-secondary: #dd7f9e;
+  --color-accent-tertiary: #8d415b;
+  --color-accent-muted: rgba(193, 83, 120, 0.14);
+  --color-accent-glow: rgba(221, 127, 158, 0.28);
+
+  --color-warm: #b18a4f;
+  --color-warm-muted: rgba(177, 138, 79, 0.14);
+  --color-warm-glow: rgba(177, 138, 79, 0.2);
+
+  --color-border: rgba(173, 128, 139, 0.24);
+  --color-border-strong: rgba(173, 128, 139, 0.42);
+  --color-border-accent: rgba(193, 83, 120, 0.28);
+
+  --shadow-glow: 0 0 20px var(--color-accent-glow);
+  --shadow-gold: 0 0 15px var(--color-warm-glow);
+}
+
 [data-skin="magic"] body {
   background-color: transparent; /* Let the html overlay show */
+}
+
+[data-skin="sakura"] body {
+  background-color: transparent;
 }
 
 /* Ensure glass morphism is stronger on magic skin to keep text readable */
@@ -360,11 +401,23 @@ h6 {
   border: 1px solid var(--color-border);
 }
 
+[data-skin="sakura"] .glass {
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(207, 163, 173, 0.3);
+}
+
 /* Restyle bottom nav to match the skin better */
 [data-skin="magic"] .bottom-nav {
   background: rgba(15, 20, 35, 0.85);
   border-top: 1px solid var(--color-accent-muted);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+[data-skin="sakura"] .bottom-nav {
+  background: rgba(255, 244, 240, 0.82);
+  border-top: 1px solid rgba(194, 126, 146, 0.18);
+  box-shadow: 0 -8px 24px rgba(127, 81, 96, 0.12);
 }
 
 [data-skin="magic"] .bottom-nav-item.active {
@@ -374,6 +427,15 @@ h6 {
 
 [data-skin="magic"] .bottom-nav-item.active svg {
   filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.3));
+}
+
+[data-skin="sakura"] .bottom-nav-item.active {
+  color: var(--color-accent-primary);
+  background: rgba(193, 83, 120, 0.1);
+}
+
+[data-skin="sakura"] .bottom-nav-item.active svg {
+  filter: drop-shadow(0 0 8px rgba(221, 127, 158, 0.24));
 }
 
 /* ---------- Base Styles ---------- */

@@ -14,7 +14,7 @@
 }
 
 .skins-header p {
-    color: var(--text-muted);
+    color: var(--color-text-secondary);
     margin: 0;
 }
 
@@ -27,7 +27,7 @@
 
 .skin-card {
     display: flex;
-    background: var(--surface-light);
+    background: linear-gradient(180deg, var(--color-bg-elevated), var(--color-bg-secondary));
     border: 2px solid transparent;
     border-radius: 12px;
     overflow: hidden;
@@ -36,8 +36,8 @@
 }
 
 .skin-card.active {
-    border-color: var(--accent-color);
-    box-shadow: 0 4px 12px rgba(var(--accent-color-rgb, 0, 0, 0), 0.15);
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 4px 12px var(--color-accent-muted);
 }
 
 .skin-preview {
@@ -65,6 +65,13 @@
     color: #ffd700; /* Gold icon */
 }
 
+.sakura-preview {
+    background-image: url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/sakura-bg-skin.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #b54f72;
+}
+
 .skin-icon {
     width: 32px;
     height: 32px;
@@ -86,7 +93,7 @@
 .skin-info p {
     margin: 0;
     font-size: 14px;
-    color: var(--text-muted);
+    color: var(--color-text-secondary);
 }
 
 .active-badge {
@@ -96,5 +103,5 @@
     margin-top: 8px;
     font-size: 13px;
     font-weight: 600;
-    color: var(--accent-color);
+    color: var(--color-accent-primary);
 }

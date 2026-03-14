@@ -603,3 +603,133 @@
 [data-skin="magic"] .book-card-badge {
     border-color: rgba(255, 241, 210, 0.3);
 }
+
+/* === SAKURA SKIN === */
+[data-skin="sakura"] .book-card {
+    border-radius: 22px;
+    border: 1px solid rgba(201, 168, 176, 0.34);
+    background:
+        linear-gradient(180deg, rgba(248, 239, 236, 0.94) 0%, rgba(242, 229, 226, 0.96) 100%);
+    box-shadow:
+        0 14px 24px rgba(169, 124, 136, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+[data-skin="sakura"] .book-card-cover {
+    background:
+        linear-gradient(180deg, rgba(244, 218, 224, 0.96) 0%, rgba(238, 201, 210, 0.9) 100%);
+    border-bottom: 1px solid rgba(214, 181, 189, 0.24);
+}
+
+[data-skin="sakura"] .book-card-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.55;
+    background:
+        radial-gradient(circle at 22% 22%, rgba(255, 255, 255, 0.54), transparent 18%),
+        radial-gradient(circle at 70% 84%, rgba(233, 162, 180, 0.3), transparent 24%);
+}
+
+[data-skin="sakura"] .book-card-cover-image {
+    filter: saturate(0.78) brightness(1.02);
+}
+
+[data-skin="sakura"] .book-card-cover-placeholder {
+    background:
+        linear-gradient(180deg, rgba(248, 232, 237, 0.98) 0%, rgba(236, 189, 203, 0.88) 100%);
+    color: #b25678;
+}
+
+[data-skin="sakura"] .book-card-cover-format {
+    color: #bf597b;
+}
+
+[data-skin="sakura"] .book-card-info {
+    gap: 10px;
+    background:
+        linear-gradient(180deg, rgba(248, 240, 237, 0.92) 0%, rgba(241, 228, 224, 0.94) 100%);
+}
+
+[data-skin="sakura"] .book-card-title {
+    color: #24181c;
+}
+
+[data-skin="sakura"] .book-card-author {
+    color: #654e56;
+}
+
+[data-skin="sakura"] .book-card-format {
+    border: 1px solid rgba(190, 92, 122, 0.2);
+    background: linear-gradient(135deg, #bc4f73 0%, #d3809e 100%);
+    color: #fff6f8;
+    box-shadow: inset 0 1px 0 rgba(255, 224, 234, 0.28);
+}
+
+[data-skin="sakura"] .book-card-size,
+[data-skin="sakura"] .book-card-cloud-label {
+    color: #6e545c;
+}
+
+[data-skin="sakura"] .book-card-progress-container {
+    background:
+        linear-gradient(to top, rgba(144, 74, 98, 0.18) 0%, rgba(144, 74, 98, 0) 100%);
+}
+
+[data-skin="sakura"] .book-card-progress-bar {
+    height: 5px;
+    background: linear-gradient(90deg, #be4f73 0%, #eca4bb 100%);
+    box-shadow: 0 0 10px rgba(212, 123, 150, 0.16);
+}
+
+[data-skin="sakura"] .book-card-progress-text {
+    color: #6a2f43;
+    text-shadow: none;
+}
+
+[data-skin="sakura"] .book-card-menu-button {
+    border-color: rgba(181, 129, 144, 0.28);
+    background:
+        radial-gradient(circle at 30% 30%, rgba(255, 241, 244, 0.95), rgba(240, 222, 225, 0.96));
+    color: #b04e70;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        0 6px 12px rgba(167, 118, 130, 0.1);
+}
+
+[data-skin="sakura"] .book-card-dropdown {
+    border-color: rgba(201, 168, 176, 0.34);
+    background:
+        linear-gradient(180deg, rgba(255, 248, 245, 0.98) 0%, rgba(249, 234, 230, 0.98) 100%);
+}
+
+[data-skin="sakura"] .book-card-dropdown-item {
+    color: #4d333c;
+}
+
+[data-skin="sakura"] .book-card-dropdown-item:hover {
+    background: rgba(193, 83, 120, 0.08);
+}
+
+[data-skin="sakura"] .book-card-dropdown-item-danger {
+    color: #cb5579;
+}
+
+[data-skin="sakura"] .book-card-cloud-badge {
+    background:
+        linear-gradient(135deg, #f8d9e1 0%, #c57b93 100%);
+    color: #6d3144;
+}
+
+[data-skin="sakura"] .book-card-download-overlay {
+    background: rgba(255, 241, 244, 0.82);
+}
+
+[data-skin="sakura"] .book-card-spinner {
+    color: #c65c81;
+}
+
+[data-skin="sakura"] .book-card-download-text {
+    color: #7b4456;
+}

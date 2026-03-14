@@ -1173,3 +1173,236 @@
         max-width: none;
     }
 }
+
+/* === SAKURA SKIN === */
+[data-skin="sakura"] .library {
+    background:
+        linear-gradient(180deg, rgba(255, 250, 247, 0.9) 0%, rgba(255, 243, 240, 0.9) 100%);
+}
+
+[data-skin="sakura"] .library::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.9;
+    background:
+        radial-gradient(circle at 86% 8%, rgba(202, 114, 145, 0.18), transparent 11%),
+        radial-gradient(circle at 16% 22%, rgba(255, 214, 223, 0.38), transparent 14%),
+        radial-gradient(circle at 78% 68%, rgba(246, 187, 203, 0.2), transparent 12%);
+}
+
+[data-skin="sakura"] .library::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image:
+        radial-gradient(circle at 18% 72%, rgba(231, 148, 173, 0.45) 0 5px, transparent 6px),
+        radial-gradient(circle at 57% 38%, rgba(231, 148, 173, 0.4) 0 5px, transparent 6px),
+        radial-gradient(circle at 86% 52%, rgba(231, 148, 173, 0.42) 0 6px, transparent 7px),
+        radial-gradient(circle at 10% 90%, rgba(231, 148, 173, 0.35) 0 4px, transparent 5px);
+}
+
+[data-skin="sakura"] .library-header,
+[data-skin="sakura"] .library-content {
+    position: relative;
+    z-index: 1;
+}
+
+[data-skin="sakura"] .library-header {
+    background:
+        linear-gradient(180deg, rgba(255, 248, 244, 0.88) 0%, rgba(255, 240, 235, 0.78) 100%);
+    border-bottom: 1px solid rgba(198, 160, 168, 0.24);
+    box-shadow:
+        0 12px 24px rgba(147, 104, 116, 0.08),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.45);
+}
+
+[data-skin="sakura"] .library-title {
+    background: linear-gradient(180deg, #d2b170 0%, #9f6f31 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+[data-skin="sakura"] .library-logo {
+    filter:
+        drop-shadow(0 6px 10px rgba(146, 107, 39, 0.18))
+        drop-shadow(0 0 8px rgba(255, 225, 210, 0.4));
+}
+
+[data-skin="sakura"] .library-pro-badge {
+    background: linear-gradient(180deg, #b08a46 0%, #8c672c 100%);
+    color: #fff6dd;
+    border: 1px solid rgba(162, 122, 56, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 247, 218, 0.55);
+}
+
+[data-skin="sakura"] .library-subtitle {
+    color: #2c2122;
+}
+
+[data-skin="sakura"] .library-action-btn,
+[data-skin="sakura"] .library-logout-btn,
+[data-skin="sakura"] .library-header-actions .sync-indicator {
+    border: 1px solid rgba(201, 168, 175, 0.4);
+    background: linear-gradient(180deg, rgba(255, 243, 238, 0.94) 0%, rgba(248, 227, 223, 0.92) 100%);
+    color: #6d5256;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.72),
+        0 8px 18px rgba(167, 118, 130, 0.08);
+}
+
+[data-skin="sakura"] .library-action-btn.library-action-btn-primary {
+    border-color: rgba(186, 97, 127, 0.52);
+    background:
+        linear-gradient(135deg, #c56a8d 0%, #d783a1 48%, #c24a74 100%);
+    color: #fff5f8;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 226, 236, 0.42),
+        0 10px 20px rgba(190, 96, 126, 0.18);
+}
+
+[data-skin="sakura"] .library-action-btn.library-action-btn-primary:hover,
+[data-skin="sakura"] .library-action-btn.library-action-btn-primary:focus-visible {
+    border-color: rgba(186, 97, 127, 0.72);
+}
+
+[data-skin="sakura"] .library-search-icon {
+    color: rgba(199, 150, 160, 0.8);
+}
+
+[data-skin="sakura"] .library-search-input {
+    border-radius: 18px;
+    border: 1px solid rgba(105, 84, 88, 0.16);
+    background: linear-gradient(180deg, rgba(89, 77, 80, 0.94) 0%, rgba(78, 66, 69, 0.96) 100%);
+    color: #f6dbe1;
+    box-shadow: 0 10px 22px rgba(90, 72, 76, 0.12);
+}
+
+[data-skin="sakura"] .library-search-input::placeholder {
+    color: rgba(238, 189, 198, 0.72);
+}
+
+[data-skin="sakura"] .library-search-input:focus {
+    border-color: rgba(199, 111, 139, 0.38);
+    background: linear-gradient(180deg, rgba(98, 82, 86, 0.95) 0%, rgba(82, 68, 71, 0.98) 100%);
+    box-shadow:
+        0 0 0 3px rgba(207, 127, 151, 0.12),
+        0 10px 22px rgba(90, 72, 76, 0.16);
+}
+
+[data-skin="sakura"] .library-sort,
+[data-skin="sakura"] .library-view-toggle {
+    border-radius: 18px;
+    border-color: rgba(205, 167, 177, 0.44);
+    background: linear-gradient(180deg, rgba(255, 245, 241, 0.94) 0%, rgba(250, 230, 225, 0.92) 100%);
+    color: #4d333c;
+}
+
+[data-skin="sakura"] .library-sort-select {
+    color: #4d333c;
+}
+
+[data-skin="sakura"] .library-view-button {
+    color: rgba(126, 76, 90, 0.72);
+}
+
+[data-skin="sakura"] .library-view-button.active {
+    background: linear-gradient(135deg, #bf486f 0%, #e3aec0 100%);
+    color: #fff6f8;
+}
+
+[data-skin="sakura"] .library-collection-chip {
+    border-color: rgba(203, 169, 177, 0.42);
+    background: linear-gradient(180deg, rgba(255, 245, 241, 0.96) 0%, rgba(249, 232, 228, 0.94) 100%);
+    color: #57353f;
+    box-shadow: 0 6px 14px rgba(173, 127, 139, 0.08);
+}
+
+[data-skin="sakura"] .library-collection-chip.active {
+    border-color: rgba(201, 88, 123, 0.22);
+    background: linear-gradient(135deg, #ff6a96 0%, #f85e7f 100%);
+    color: #fff7fa;
+}
+
+[data-skin="sakura"] .library-website-promo-btn,
+[data-skin="sakura"] .library-hero,
+[data-skin="sakura"] .library-stat-card,
+[data-skin="sakura"] .library-empty,
+[data-skin="sakura"] .library-error {
+    border: 1px solid rgba(205, 175, 183, 0.28);
+    background: linear-gradient(180deg, rgba(255, 247, 244, 0.94) 0%, rgba(249, 235, 230, 0.94) 100%);
+    box-shadow:
+        0 14px 24px rgba(163, 117, 130, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+[data-skin="sakura"] .library-website-title,
+[data-skin="sakura"] .library-hero-title,
+[data-skin="sakura"] .library-stat-value,
+[data-skin="sakura"] .library-empty-title {
+    color: #342126;
+}
+
+[data-skin="sakura"] .library-website-subtitle,
+[data-skin="sakura"] .library-hero-author,
+[data-skin="sakura"] .library-empty-text,
+[data-skin="sakura"] .library-stat-label {
+    color: #7a5b65;
+}
+
+[data-skin="sakura"] .library-hero-label,
+[data-skin="sakura"] .library-hero-progress-text {
+    color: #b55b78;
+}
+
+[data-skin="sakura"] .library-hero-progress-track {
+    background: rgba(199, 160, 170, 0.2);
+}
+
+[data-skin="sakura"] .library-hero-progress-fill {
+    background: linear-gradient(90deg, #c15077 0%, #ef9fba 100%);
+    box-shadow: 0 0 10px rgba(212, 117, 147, 0.18);
+}
+
+[data-skin="sakura"] .library-hero-cta {
+    background: linear-gradient(135deg, #c15378 0%, #e0a3b8 100%);
+    color: #fff5f8;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 227, 236, 0.4),
+        0 8px 18px rgba(190, 96, 126, 0.14);
+}
+
+[data-skin="sakura"] .library-grid {
+    gap: 18px;
+}
+
+[data-skin="sakura"] .library-spinner {
+    border-color: rgba(201, 161, 171, 0.18);
+    border-top-color: #d46f94;
+}
+
+[data-skin="sakura"] .import-error {
+    background: rgba(198, 84, 116, 0.1);
+}
+
+[data-skin="sakura"] .import-url-divider,
+[data-skin="sakura"] .delete-modal-content p {
+    color: #7a5b65;
+}
+
+[data-skin="sakura"] .import-url-input {
+    border-color: rgba(205, 167, 177, 0.42);
+    background: rgba(255, 245, 241, 0.92);
+    color: #4d333c;
+}
+
+[data-skin="sakura"] .import-url-input::placeholder {
+    color: rgba(126, 96, 105, 0.65);
+}
