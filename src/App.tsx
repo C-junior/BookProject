@@ -11,6 +11,9 @@ import { updateBook } from '@/services/storage/db'
 import { auth, isFirebaseConfigured, onAuthChange, handleRedirectResult, getUserProfile, isUserPro } from '@/services/firebase'
 import { clearAuthSession, getActiveUserId, getCachedAuthUserId, rememberAuthSession } from '@/services/auth/session'
 import type { Book } from '@/types'
+import { useNavigationStore } from '@/stores/navigationStore'
+import { BottomNav } from '@/components/layout/BottomNav'
+import { StoreView } from '@/components/store/StoreView'
 import './App.css'
 
 // Lazy-load heavy components — epub.js & pdfjs only download when needed
@@ -22,6 +25,7 @@ const ShareTarget = lazy(() => import('@/components/ui/ShareTarget').then(m => (
 function App() {
     const { loadUsers, currentUser } = useUserStore()
     const { isReading, currentBook, openBook, closeBook, preferences } = useReaderStore()
+    const { activeTab } = useNavigationStore()
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [isInitialized, setIsInitialized] = useState(false)
     const [isAuthResolved, setIsAuthResolved] = useState(false)
@@ -239,7 +243,33 @@ function App() {
     return (
         <ErrorBoundary>
             <div className="app">
-                <LibraryView onOpenBook={handleOpenBook} onLogout={handleLogout} />
+                {activeTab === 'library' && (
+                    <LibraryView onOpenBook={handleOpenBook} onLogout={handleLogout} />
+                )}
+                {activeTab === 'store' && (
+                    <StoreView />
+                )}
+                {activeTab === 'settings' && (
+                    <div style={{ padding: '80px 20px', textAlign: 'center' }}>
+                        <h2>Settings</h2>
+                        <p style={{ color: 'var(--text-muted)' }}>Coming soon...</p>
+                        <button 
+                            onClick={handleLogout}
+                            style={{ 
+                                marginTop: '20px', 
+                                padding: '10px 20px', 
+                                background: 'var(--surface-light)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '8px',
+                                color: 'var(--text-primary)',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Log Out
+                        </button>
+                    </div>
+                )}
+                <BottomNav />
             </div>
             {showUpdateToast && (
                 <UpdateToast onUpdate={handleSWUpdate} />
