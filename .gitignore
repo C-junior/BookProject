@@ -31,3 +31,7 @@ lerna-debug.log*
 .env.production
 .vercel
 .env*.local
+.env.vercel
+health_response.json
+stats.html
+upgrade-users.cjs

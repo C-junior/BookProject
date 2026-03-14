@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
-    "@vercel/node": "^5.6.12",
+    "@vercel/node": "^5.6.15",
     "dexie": "^4.0.11",
     "dexie-react-hooks": "^1.1.7",
     "epubjs": "^0.3.93",
