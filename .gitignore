@@ -35,3 +35,9 @@ lerna-debug.log*
 health_response.json
 stats.html
 upgrade-users.cjs
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

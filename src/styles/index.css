@@ -310,6 +310,67 @@ h6 {
   --color-border-accent: rgba(138, 109, 26, 0.3);
 }
 
+/* ============================================
+   Skins (Visual Overlays)
+   ============================================ */
+
+/* ---------- Magic Skin ---------- */
+[data-skin="magic"] {
+  /* Use the mystical starry background */
+  background-image: url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/magic-bg-skin.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+
+  /* Force background colors to be partially transparent so the image shows through */
+  --color-bg-primary: rgba(15, 20, 35, 0.7);
+  --color-bg-secondary: rgba(20, 25, 45, 0.8);
+  --color-bg-tertiary: rgba(30, 35, 60, 0.85);
+  --color-bg-elevated: rgba(35, 40, 70, 0.9);
+  --color-bg-glass: rgba(15, 20, 35, 0.6);
+
+  /* Override text for better contrast against the dark magical background */
+  --color-text-primary: #fdfbf7;
+  --color-text-secondary: #dcd0c0;
+  --color-text-tertiary: #a89f91;
+
+  /* Gold/Metallic Accent Palette based on the reference UI */
+  --color-accent-primary: #d4af37; /* Metallic Gold */
+  --color-accent-secondary: #e6c27a; /* Lighter Gold */
+  --color-accent-tertiary: #b5952f; /* Darker Gold */
+  --color-accent-muted: rgba(212, 175, 55, 0.2);
+  --color-accent-glow: rgba(212, 175, 55, 0.4);
+
+  /* Borders & Shadows */
+  --color-border: rgba(212, 175, 55, 0.3);
+  --color-border-strong: rgba(212, 175, 55, 0.6);
+  --color-border-accent: rgba(212, 175, 55, 0.5);
+  --shadow-glow: 0 0 20px var(--color-accent-glow);
+  --shadow-gold: 0 0 15px var(--color-accent-glow);
+}
+
+[data-skin="magic"] body {
+  background-color: transparent; /* Let the html overlay show */
+}
+
+/* Ensure glass morphism is stronger on magic skin to keep text readable */
+[data-skin="magic"] .glass {
+  backdrop-filter: blur(16px) saturate(200%);
+  -webkit-backdrop-filter: blur(16px) saturate(200%);
+  border: 1px solid var(--color-border);
+}
+
+/* Restyle bottom nav to match the skin better */
+[data-skin="magic"] .bottom-nav {
+  background: rgba(15, 20, 35, 0.85);
+  border-top: 1px solid var(--color-accent-muted);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+[data-skin="magic"] .nav-item.active {
+  color: var(--color-accent-primary);
+}
+
 /* ---------- Base Styles ---------- */
 body {
   background-color: var(--color-bg-primary);

@@ -14,6 +14,7 @@ import type { Book } from '@/types'
 import { useNavigationStore } from '@/stores/navigationStore'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { StoreView } from '@/components/store/StoreView'
+import { SkinsView } from '@/components/skins/SkinsView'
 import './App.css'
 
 // Lazy-load heavy components — epub.js & pdfjs only download when needed
@@ -104,10 +105,15 @@ function App() {
         return () => unsubscribe()
     }, [isInitialized, useFirebase])
 
-    // Apply theme from preferences
+    // Apply theme and skin from preferences
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', preferences.theme)
-    }, [preferences.theme])
+        if (preferences.skin === 'magic') {
+             document.documentElement.setAttribute('data-skin', 'magic')
+        } else {
+             document.documentElement.removeAttribute('data-skin')
+        }
+    }, [preferences.theme, preferences.skin])
 
     // Listen for service worker update events
     useEffect(() => {
@@ -250,10 +256,7 @@ function App() {
                     <StoreView />
                 )}
                 {activeTab === 'skins' && (
-                    <div style={{ padding: '80px 20px', textAlign: 'center' }}>
-                        <h2>Skins & Customization</h2>
-                        <p style={{ color: 'var(--text-muted)' }}>More customizations will be added here later.</p>
-                    </div>
+                    <SkinsView />
                 )}
                 {activeTab === 'settings' && (
                     <div style={{ padding: '80px 20px', textAlign: 'center' }}>
