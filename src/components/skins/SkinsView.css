@@ -72,6 +72,20 @@
     color: #b54f72;
 }
 
+.chronicles-preview {
+    background-image: url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/chronicles-bg-skin.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #79d7d6;
+}
+
+.synthborne-preview {
+    background-image: url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/chronicles-bg-skin.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #f4d062;
+}
+
 .skin-icon {
     width: 32px;
     height: 32px;

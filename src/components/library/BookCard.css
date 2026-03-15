@@ -733,3 +733,262 @@
 [data-skin="sakura"] .book-card-download-text {
     color: #7b4456;
 }
+
+/* === CHRONICLES SKIN === */
+[data-skin="chronicles"] .book-card {
+    border-radius: 22px;
+    border: 1px solid rgba(89, 130, 140, 0.28);
+    background:
+        linear-gradient(180deg, rgba(16, 29, 41, 0.94) 0%, rgba(10, 20, 30, 0.98) 100%);
+    box-shadow:
+        0 16px 26px rgba(1, 8, 15, 0.28),
+        inset 0 1px 0 rgba(112, 174, 182, 0.06);
+}
+
+[data-skin="chronicles"] .book-card-cover {
+    background:
+        linear-gradient(180deg, rgba(28, 48, 61, 0.96) 0%, rgba(14, 29, 40, 0.96) 100%);
+    border-bottom: 1px solid rgba(96, 136, 146, 0.24);
+}
+
+[data-skin="chronicles"] .book-card-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.36;
+    background:
+        linear-gradient(180deg, transparent 0%, rgba(23, 73, 76, 0.18) 100%),
+        radial-gradient(circle at 18% 18%, rgba(224, 180, 101, 0.2), transparent 16%),
+        linear-gradient(90deg, transparent 0 78%, rgba(83, 206, 196, 0.22) 78% 82%, transparent 82%);
+}
+
+[data-skin="chronicles"] .book-card-cover-image {
+    filter: saturate(0.82) contrast(1.04) brightness(0.82);
+}
+
+[data-skin="chronicles"] .book-card-cover-placeholder {
+    background:
+        linear-gradient(180deg, rgba(25, 43, 56, 0.98) 0%, rgba(17, 31, 43, 0.98) 100%);
+    color: #60cfc8;
+}
+
+[data-skin="chronicles"] .book-card-cover-format {
+    color: #d3ab64;
+}
+
+[data-skin="chronicles"] .book-card-info {
+    gap: 10px;
+    background:
+        linear-gradient(180deg, rgba(16, 29, 41, 0.94) 0%, rgba(10, 20, 30, 0.98) 100%);
+}
+
+[data-skin="chronicles"] .book-card-title {
+    color: #ebefea;
+}
+
+[data-skin="chronicles"] .book-card-author {
+    color: #a9bab8;
+}
+
+[data-skin="chronicles"] .book-card-format {
+    border: 1px solid rgba(86, 206, 196, 0.18);
+    background: linear-gradient(135deg, #12353c 0%, #2f8d8a 100%);
+    color: #dff7f4;
+    box-shadow: inset 0 1px 0 rgba(202, 245, 240, 0.14);
+}
+
+[data-skin="chronicles"] .book-card-size,
+[data-skin="chronicles"] .book-card-cloud-label {
+    color: #96abaa;
+}
+
+[data-skin="chronicles"] .book-card-progress-container {
+    background:
+        linear-gradient(to top, rgba(5, 13, 21, 0.82) 0%, rgba(5, 13, 21, 0) 100%);
+}
+
+[data-skin="chronicles"] .book-card-progress-bar {
+    height: 5px;
+    background: linear-gradient(90deg, #41c8bf 0%, #d7ae65 100%);
+    box-shadow: 0 0 10px rgba(89, 205, 197, 0.24);
+}
+
+[data-skin="chronicles"] .book-card-progress-text {
+    color: #edf2ed;
+}
+
+[data-skin="chronicles"] .book-card-menu-button {
+    border-color: rgba(95, 135, 145, 0.22);
+    background:
+        radial-gradient(circle at 30% 30%, rgba(33, 57, 71, 0.96), rgba(9, 20, 30, 0.98));
+    color: #9ed8d3;
+    box-shadow:
+        inset 0 1px 0 rgba(111, 174, 182, 0.08),
+        0 8px 14px rgba(0, 0, 0, 0.18);
+}
+
+[data-skin="chronicles"] .book-card-dropdown {
+    border-color: rgba(89, 130, 140, 0.28);
+    background:
+        linear-gradient(180deg, rgba(14, 28, 40, 0.98) 0%, rgba(9, 20, 30, 0.98) 100%);
+}
+
+[data-skin="chronicles"] .book-card-dropdown-item {
+    color: #deeeec;
+}
+
+[data-skin="chronicles"] .book-card-dropdown-item:hover {
+    background: rgba(74, 199, 192, 0.08);
+}
+
+[data-skin="chronicles"] .book-card-dropdown-item-danger {
+    color: #f38e85;
+}
+
+[data-skin="chronicles"] .book-card-cloud-badge {
+    background:
+        linear-gradient(135deg, #132e35 0%, #5dcfc7 100%);
+    color: #08161d;
+}
+
+[data-skin="chronicles"] .book-card-download-overlay {
+    background: rgba(6, 14, 22, 0.76);
+}
+
+[data-skin="chronicles"] .book-card-spinner {
+    color: #55cbc4;
+}
+
+/* === SYNTHBORNE SKIN === */
+[data-skin="synthborne"] .book-card {
+    border-radius: 22px;
+    border: 1px solid rgba(104, 117, 155, 0.26);
+    background:
+        linear-gradient(180deg, rgba(14, 21, 37, 0.95) 0%, rgba(9, 14, 25, 0.98) 100%);
+    box-shadow:
+        0 18px 28px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(169, 181, 221, 0.05);
+}
+
+[data-skin="synthborne"] .book-card-cover {
+    background:
+        linear-gradient(180deg, rgba(18, 28, 48, 0.98) 0%, rgba(11, 18, 33, 0.98) 100%);
+    border-bottom: 1px solid rgba(240, 199, 63, 0.16);
+}
+
+[data-skin="synthborne"] .book-card-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background:
+        radial-gradient(circle at 50% 34%, transparent 0 18%, rgba(240, 199, 63, 0.26) 18.5%, transparent 19.8%),
+        radial-gradient(circle at 50% 34%, transparent 0 28%, rgba(240, 199, 63, 0.12) 28.4%, transparent 29.6%),
+        radial-gradient(circle at 20% 14%, rgba(255, 232, 165, 0.22), transparent 10%),
+        repeating-linear-gradient(
+            90deg,
+            transparent 0 12px,
+            rgba(101, 116, 155, 0.05) 12px 13px
+        );
+}
+
+[data-skin="synthborne"] .book-card-cover-image {
+    filter: saturate(0.78) contrast(1.04) brightness(0.84);
+}
+
+[data-skin="synthborne"] .book-card-cover-placeholder {
+    background:
+        linear-gradient(180deg, rgba(19, 29, 49, 0.98) 0%, rgba(12, 18, 33, 0.98) 100%);
+    color: #f0c73f;
+}
+
+[data-skin="synthborne"] .book-card-cover-format {
+    color: #f0c73f;
+}
+
+[data-skin="synthborne"] .book-card-info {
+    gap: 10px;
+    background:
+        linear-gradient(180deg, rgba(14, 21, 37, 0.95) 0%, rgba(9, 14, 25, 0.98) 100%);
+}
+
+[data-skin="synthborne"] .book-card-title {
+    color: #f1f2ef;
+}
+
+[data-skin="synthborne"] .book-card-author {
+    color: #b7bec9;
+}
+
+[data-skin="synthborne"] .book-card-format {
+    border: 1px solid rgba(240, 199, 63, 0.22);
+    background: linear-gradient(135deg, #8c6920 0%, #f0c73f 100%);
+    color: #1a1308;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 245, 205, 0.34),
+        0 0 10px rgba(240, 199, 63, 0.12);
+}
+
+[data-skin="synthborne"] .book-card-size,
+[data-skin="synthborne"] .book-card-cloud-label {
+    color: #a0a9b7;
+}
+
+[data-skin="synthborne"] .book-card-progress-container {
+    background:
+        linear-gradient(to top, rgba(5, 9, 18, 0.82) 0%, rgba(5, 9, 18, 0) 100%);
+}
+
+[data-skin="synthborne"] .book-card-progress-bar {
+    height: 5px;
+    background: linear-gradient(90deg, #f0c73f 0%, #ffe087 100%);
+    box-shadow: 0 0 12px rgba(240, 199, 63, 0.26);
+}
+
+[data-skin="synthborne"] .book-card-progress-text {
+    color: #fff6d8;
+}
+
+[data-skin="synthborne"] .book-card-menu-button {
+    border-color: rgba(111, 124, 163, 0.22);
+    background:
+        radial-gradient(circle at 30% 30%, rgba(34, 42, 68, 0.96), rgba(10, 14, 26, 0.98));
+    color: #f1d675;
+    box-shadow:
+        inset 0 1px 0 rgba(172, 184, 222, 0.08),
+        0 8px 14px rgba(0, 0, 0, 0.22);
+}
+
+[data-skin="synthborne"] .book-card-dropdown {
+    border-color: rgba(104, 117, 155, 0.26);
+    background:
+        linear-gradient(180deg, rgba(13, 20, 35, 0.98) 0%, rgba(8, 12, 24, 0.98) 100%);
+}
+
+[data-skin="synthborne"] .book-card-dropdown-item {
+    color: #edf0f5;
+}
+
+[data-skin="synthborne"] .book-card-dropdown-item:hover {
+    background: rgba(240, 199, 63, 0.08);
+}
+
+[data-skin="synthborne"] .book-card-dropdown-item-danger {
+    color: #ef8a80;
+}
+
+[data-skin="synthborne"] .book-card-cloud-badge {
+    background:
+        linear-gradient(135deg, #8f6d20 0%, #f0c73f 100%);
+    color: #1b1307;
+}
+
+[data-skin="synthborne"] .book-card-download-overlay {
+    background: rgba(6, 10, 21, 0.8);
+}
+
+[data-skin="synthborne"] .book-card-spinner {
+    color: #f0c73f;
+}

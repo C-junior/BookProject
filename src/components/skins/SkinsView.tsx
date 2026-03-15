@@ -1,5 +1,5 @@
 import { useUserStore } from '@/stores/userStore'
-import { Check, Sparkles, Monitor, Flower2 } from 'lucide-react'
+import { Check, Sparkles, Monitor, Flower2, Cpu, Cross } from 'lucide-react'
 import './SkinsView.css'
 
 export function SkinsView() {
@@ -9,7 +9,7 @@ export function SkinsView() {
 
     const currentSkin = currentUser.preferences.skin || 'default'
 
-    const handleSelectSkin = async (skin: 'default' | 'magic' | 'sakura') => {
+    const handleSelectSkin = async (skin: 'default' | 'magic' | 'sakura' | 'chronicles' | 'synthborne') => {
         await updateCurrentUserPreferences({ skin })
     }
 
@@ -70,6 +70,42 @@ export function SkinsView() {
                         <h3>Sakura</h3>
                         <p>Soft cherry blossom theme with warm paper and pink accents</p>
                         {currentSkin === 'sakura' && (
+                            <div className="active-badge">
+                                <Check size={14} /> Active
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div
+                    className={`skin-card ${currentSkin === 'chronicles' ? 'active' : ''}`}
+                    onClick={() => handleSelectSkin('chronicles')}
+                >
+                    <div className="skin-preview chronicles-preview">
+                        <Cpu className="skin-icon" />
+                    </div>
+                    <div className="skin-info">
+                        <h3>Metal Solid</h3>
+                        <p>Ancient-future sci-fantasy skin with teal energy and metallic glow</p>
+                        {currentSkin === 'chronicles' && (
+                            <div className="active-badge">
+                                <Check size={14} /> Active
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div
+                    className={`skin-card ${currentSkin === 'synthborne' ? 'active' : ''}`}
+                    onClick={() => handleSelectSkin('synthborne')}
+                >
+                    <div className="skin-preview synthborne-preview">
+                        <Cross className="skin-icon" />
+                    </div>
+                    <div className="skin-info">
+                        <h3>Chronicles of Synthborne</h3>
+                        <p>Golden techno-mystic skin with sacred circuits and luminous relic energy</p>
+                        {currentSkin === 'synthborne' && (
                             <div className="active-badge">
                                 <Check size={14} /> Active
                             </div>
