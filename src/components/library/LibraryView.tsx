@@ -26,7 +26,8 @@ import {
     ChevronRight,
     ChartColumnBig,
     Sparkles,
-    Globe
+    Globe,
+    X
 } from 'lucide-react'
 import { parseBookFile } from '@/services/parsers'
 import { signOut, auth } from '@/services/firebase'
@@ -92,6 +93,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     const [importUrl, setImportUrl] = useState('')
     const [urlImporting, setUrlImporting] = useState(false)
     const [selectedSmartCollection, setSelectedSmartCollection] = useState<string | null>(null)
+    const [isSearchOpen, setIsSearchOpen] = useState(false)
 
     // Collections and progress state
     const [collections, setCollections] = useState<Collection[]>([])
@@ -415,6 +417,13 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
             .sort((a, b) => new Date(b.lastReadAt!).getTime() - new Date(a.lastReadAt!).getTime())[0] || null
         : null
 
+    const toggleSearch = () => {
+        setIsSearchOpen(!isSearchOpen)
+        if (isSearchOpen) {
+            setSearchQuery('')
+        }
+    }
+
     return (
         <div className="library">
             {/* Header */}
@@ -452,8 +461,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                             onClick={() => setShowStatsModal(true)}
                             aria-label={t('library.openReadingStatistics')}
                             title={t('library.openReadingStatistics')}
-                        >
-                        </Button>
+                        />
                         <Button
                             variant="secondary"
                             leftIcon={<FolderOpen size={18} />}
@@ -461,8 +469,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                             onClick={() => setShowCollectionsManager(true)}
                             aria-label={t('library.openCollections')}
                             title={t('library.openCollections')}
-                        >
-                        </Button>
+                        />
                         <Button
                             variant="primary"
                             leftIcon={<Plus size={18} />}
@@ -483,19 +490,34 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                 </div>
 
                 {/* Search and filters */}
-                <div className="library-toolbar">
-                    <div className="library-search">
-                        <Search size={18} className="library-search-icon" />
-                        <input
-                            type="text"
-                            placeholder={t('library.searchPlaceholder')}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="library-search-input"
-                        />
+                <div className={`library-toolbar ${isSearchOpen ? 'search-active' : ''}`}>
+                    <div className="library-search-overlay">
+                        <div className="library-search-container">
+                            <Search size={18} className="library-search-icon" />
+                            <input
+                                type="text"
+                                placeholder={t('library.searchPlaceholder')}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="library-search-input"
+                                autoFocus={isSearchOpen}
+                            />
+                            <button className="library-search-close" onClick={toggleSearch}>
+                                <X size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="library-filters">
+                        <button
+                            className={`library-search-toggle-btn ${isSearchOpen ? 'active' : ''}`}
+                            onClick={toggleSearch}
+                            aria-label={t('library.searchPlaceholder')}
+                            title={t('library.searchPlaceholder')}
+                        >
+                            <Search size={18} />
+                        </button>
+
                         <div className="library-sort">
                             <SortAsc size={16} />
                             <select
@@ -877,4 +899,3 @@ function formatDuration(totalSeconds: number): string {
     if (minutes === 0) return `${hours}h`
     return `${hours}h ${minutes}m`
 }
-
