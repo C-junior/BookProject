@@ -86,6 +86,13 @@
     color: #f4d062;
 }
 
+.samurai-preview {
+    background-image: url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/samurai-bg-skin.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #d8b46a;
+}
+
 .skin-icon {
     width: 32px;
     height: 32px;

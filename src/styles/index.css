@@ -461,6 +461,43 @@ h6 {
   --shadow-gold: 0 0 18px var(--color-warm-glow);
 }
 
+[data-skin="samurai"] {
+  background-image:
+    linear-gradient(180deg, rgba(50, 23, 12, 0.34) 0%, rgba(35, 17, 10, 0.48) 100%),
+    url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/samurai-bg-skin.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+
+  --color-bg-primary: rgba(47, 22, 12, 0.92);
+  --color-bg-secondary: rgba(67, 33, 18, 0.94);
+  --color-bg-tertiary: rgba(98, 52, 27, 0.95);
+  --color-bg-elevated: rgba(79, 39, 21, 0.95);
+  --color-bg-glass: rgba(52, 24, 13, 0.76);
+
+  --color-text-primary: #f5ecd7;
+  --color-text-secondary: #dbc6a5;
+  --color-text-tertiary: #a98d67;
+  --color-text-inverse: #2c140c;
+
+  --color-accent-primary: #bb492e;
+  --color-accent-secondary: #d36b45;
+  --color-accent-tertiary: #84311f;
+  --color-accent-muted: rgba(187, 73, 46, 0.16);
+  --color-accent-glow: rgba(187, 73, 46, 0.24);
+
+  --color-warm: #d0a54d;
+  --color-warm-muted: rgba(208, 165, 77, 0.16);
+  --color-warm-glow: rgba(208, 165, 77, 0.24);
+
+  --color-border: rgba(170, 123, 73, 0.24);
+  --color-border-strong: rgba(208, 165, 77, 0.34);
+  --color-border-accent: rgba(187, 73, 46, 0.28);
+
+  --shadow-glow: 0 0 20px var(--color-accent-glow);
+  --shadow-gold: 0 0 16px var(--color-warm-glow);
+}
+
 [data-skin="magic"] body {
   background-color: transparent; /* Let the html overlay show */
 }
@@ -474,6 +511,10 @@ h6 {
 }
 
 [data-skin="synthborne"] body {
+  background-color: transparent;
+}
+
+[data-skin="samurai"] body {
   background-color: transparent;
 }
 
@@ -502,6 +543,12 @@ h6 {
   border: 1px solid rgba(127, 142, 182, 0.24);
 }
 
+[data-skin="samurai"] .glass {
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid rgba(170, 123, 73, 0.24);
+}
+
 /* Restyle bottom nav to match the skin better */
 [data-skin="magic"] .bottom-nav {
   background: rgba(15, 20, 35, 0.85);
@@ -525,6 +572,12 @@ h6 {
   background: rgba(6, 10, 21, 0.86);
   border-top: 1px solid rgba(240, 199, 63, 0.14);
   box-shadow: 0 -10px 28px rgba(1, 6, 14, 0.42);
+}
+
+[data-skin="samurai"] .bottom-nav {
+  background: rgba(53, 24, 13, 0.86);
+  border-top: 1px solid rgba(208, 165, 77, 0.16);
+  box-shadow: 0 -10px 24px rgba(24, 10, 6, 0.34);
 }
 
 [data-skin="magic"] .bottom-nav-item.active {
@@ -561,6 +614,15 @@ h6 {
 
 [data-skin="synthborne"] .bottom-nav-item.active svg {
   filter: drop-shadow(0 0 10px rgba(240, 199, 63, 0.28));
+}
+
+[data-skin="samurai"] .bottom-nav-item.active {
+  color: var(--color-warm);
+  background: rgba(208, 165, 77, 0.12);
+}
+
+[data-skin="samurai"] .bottom-nav-item.active svg {
+  filter: drop-shadow(0 0 8px rgba(208, 165, 77, 0.24));
 }
 
 /* ---------- Base Styles ---------- */

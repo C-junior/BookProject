@@ -1992,3 +1992,221 @@
 [data-skin="synthborne"] .import-url-input::placeholder {
     color: rgba(145, 156, 184, 0.6);
 }
+
+/* === SAMURAI SKIN === */
+[data-skin="samurai"] .library {
+    background:
+        linear-gradient(180deg, rgba(52, 24, 13, 0.95) 0%, rgba(39, 18, 10, 0.98) 100%);
+}
+
+[data-skin="samurai"] .library::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.28;
+    background:
+        radial-gradient(circle at 12% 82%, rgba(208, 165, 77, 0.12), transparent 12%),
+        radial-gradient(circle at 86% 72%, rgba(187, 73, 46, 0.12), transparent 12%),
+        repeating-radial-gradient(
+            circle at 50% 100%,
+            rgba(0, 0, 0, 0) 0 12px,
+            rgba(33, 14, 8, 0.16) 12px 13px
+        );
+}
+
+[data-skin="samurai"] .library-header,
+[data-skin="samurai"] .library-content {
+    position: relative;
+    z-index: 1;
+}
+
+[data-skin="samurai"] .library-header {
+    background:
+        linear-gradient(180deg, rgba(68, 33, 18, 0.9) 0%, rgba(54, 26, 14, 0.88) 100%);
+    border-bottom: 1px solid rgba(176, 132, 80, 0.22);
+    box-shadow:
+        0 14px 26px rgba(22, 9, 6, 0.28),
+        inset 0 -1px 0 rgba(223, 193, 148, 0.06);
+}
+
+[data-skin="samurai"] .library-logo {
+    filter:
+        drop-shadow(0 6px 12px rgba(0, 0, 0, 0.28))
+        drop-shadow(0 0 10px rgba(94, 194, 214, 0.18));
+}
+
+[data-skin="samurai"] .library-title {
+    background: linear-gradient(180deg, #efd79e 0%, #c79f4d 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+[data-skin="samurai"] .library-pro-badge {
+    background: linear-gradient(180deg, #ce8a26 0%, #9f6419 100%);
+    color: #fff3d9;
+    border: 1px solid rgba(214, 166, 76, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 245, 214, 0.3);
+}
+
+[data-skin="samurai"] .library-subtitle {
+    color: rgba(244, 233, 211, 0.84);
+}
+
+[data-skin="samurai"] .library-action-btn,
+[data-skin="samurai"] .library-logout-btn,
+[data-skin="samurai"] .library-header-actions .sync-indicator {
+    border: 1px solid rgba(167, 123, 73, 0.28);
+    background: linear-gradient(180deg, rgba(82, 43, 24, 0.96) 0%, rgba(58, 28, 15, 0.96) 100%);
+    color: #f0e0bf;
+    box-shadow:
+        inset 0 1px 0 rgba(238, 210, 168, 0.08),
+        0 10px 18px rgba(22, 10, 6, 0.18);
+}
+
+[data-skin="samurai"] .library-action-btn.library-action-btn-primary {
+    border-color: rgba(185, 91, 57, 0.44);
+    background: linear-gradient(135deg, #8a341f 0%, #b94a2e 48%, #cf6e43 100%);
+    color: #fff3e6;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 216, 196, 0.22),
+        0 10px 20px rgba(93, 34, 19, 0.22);
+}
+
+[data-skin="samurai"] .library-search-icon,
+[data-skin="samurai"] .library-search-close {
+    color: rgba(120, 93, 65, 0.74);
+}
+
+[data-skin="samurai"] .library-search-input {
+    border-radius: 18px;
+    border: 1px solid rgba(179, 140, 89, 0.32);
+    background: linear-gradient(180deg, #f4ead4 0%, #efe2c7 100%);
+    color: #4f2d1b;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 250, 239, 0.62),
+        0 10px 22px rgba(20, 8, 5, 0.18);
+}
+
+[data-skin="samurai"] .library-search-input::placeholder {
+    color: rgba(113, 83, 54, 0.62);
+}
+
+[data-skin="samurai"] .library-search-input:focus {
+    border-color: rgba(206, 165, 83, 0.46);
+    box-shadow:
+        0 0 0 3px rgba(208, 165, 77, 0.12),
+        0 10px 22px rgba(20, 8, 5, 0.2);
+}
+
+[data-skin="samurai"] .library-search-toggle-btn,
+[data-skin="samurai"] .library-sort,
+[data-skin="samurai"] .library-view-toggle {
+    height: 48px;
+    border-radius: 18px;
+    border-color: rgba(163, 120, 70, 0.28);
+    background: linear-gradient(180deg, rgba(79, 39, 21, 0.96) 0%, rgba(58, 28, 15, 0.96) 100%);
+    color: #e0c78e;
+}
+
+[data-skin="samurai"] .library-view-button.active {
+    background: linear-gradient(135deg, #a34129 0%, #cf6e43 54%, #d9af4f 100%);
+    color: #fff4ea;
+}
+
+[data-skin="samurai"] .library-search-toggle-btn.active {
+    background: linear-gradient(135deg, #b58c3f 0%, #d8b867 100%);
+    color: #4a2a18;
+}
+
+[data-skin="samurai"] .library-sort-select {
+    color: #f2e5c8;
+}
+
+[data-skin="samurai"] .library-view-button {
+    color: rgba(215, 194, 151, 0.72);
+}
+
+[data-skin="samurai"] .library-collection-chip {
+    border-color: rgba(159, 117, 69, 0.28);
+    background: linear-gradient(180deg, rgba(72, 35, 19, 0.96) 0%, rgba(54, 26, 14, 0.98) 100%);
+    color: #eeddb6;
+    box-shadow: 0 8px 16px rgba(21, 9, 6, 0.16);
+}
+
+[data-skin="samurai"] .library-collection-chip.active {
+    border-color: rgba(187, 73, 46, 0.42);
+    background: linear-gradient(135deg, #9e3b24 0%, #c55a38 100%);
+    color: #fff4e9;
+}
+
+[data-skin="samurai"] .library-website-promo-btn,
+[data-skin="samurai"] .library-hero,
+[data-skin="samurai"] .library-stat-card,
+[data-skin="samurai"] .library-empty,
+[data-skin="samurai"] .library-error {
+    border: 1px solid rgba(173, 131, 80, 0.22);
+    background: linear-gradient(180deg, rgba(79, 39, 21, 0.95) 0%, rgba(54, 26, 14, 0.97) 100%);
+    box-shadow:
+        0 16px 26px rgba(20, 8, 5, 0.22),
+        inset 0 1px 0 rgba(242, 221, 181, 0.06);
+}
+
+[data-skin="samurai"] .library-website-title,
+[data-skin="samurai"] .library-hero-title,
+[data-skin="samurai"] .library-stat-value,
+[data-skin="samurai"] .library-empty-title {
+    color: #f4e8cf;
+}
+
+[data-skin="samurai"] .library-website-subtitle,
+[data-skin="samurai"] .library-hero-author,
+[data-skin="samurai"] .library-empty-text,
+[data-skin="samurai"] .library-stat-label {
+    color: #dbc6a5;
+}
+
+[data-skin="samurai"] .library-hero-label,
+[data-skin="samurai"] .library-hero-progress-text {
+    color: #d5aa55;
+}
+
+[data-skin="samurai"] .library-hero-progress-track {
+    background: rgba(109, 73, 41, 0.28);
+}
+
+[data-skin="samurai"] .library-hero-progress-fill {
+    background: linear-gradient(90deg, #bf5c37 0%, #d9af4f 100%);
+    box-shadow: 0 0 10px rgba(208, 165, 77, 0.18);
+}
+
+[data-skin="samurai"] .library-hero-cta {
+    background: linear-gradient(135deg, #9e3b24 0%, #cf6e43 54%, #d9af4f 100%);
+    color: #fff3e5;
+}
+
+[data-skin="samurai"] .library-spinner {
+    border-color: rgba(173, 131, 80, 0.18);
+    border-top-color: #d5aa55;
+}
+
+[data-skin="samurai"] .import-error {
+    background: rgba(113, 36, 36, 0.16);
+}
+
+[data-skin="samurai"] .import-url-divider,
+[data-skin="samurai"] .delete-modal-content p {
+    color: #dbc6a5;
+}
+
+[data-skin="samurai"] .import-url-input {
+    border-color: rgba(173, 131, 80, 0.24);
+    background: rgba(79, 39, 21, 0.96);
+    color: #f0e0bf;
+}
+
+[data-skin="samurai"] .import-url-input::placeholder {
+    color: rgba(173, 151, 119, 0.58);
+}

@@ -1,5 +1,5 @@
 import { useUserStore } from '@/stores/userStore'
-import { Check, Sparkles, Monitor, Flower2, Cpu, Cross } from 'lucide-react'
+import { Check, Sparkles, Monitor, Flower2, Cpu, Cross, Shield } from 'lucide-react'
 import './SkinsView.css'
 
 export function SkinsView() {
@@ -9,7 +9,7 @@ export function SkinsView() {
 
     const currentSkin = currentUser.preferences.skin || 'default'
 
-    const handleSelectSkin = async (skin: 'default' | 'magic' | 'sakura' | 'chronicles' | 'synthborne') => {
+    const handleSelectSkin = async (skin: 'default' | 'magic' | 'sakura' | 'chronicles' | 'synthborne' | 'samurai') => {
         await updateCurrentUserPreferences({ skin })
     }
 
@@ -106,6 +106,24 @@ export function SkinsView() {
                         <h3>Chronicles of Synthborne</h3>
                         <p>Golden techno-mystic skin with sacred circuits and luminous relic energy</p>
                         {currentSkin === 'synthborne' && (
+                            <div className="active-badge">
+                                <Check size={14} /> Active
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div
+                    className={`skin-card ${currentSkin === 'samurai' ? 'active' : ''}`}
+                    onClick={() => handleSelectSkin('samurai')}
+                >
+                    <div className="skin-preview samurai-preview">
+                        <Shield className="skin-icon" />
+                    </div>
+                    <div className="skin-info">
+                        <h3>Samurai</h3>
+                        <p>Warm wood, parchment panels, and lacquer-red accents with traditional elegance</p>
+                        {currentSkin === 'samurai' && (
                             <div className="active-badge">
                                 <Check size={14} /> Active
                             </div>
