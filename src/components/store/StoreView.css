@@ -1,166 +1,471 @@
 .store-view {
-    padding: var(--spacing-4);
     min-height: 100vh;
-    padding-bottom: var(--bottom-nav-height, 80px); /* Leave space for BottomNav */
+    padding: clamp(20px, 4vw, 40px);
+    padding-bottom: calc(var(--bottom-nav-height, 80px) + 32px);
+    background:
+        radial-gradient(circle at top left, rgba(214, 168, 107, 0.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(83, 161, 154, 0.14), transparent 24%),
+        linear-gradient(180deg, rgba(8, 12, 18, 0.98) 0%, rgba(11, 18, 27, 1) 100%);
 }
 
-.store-header {
-    margin-bottom: var(--spacing-6);
-    margin-top: env(safe-area-inset-top, 0px);
+.store-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.9fr) minmax(280px, 0.9fr);
+    gap: 24px;
+    align-items: stretch;
+    margin-bottom: 28px;
 }
 
-.store-header h1 {
-    font-size: 2rem;
+.store-hero-copy,
+.store-hero-panel,
+.store-section {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(12, 18, 27, 0.72);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.store-hero-copy {
+    padding: clamp(24px, 4vw, 40px);
+    border-radius: 28px;
+}
+
+.store-eyebrow,
+.store-section-kicker,
+.store-panel-label {
+    display: inline-block;
+    margin-bottom: 10px;
+    font-size: 0.75rem;
     font-weight: 700;
-    margin-bottom: var(--spacing-1);
-    background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #d8b46a;
+}
+
+.store-hero-copy h1 {
+    margin: 0;
+    max-width: 12ch;
+    font-size: clamp(2.25rem, 5vw, 4.2rem);
+    line-height: 0.95;
+    color: #f6efe1;
 }
 
 .store-subtitle {
-    color: var(--text-muted);
-    font-size: 0.95rem;
+    max-width: 56ch;
+    margin: 16px 0 0;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: rgba(236, 236, 235, 0.78);
 }
 
-.store-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: var(--spacing-4);
+.store-hero-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
 }
 
-.store-book-card {
-    background: var(--surface-light);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid var(--border-color);
+.store-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: #f4efe4;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.store-pill-pro {
+    border-color: rgba(216, 180, 106, 0.25);
+    background: rgba(216, 180, 106, 0.16);
+}
+
+.store-hero-panel {
+    padding: 22px;
+    border-radius: 24px;
     display: flex;
     flex-direction: column;
+    gap: 14px;
+    justify-content: center;
 }
 
-.store-book-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-.store-book-cover {
-    aspect-ratio: 2 / 3;
-    width: 100%;
+.store-current-skin-preview {
+    min-height: 170px;
+    border-radius: 20px;
+    display: grid;
+    place-items: center;
     position: relative;
-    background: var(--surface);
     overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.store-book-cover img {
+.store-current-skin-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.store-current-skin-copy strong {
+    font-size: 1.05rem;
+    color: #fbf7ef;
+}
+
+.store-current-skin-copy span {
+    color: rgba(236, 236, 235, 0.72);
+    line-height: 1.5;
+}
+
+.store-content {
+    display: grid;
+    gap: 22px;
+}
+
+.store-section {
+    padding: clamp(20px, 3vw, 28px);
+    border-radius: 26px;
+}
+
+.store-feature-card {
+    display: grid;
+    grid-template-columns: minmax(220px, 290px) minmax(0, 1fr);
+    gap: 24px;
+}
+
+.store-feature-media {
+    border-radius: 22px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+    min-height: 100%;
+}
+
+.store-feature-media img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease;
 }
 
-.store-book-card:hover .store-book-cover img {
-    transform: scale(1.05);
-}
-
-.store-book-genre {
-    position: absolute;
-    top: var(--spacing-2);
-    left: var(--spacing-2);
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: white;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.store-book-info {
-    padding: var(--spacing-3);
+.store-feature-body {
     display: flex;
     flex-direction: column;
-    flex: 1;
+    gap: 18px;
 }
 
-.store-book-title {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 2px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    line-height: 1.3;
+.store-feature-heading h2,
+.store-section-header h2 {
+    margin: 0;
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    color: #f8f2e7;
 }
 
-.store-book-author {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-bottom: var(--spacing-3);
+.store-feature-heading p,
+.store-section-header p,
+.store-feature-description,
+.store-skin-info p,
+.store-inline-message {
+    margin: 0;
+    color: rgba(236, 236, 235, 0.74);
+    line-height: 1.65;
 }
 
-.store-book-meta {
+.store-meta-row,
+.store-tag-row,
+.store-action-row,
+.store-skin-title-row,
+.store-section-header {
     display: flex;
+    align-items: center;
+}
+
+.store-meta-row,
+.store-action-row,
+.store-section-header {
     justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
-    margin-bottom: var(--spacing-3);
+    gap: 16px;
 }
 
-.store-book-rating {
-    display: flex;
+.store-rating,
+.store-price,
+.store-tag,
+.store-skin-badge,
+.store-skin-accent {
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.store-rating {
+    color: #f5d17d;
+}
+
+.store-price {
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #f6f0e3;
+}
+
+.store-tag-row {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.store-tag {
+    min-height: 36px;
+    padding: 0 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgba(246, 240, 227, 0.82);
     font-size: 0.85rem;
-    font-weight: 500;
-    color: #ffd700;
 }
 
-.store-book-rating .star-icon {
-    fill: currentColor;
+.store-primary-btn,
+.store-secondary-btn,
+.store-skin-card {
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
-.store-book-price {
+.store-primary-btn,
+.store-secondary-btn {
+    min-height: 48px;
+    padding: 0 18px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
     font-size: 0.95rem;
     font-weight: 700;
-    color: var(--primary-light);
+    text-decoration: none;
 }
 
-.store-get-btn {
-    width: 100%;
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 8px;
-    border-radius: var(--radius-md);
-    font-weight: 600;
-    display: flex;
+.store-primary-btn {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
+    background: linear-gradient(135deg, #d8b46a 0%, #f0d9a6 100%);
+    color: #14181f;
+}
+
+.store-primary-btn:hover,
+.store-secondary-btn:hover,
+.store-skin-card:hover {
+    transform: translateY(-2px);
+}
+
+.store-primary-btn:disabled,
+.store-skin-card:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    transform: none;
+}
+
+.store-secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    color: #f7f2e8;
+}
+
+.store-inline-message {
+    color: #d8e9c5;
+}
+
+.store-section-header {
+    margin-bottom: 18px;
+}
+
+.store-section-header p {
+    max-width: 42ch;
+}
+
+.store-skins-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.store-skin-card {
+    width: 100%;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.02);
+    color: inherit;
+    text-align: left;
     cursor: pointer;
-    transition: all 0.2s ease;
 }
 
-.store-get-btn:hover {
-    background: var(--primary-light);
-    transform: translateY(-1px);
+.store-skin-card.active {
+    border-color: rgba(216, 180, 106, 0.75);
+    box-shadow: 0 14px 30px rgba(216, 180, 106, 0.16);
 }
 
-.store-get-btn:active {
-    transform: translateY(1px);
+.store-skin-preview {
+    min-height: 150px;
+    padding: 18px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
 }
 
-@media (max-width: 480px) {
-    .store-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-3);
+.store-skin-preview::after,
+.store-current-skin-preview::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(8, 12, 18, 0.42) 100%);
+}
+
+.store-skin-icon,
+.store-current-skin-preview svg {
+    position: relative;
+    z-index: 1;
+}
+
+.store-skin-icon {
+    width: 30px;
+    height: 30px;
+}
+
+.store-skin-accent {
+    position: relative;
+    z-index: 1;
+    min-height: 30px;
+    padding: 0 10px;
+    background: rgba(8, 12, 18, 0.5);
+    color: #fff7e5;
+    font-size: 0.75rem;
+}
+
+.store-skin-info {
+    padding: 18px;
+}
+
+.store-skin-title-row {
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.store-skin-title-row h3 {
+    margin: 0;
+    color: #f8f2e7;
+    font-size: 1rem;
+}
+
+.store-skin-badge {
+    min-height: 28px;
+    padding: 0 10px;
+    background: rgba(216, 180, 106, 0.16);
+    color: #f2d89e;
+    font-size: 0.78rem;
+}
+
+.default-preview {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(205, 213, 224, 0.85)),
+        linear-gradient(180deg, #d5dbe3 0%, #eef2f7 100%);
+    color: #48525f;
+}
+
+.magic-preview {
+    background-image:
+        linear-gradient(180deg, rgba(9, 12, 28, 0.28), rgba(9, 12, 28, 0.62)),
+        url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/magic-bg-skin.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #f5d17d;
+}
+
+.sakura-preview {
+    background-image:
+        linear-gradient(180deg, rgba(66, 24, 39, 0.12), rgba(66, 24, 39, 0.45)),
+        url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/sakura-bg-skin.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #ffd4df;
+}
+
+.chronicles-preview {
+    background-image:
+        linear-gradient(180deg, rgba(12, 35, 40, 0.2), rgba(12, 35, 40, 0.58)),
+        url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/chronicles-bg-skin.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #9deceb;
+}
+
+.synthborne-preview {
+    background-image:
+        linear-gradient(180deg, rgba(44, 35, 10, 0.12), rgba(44, 35, 10, 0.62)),
+        url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/chronicles-bg-skin.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #ffe29a;
+}
+
+.samurai-preview {
+    background-image:
+        linear-gradient(180deg, rgba(53, 24, 19, 0.16), rgba(53, 24, 19, 0.58)),
+        url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/samurai-bg-skin.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #f0cf8e;
+}
+
+@media (max-width: 900px) {
+    .store-hero,
+    .store-feature-card,
+    .store-section-header {
+        grid-template-columns: 1fr;
+    }
+
+    .store-meta-row,
+    .store-action-row,
+    .store-section-header,
+    .store-skin-title-row {
+        align-items: flex-start;
+    }
+
+    .store-meta-row,
+    .store-action-row,
+    .store-section-header {
+        flex-direction: column;
+    }
+
+    .store-feature-media {
+        max-width: 320px;
+    }
+}
+
+@media (max-width: 640px) {
+    .store-view {
+        padding: 16px;
+        padding-bottom: calc(var(--bottom-nav-height, 80px) + 20px);
+    }
+
+    .store-hero-copy h1 {
+        max-width: none;
+    }
+
+    .store-feature-media {
+        max-width: none;
+    }
+
+    .store-primary-btn,
+    .store-secondary-btn {
+        width: 100%;
     }
 }

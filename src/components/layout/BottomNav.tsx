@@ -1,11 +1,9 @@
-import { Library, ShoppingBag, Settings, Palette } from 'lucide-react'
+import { Library, Settings, Sparkles } from 'lucide-react'
 import { useNavigationStore } from '@/stores/navigationStore'
-import { useTranslation } from 'react-i18next'
 import './BottomNav.css'
 
 export function BottomNav() {
     const { activeTab, setActiveTab } = useNavigationStore()
-    const { t } = useTranslation()
 
     return (
         <nav className="bottom-nav">
@@ -13,34 +11,25 @@ export function BottomNav() {
                 <button
                     className={`bottom-nav-item ${activeTab === 'library' ? 'active' : ''}`}
                     onClick={() => setActiveTab('library')}
-                    aria-label={t('nav.library') || 'Library'}
+                    aria-label="Library"
                 >
                     <Library size={24} />
                     <span className="bottom-nav-label">Library</span>
                 </button>
                 
                 <button
-                    className={`bottom-nav-item ${activeTab === 'store' ? 'active' : ''}`}
+                    className={`bottom-nav-item ${(activeTab === 'store' || activeTab === 'skins') ? 'active' : ''}`}
                     onClick={() => setActiveTab('store')}
-                    aria-label={t('nav.store') || 'Store'}
+                    aria-label="Discover"
                 >
-                    <ShoppingBag size={24} />
-                    <span className="bottom-nav-label">Store</span>
-                </button>
-
-                <button
-                    className={`bottom-nav-item ${activeTab === 'skins' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('skins')}
-                    aria-label={t('nav.skins') || 'Skins'}
-                >
-                    <Palette size={24} />
-                    <span className="bottom-nav-label">Skins</span>
+                    <Sparkles size={24} />
+                    <span className="bottom-nav-label">Discover</span>
                 </button>
 
                 <button
                     className={`bottom-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
                     onClick={() => setActiveTab('settings')}
-                    aria-label={t('nav.settings') || 'Settings'}
+                    aria-label="Settings"
                 >
                     <Settings size={24} />
                     <span className="bottom-nav-label">Settings</span>
