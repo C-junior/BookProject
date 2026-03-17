@@ -11,7 +11,7 @@ import { updateBook } from '@/services/storage/db'
 import { auth, isFirebaseConfigured, onAuthChange, handleRedirectResult, getUserProfile, isUserPro } from '@/services/firebase'
 import { clearAuthSession, getActiveUserId, getCachedAuthUserId, rememberAuthSession } from '@/services/auth/session'
 import type { Book } from '@/types'
-import { useNavigationStore } from '@/stores/navigationStore'
+import { useNavigationStore, type TabId } from '@/stores/navigationStore'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { StoreView } from '@/components/store/StoreView'
 import './App.css'
@@ -110,14 +110,26 @@ function App() {
         }
     }, [currentUser?.preferences, setPreferences])
 
+    // Handle tab navigation from URL query params (e.g. ?tab=store)
+    // Persist across auth redirects using sessionStorage
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
-        const requestedTab = params.get('tab')
+        const urlTab = params.get('tab')
+        
+        if (urlTab) {
+            sessionStorage.setItem('pendingTab', urlTab)
+        }
+
+        const requestedTab = sessionStorage.getItem('pendingTab') || urlTab
 
         if (requestedTab === 'library' || requestedTab === 'store' || requestedTab === 'skins' || requestedTab === 'settings') {
-            setActiveTab(requestedTab)
+            setActiveTab(requestedTab as TabId)
+            // Once authenticated and tab is set, we can clear the pending state
+            if (isAuthenticated) {
+                sessionStorage.removeItem('pendingTab')
+            }
         }
-    }, [setActiveTab])
+    }, [setActiveTab, isAuthenticated])
 
     // Apply theme and skin from the active user's saved preferences
     useEffect(() => {
