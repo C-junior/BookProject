@@ -50,9 +50,9 @@ interface SkinOption {
 const FEATURED_BOOK: FeaturedBook = {
     id: 'chronicles_of_synthborne',
     title: 'Chronicles of Synthborne',
-    author: 'Codex Universe',
-    coverUrl: 'https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/0Ux5jpiusoOOpmJPNfpaMd7d9mg2/book-1771400697109-ri0nhi12s/cover.jpg',
-    bookUrl: 'https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/Chronicles_of_Synthborne.epub',
+    author: 'C. Junior',
+    coverUrl: 'https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/capa-book.jpg',
+    bookUrl: 'https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/Chronicles-of-Synthborne.epub',
     price: '$14.99',
     rating: 4.8,
     genre: 'Fantasy / Sci-Fi',
