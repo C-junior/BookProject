@@ -19,6 +19,7 @@ import { useNavigationStore } from '@/stores/navigationStore'
 import { parseBookFile } from '@/services/parsers'
 import { getActiveUserId } from '@/services/auth/session'
 import type { ReaderPreferences } from '@/types'
+import { UpgradePrompt } from '@/components/subscription/UpgradePrompt'
 import './StoreView.css'
 
 type SkinId = NonNullable<ReaderPreferences['skin']>
@@ -118,6 +119,7 @@ export function StoreView() {
     const [isImportingBook, setIsImportingBook] = useState(false)
     const [bookMessage, setBookMessage] = useState<string | null>(null)
     const [pendingSkin, setPendingSkin] = useState<SkinId | null>(null)
+    const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
 
     const activeUserId = getActiveUserId(currentUser?.id)
     const currentSkin = currentUser?.preferences.skin || 'default'
@@ -133,6 +135,12 @@ export function StoreView() {
     const handleImportFeaturedBook = async () => {
         if (alreadyOwned) {
             setActiveTab('library')
+            return
+        }
+
+        if (!isPro) {
+            setBookMessage('Chronicles of Synthborne is included with Pro. Upgrade to unlock it instantly.')
+            setShowUpgradePrompt(true)
             return
         }
 
@@ -262,7 +270,7 @@ export function StoreView() {
                                 ) : (
                                     <>
                                         <Wand2 size={16} />
-                                        {isPro ? 'Add to library' : 'Get featured book'}
+                                        {isPro ? 'Add to library' : 'Unlock with Pro'}
                                     </>
                                 )}
                             </button>
@@ -330,6 +338,13 @@ export function StoreView() {
                     </div>
                 </section>
             </main>
+
+            {showUpgradePrompt && (
+                <UpgradePrompt
+                    reason="premium_book"
+                    onClose={() => setShowUpgradePrompt(false)}
+                />
+            )}
         </div>
     )
 }

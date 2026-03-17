@@ -25,7 +25,7 @@ const ShareTarget = lazy(() => import('@/components/ui/ShareTarget').then(m => (
 function App() {
     const { loadUsers, currentUser } = useUserStore()
     const { isReading, currentBook, openBook, closeBook, preferences, setPreferences } = useReaderStore()
-    const { activeTab } = useNavigationStore()
+    const { activeTab, setActiveTab } = useNavigationStore()
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [isInitialized, setIsInitialized] = useState(false)
     const [isAuthResolved, setIsAuthResolved] = useState(false)
@@ -109,6 +109,15 @@ function App() {
             setPreferences(currentUser.preferences)
         }
     }, [currentUser?.preferences, setPreferences])
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const requestedTab = params.get('tab')
+
+        if (requestedTab === 'library' || requestedTab === 'store' || requestedTab === 'skins' || requestedTab === 'settings') {
+            setActiveTab(requestedTab)
+        }
+    }, [setActiveTab])
 
     // Apply theme and skin from the active user's saved preferences
     useEffect(() => {

@@ -206,6 +206,49 @@ These are parked for later but represent strong growth opportunities.
 
 ---
 
+## Recommended Tier Update
+
+The overall direction is strong: the best parts are the built-in trial, the hard library cap, and the mix of subscription plus one-time purchases. The main thing I would improve is the packaging, because right now too many different value props are stacked into a single `Pro` plan.
+
+### Suggested structure
+
+| Tier | Price Idea | Best For | Include |
+| :--- | :--- | :--- | :--- |
+| **Free** | $0 | Casual readers | 3 books, local only, basic themes, trial access |
+| **Plus** | $2.99-$4.99/mo | Readers who want utility | Higher book cap (10-20), cloud sync, no premium skins, no premium book bundle |
+| **Pro** | $7.99-$9.99/mo | Power users / fans | Unlimited books, premium book included, premium themes, skin discounts, future advanced tools |
+| **A la carte** | one-time | Users who avoid subscriptions | Buy a single book, skin, or bundle without subscribing |
+
+### Why this is stronger than Free + Pro only
+
+- `Plus` captures users who need sync and more storage but do not care about cosmetics or premium content.
+- `Pro` stays aspirational instead of becoming the only answer for every customer type.
+- A la carte purchases reduce churn pressure because users can still spend even if they do not want a subscription.
+- The premium book becomes a real upsell lever instead of the only premium hook.
+
+### Packaging recommendation
+
+- Put **cloud sync** in `Plus` and `Pro`. It is a utility feature, not a luxury feature.
+- Keep **premium books, exclusive skins, bundles, discounts, and future creator-style perks** in `Pro`.
+- Sell **individual books and skins separately** so free users still have a spending path.
+- Reserve **seasonal drops, founder packs, and collectible bundles** for one-time purchases or Pro discounts.
+
+### Revenue mechanics to add next
+
+1. Add a **one-time purchase SKU** for `Chronicles of Synthborne` before adding more premium books.
+2. Add **skin bundles** and a **starter pack** instead of only single-item purchases.
+3. Offer **annual plans** for `Plus` and `Pro` with 2 months free.
+4. Add a **Founder / Supporter pack** once, with badge + skin + book bundle, for your most loyal users.
+5. Track conversion separately for `book_limit`, `premium_book`, `sync_lock`, and `skin_store` so you know what actually sells.
+
+### Guardrails
+
+- Do not put every desirable feature into `Pro`, or users will feel forced instead of upgraded.
+- Do not gate too many reading basics; friction should push conversion, not punish reading.
+- If you add `Plus`, keep the message simple: `Plus = utility`, `Pro = utility + exclusives`.
+
+---
+
 ## Implementation Priority
 
 ```mermaid

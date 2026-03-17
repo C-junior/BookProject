@@ -44,6 +44,7 @@ import {
 } from '@/services/storage/db'
 import { TrialBanner } from '@/components/subscription/TrialBanner'
 import { UpgradePrompt } from '@/components/subscription/UpgradePrompt'
+import { useNavigationStore } from '@/stores/navigationStore'
 import './LibraryView.css'
 
 interface LibraryViewProps {
@@ -80,6 +81,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     } = useLibraryStore()
 
     const { currentUser } = useUserStore()
+    const { setActiveTab } = useNavigationStore()
     const activeUserId = getActiveUserId(currentUser?.id)
     const { t, i18n } = useTranslation()
 
@@ -597,19 +599,18 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                 <TrialBanner />
 
                 {/* Book Website Button */}
-                <a
-                    href="https://crhonicles-of-synthborn.vercel.app/"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                <button
+                    type="button"
                     className="library-website-promo-btn"
-                    aria-label="Visit Synthborne website"
-                    title="Visit Chronicles of Synthborn"
+                    onClick={() => setActiveTab('store')}
+                    aria-label="Open Synthborne in the store"
+                    title="Open Chronicles of Synthborne in the store"
                 >
                     <div className="library-website-btn-content">
                         <span className="library-website-title">SYNTHBORNE</span>
-                        <span className="library-website-subtitle">Explore the world behind the book {'->'}</span>
+                        <span className="library-website-subtitle">Open the store page and manage access {'->'}</span>
                     </div>
-                </a>
+                </button>
 
                 {/* Continue Reading Hero */}
                 {lastReadBook && !isLoading && !error && (
