@@ -1,135 +1,120 @@
 import { useUserStore } from '@/stores/userStore'
 import { Check, Sparkles, Monitor, Flower2, Cpu, Cross, Shield } from 'lucide-react'
+import type { ReaderPreferences } from '@/types'
 import './SkinsView.css'
+
+type SkinId = NonNullable<ReaderPreferences['skin']>
+
+interface SkinOption {
+    id: SkinId
+    name: string
+    blurb: string
+    accent: string
+    previewClassName: string
+    Icon: typeof Monitor
+}
+
+const SKIN_OPTIONS: SkinOption[] = [
+    {
+        id: 'default',
+        name: 'Default',
+        blurb: 'Clean, minimal, and distraction-free.',
+        accent: 'Balanced',
+        previewClassName: 'default-preview',
+        Icon: Monitor
+    },
+    {
+        id: 'magic',
+        name: 'Magic',
+        blurb: 'Starry, luminous, and a little theatrical.',
+        accent: 'Cinematic',
+        previewClassName: 'magic-preview',
+        Icon: Sparkles
+    },
+    {
+        id: 'sakura',
+        name: 'Sakura',
+        blurb: 'Warm paper tones with soft blossom color.',
+        accent: 'Calm',
+        previewClassName: 'sakura-preview',
+        Icon: Flower2
+    },
+    {
+        id: 'chronicles',
+        name: 'Metal Solid',
+        blurb: 'Teal energy, steel texture, ancient-future mood.',
+        accent: 'Bold',
+        previewClassName: 'chronicles-preview',
+        Icon: Cpu
+    },
+    {
+        id: 'synthborne',
+        name: 'Synthborne',
+        blurb: 'Gold relic energy and sacred circuit drama.',
+        accent: 'Signature',
+        previewClassName: 'synthborne-preview',
+        Icon: Cross
+    },
+    {
+        id: 'samurai',
+        name: 'Samurai',
+        blurb: 'Wood, parchment, and lacquer-red elegance.',
+        accent: 'Grounded',
+        previewClassName: 'samurai-preview',
+        Icon: Shield
+    }
+]
 
 export function SkinsView() {
     const { currentUser, updateCurrentUserPreferences } = useUserStore()
-    
+
     if (!currentUser) return null
 
     const currentSkin = currentUser.preferences.skin || 'default'
 
-    const handleSelectSkin = async (skin: 'default' | 'magic' | 'sakura' | 'chronicles' | 'synthborne' | 'samurai') => {
+    const handleSelectSkin = async (skin: SkinId) => {
         await updateCurrentUserPreferences({ skin })
     }
 
     return (
         <div className="skins-view">
             <header className="skins-header">
+                <span className="skins-eyebrow">Style Studio</span>
                 <h1>App Skins</h1>
-                <p>Customize the look and feel of PageTurner</p>
+                <p>Choose a visual theme — your reading mood, your rules.</p>
             </header>
 
             <div className="skins-grid">
-                {/* Default Skin */}
-                <div 
-                    className={`skin-card ${currentSkin === 'default' ? 'active' : ''}`}
-                    onClick={() => handleSelectSkin('default')}
-                >
-                    <div className="skin-preview default-preview">
-                        <Monitor className="skin-icon" />
-                    </div>
-                    <div className="skin-info">
-                        <h3>Default</h3>
-                        <p>Clean and minimal reading experience</p>
-                        {currentSkin === 'default' && (
-                            <div className="active-badge">
-                                <Check size={14} /> Active
-                            </div>
-                        )}
-                    </div>
-                </div>
+                {SKIN_OPTIONS.map((skin) => {
+                    const isActive = currentSkin === skin.id
 
-                {/* Magic Skin */}
-                <div 
-                    className={`skin-card ${currentSkin === 'magic' ? 'active' : ''}`}
-                    onClick={() => handleSelectSkin('magic')}
-                >
-                    <div className="skin-preview magic-preview">
-                        <Sparkles className="skin-icon" />
-                    </div>
-                    <div className="skin-info">
-                        <h3>Magic</h3>
-                        <p>Mystical theme with a starry background</p>
-                        {currentSkin === 'magic' && (
-                            <div className="active-badge">
-                                <Check size={14} /> Active
+                    return (
+                        <button
+                            key={skin.id}
+                            type="button"
+                            className={`skin-card ${isActive ? 'active' : ''}`}
+                            onClick={() => handleSelectSkin(skin.id)}
+                        >
+                            <div className={`skin-preview ${skin.previewClassName}`}>
+                                <skin.Icon className="skin-icon" />
+                                <span className="skin-accent-label">{skin.accent}</span>
                             </div>
-                        )}
-                    </div>
-                </div>
 
-                <div
-                    className={`skin-card ${currentSkin === 'sakura' ? 'active' : ''}`}
-                    onClick={() => handleSelectSkin('sakura')}
-                >
-                    <div className="skin-preview sakura-preview">
-                        <Flower2 className="skin-icon" />
-                    </div>
-                    <div className="skin-info">
-                        <h3>Sakura</h3>
-                        <p>Soft cherry blossom theme with warm paper and pink accents</p>
-                        {currentSkin === 'sakura' && (
-                            <div className="active-badge">
-                                <Check size={14} /> Active
+                            <div className="skin-info">
+                                <div className="skin-title-row">
+                                    <h3>{skin.name}</h3>
+                                    {isActive && (
+                                        <span className="active-badge">
+                                            <Check size={13} />
+                                            Active
+                                        </span>
+                                    )}
+                                </div>
+                                <p>{skin.blurb}</p>
                             </div>
-                        )}
-                    </div>
-                </div>
-
-                <div
-                    className={`skin-card ${currentSkin === 'chronicles' ? 'active' : ''}`}
-                    onClick={() => handleSelectSkin('chronicles')}
-                >
-                    <div className="skin-preview chronicles-preview">
-                        <Cpu className="skin-icon" />
-                    </div>
-                    <div className="skin-info">
-                        <h3>Metal Solid</h3>
-                        <p>Ancient-future sci-fantasy skin with teal energy and metallic glow</p>
-                        {currentSkin === 'chronicles' && (
-                            <div className="active-badge">
-                                <Check size={14} /> Active
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div
-                    className={`skin-card ${currentSkin === 'synthborne' ? 'active' : ''}`}
-                    onClick={() => handleSelectSkin('synthborne')}
-                >
-                    <div className="skin-preview synthborne-preview">
-                        <Cross className="skin-icon" />
-                    </div>
-                    <div className="skin-info">
-                        <h3>Chronicles of Synthborne</h3>
-                        <p>Golden techno-mystic skin with sacred circuits and luminous relic energy</p>
-                        {currentSkin === 'synthborne' && (
-                            <div className="active-badge">
-                                <Check size={14} /> Active
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div
-                    className={`skin-card ${currentSkin === 'samurai' ? 'active' : ''}`}
-                    onClick={() => handleSelectSkin('samurai')}
-                >
-                    <div className="skin-preview samurai-preview">
-                        <Shield className="skin-icon" />
-                    </div>
-                    <div className="skin-info">
-                        <h3>Samurai</h3>
-                        <p>Warm wood, parchment panels, and lacquer-red accents with traditional elegance</p>
-                        {currentSkin === 'samurai' && (
-                            <div className="active-badge">
-                                <Check size={14} /> Active
-                            </div>
-                        )}
-                    </div>
-                </div>
+                        </button>
+                    )
+                })}
             </div>
         </div>
     )
