@@ -37,13 +37,18 @@ export function TrialBanner() {
     const isExpired = daysRemaining === 0
 
     const handleUpgrade = async () => {
-        const userId = auth.currentUser?.uid
-        if (!userId) return
+        const user = auth.currentUser
+        const userId = user?.uid
+        if (!user || !userId) return
 
         try {
+            const token = await user.getIdToken()
             const response = await fetch('/api/create-checkout-session', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ userId })
             })
             const data = await response.json()

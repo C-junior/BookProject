@@ -1,5 +1,45 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
+import admin from 'firebase-admin';
+
+// Initialize Firebase Admin (only once)
+function initFirebase() {
+    try {
+        if (admin.apps?.length) {
+            return; // already initialized
+        }
+    } catch {
+        // Not initialized yet, proceed
+    }
+
+    try {
+        let serviceAccount: admin.ServiceAccount;
+
+        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        } else {
+            const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+            if (!privateKey) {
+                throw new Error('FIREBASE_PRIVATE_KEY is not set');
+            }
+            serviceAccount = {
+                projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                privateKey: privateKey.replace(/\\n/g, '\n'),
+            };
+        }
+
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+        });
+        console.log('Firebase Admin initialized successfully in create-checkout-session');
+    } catch (error: any) {
+        console.error('Firebase admin initialization error:', error?.message || error);
+    }
+}
+
+// Initialize at module load
+initFirebase();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -19,6 +59,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (!userId) {
             return res.status(400).json({ error: 'User ID is required' });
+        }
+
+        const authHeader = req.headers.authorization;
+        if (!authHeader?.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Unauthorized: Missing or invalid Authorization header' });
+        }
+        const idToken = authHeader.split('Bearer ')[1];
+
+        // Guard: check Firebase is initialized
+        const apps = admin.apps || [];
+        if (!apps.length) {
+            initFirebase();
+            if (!(admin.apps || []).length) {
+                return res.status(500).json({ error: 'Server error: Firebase not initialized' });
+            }
+        }
+
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        if (decodedToken.uid !== userId) {
+            return res.status(403).json({ error: 'Forbidden: UID mismatch' });
         }
 
         let successUrl = 'https://codex-two-teal.vercel.app/';

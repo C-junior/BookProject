@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useReaderStore } from '@/stores/readerStore'
 import { Search, X, ChevronUp, ChevronDown, Loader2 } from 'lucide-react'
+import DOMPurify from 'dompurify'
 import type { SearchResult } from '@/types'
 import './SearchPanel.css'
 
@@ -185,7 +186,7 @@ export function SearchPanel({ onSearch, onNavigate }: SearchPanelProps) {
                                     <span
                                         className="search-result-excerpt"
                                         dangerouslySetInnerHTML={{
-                                            __html: highlightQuery(result.excerpt, searchQuery)
+                                            __html: DOMPurify.sanitize(highlightQuery(result.excerpt, searchQuery))
                                         }}
                                     />
                                 </button>

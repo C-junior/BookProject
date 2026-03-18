@@ -17,17 +17,21 @@ export function CheckoutButton({ targetUrl, buttonText = 'Subscribe to Pro' }: C
         setError(null)
 
         try {
-            const userId = auth.currentUser?.uid
+            const user = auth.currentUser
+            const userId = user?.uid
 
-            if (!userId) {
+            if (!user || !userId) {
                 // If not logged in, we can't tie a subscription to them.
                 throw new Error('You must be logged in to subscribe')
             }
+
+            const token = await user.getIdToken()
 
             const response = await fetch('/api/create-checkout-session', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ userId, targetUrl })
             })
