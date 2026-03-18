@@ -266,3 +266,62 @@ gantt
     Reading Stats                 :p3a, after p2d, 5d
     TTS Implementation            :p3b, after p3a, 5d
 ```
+# Estratégia de Monetização e Integração com Stripe (Codex)
+
+Este documento descreve a estratégia de monetização do Codex e o plano de integração passo a passo com o Stripe, garantindo que o aplicativo seja totalmente funcional.
+
+## Produtos e Preços Criados via MCP
+
+Já configurei os recursos no Stripe para você. A estratégia inicial focará em **assinaturas em Reais (BRL)**. Posteriormente, você pode adicionar preços em Dólar (USD) criando um novo `Price` para o mesmo `Product`.
+
+- **Produto (Subscription):** Codex Pro
+  - **Stripe Product ID:** `prod_UASo5X6vxlvFF6`
+  - **Descrição:** Acesso ilimitado a livros e skins premium.
+- **Preço (Mensal):** R$ 19,90 / mês
+  - **Stripe Price ID:** `price_1TC7tPRjV64R8pPEUAkzpDm9`
+  - **Moeda:** BRL
+
+---
+
+## O que Falta para o App Ficar Totalmente Conectado ao Stripe?
+
+Atualmente, o app possui no front-end um botão (`CheckoutButton.tsx`) que faz uma chamada para `/api/create-checkout-session`. Para fechar o ciclo e deixar tudo 100% funcional, você precisa implementar as seguintes camadas do lado do back-end (ex: Next.js API Routes, Firebase Cloud Functions ou Supabase Edge Functions):
+
+### 1. Criar a Rota de Checkout Session (`/api/create-checkout-session`)
+Quando o usuário clicar em "Subscribe to Pro", o backend deve criar uma *Stripe Checkout Session*.
+- **O que fazer:**
+  - Instale a biblioteca do Stripe no backend (`npm install stripe`).
+  - Receba no corpo da requisição o `userId` (do Firebase ou Supabase) e possivelmente o `targetUrl`.
+  - Chame `stripe.checkout.sessions.create()` passando:
+    - `payment_method_types: ['card']`
+    - `line_items`: com o `price` configurado para `price_1TC7tPRjV64R8pPEUAkzpDm9` e `quantity: 1`.
+    - `mode: 'subscription'`
+    - `success_url`: a URL de redirecionamento em caso de sucesso (ex: `http://localhost:5173/store?session_id={CHECKOUT_SESSION_ID}`).
+    - `cancel_url`: a URL de redirecionamento se o usuário cancelar.
+    - **IMPORTANTE:** Passe o `userId` no campo `client_reference_id` e também como `metadata: { firebaseUserId: userId }`. Isso garante que o Stripe devolverá essa informação no webhook após o pagamento.
+  - Devolva o `session.url` para o frontend redirecionar o usuário.
+
+### 2. Configurar o Stripe Webhook (`/api/stripe-webhook`)
+Saber que o usuário foi para a tela de checkout não é suficiente. O Stripe precisa avisar o seu servidor quando o pagamento realmente for concluído.
+- **O que fazer:**
+  - Crie um endpoint POST chamado `/api/stripe-webhook`.
+  - Use a chave secreta de webhooks do Stripe (`STRIPE_WEBHOOK_SECRET`) para verificar a assinatura (`stripe.webhooks.constructEvent`).
+  - Escute os seguintes eventos principais:
+    - `checkout.session.completed`: Ocorre quando o usuário assina com sucesso. Pegue o `metadata.firebaseUserId`, ou o `client_reference_id`, e atualize o perfil do usuário no banco de dados, marcando `isPro: true` e salvando o `stripe_customer_id` e `stripe_subscription_id`.
+    - `customer.subscription.updated` / `customer.subscription.deleted`: Ocorre se o usuário renovou, cancelou ou teve falha no pagamento. Atualize o banco de dados (por exemplo, se deletado, `isPro: false`).
+
+### 3. Configurar o Customer Portal (Opcional, mas Recomendado)
+Para que o usuário consiga cancelar a assinatura a qualquer momento, mudar cartão de crédito ou ver faturas passadas.
+- **O que fazer:**
+  - Crie um endpoint `/api/create-portal-session`.
+  - Receba o `userId`, busque no banco de dados o `stripe_customer_id` associado.
+  - Chame `stripe.billingPortal.sessions.create({ customer: customerId, return_url: '...' })`.
+  - Redirecione o usuário para a URL do portal retornada.
+
+## Resumo dos Passos Seguintes
+1. Atualizar o arquivo `.env` com as chaves do Stripe (`STRIPE_SECRET_KEY`, `VITE_STRIPE_PUBLIC_KEY`, `STRIPE_WEBHOOK_SECRET`).
+2. Escrever a API para criar a Sessão de Checkout usando os IDs `prod_UASo5X6vxlvFF6` e `price_1TC7tPRjV64R8pPEUAkzpDm9`.
+3. Escrever e testar a função de Webhook para escutar `checkout.session.completed` e atualizar o estado do usuário local/Firebase/Supabase (`isPro = true`).
+4. Testar o fluxo usando os números de cartão de teste do Stripe (`4242 4242 4242 4242`).
+
+Quando você terminar de testar em BRL e quiser adicionar USD, basta criar no painel do Stripe (ou pedir para a IA criar via MCP) um novo Price para o mesmo Produto `prod_UASo5X6vxlvFF6`, mudando apenas a moeda (Currency) e o valor. Na hora de criar a Checkout Session, se o usuário for internacional, você passa o ID do price em USD; se for BR, passa o ID do price em BRL.
