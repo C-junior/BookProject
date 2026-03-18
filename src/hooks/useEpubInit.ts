@@ -226,7 +226,8 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
                     height: '100%',
                     spread: 'none',
                     flow: isVerticalScrollMode ? 'scrolled-doc' : 'paginated',
-                    manager: isVerticalScrollMode ? 'continuous' : 'default'
+                    manager: isVerticalScrollMode ? 'continuous' : 'default',
+                    allowScriptedContent: true
                 })
                 renditionRef.current = rendition
 
