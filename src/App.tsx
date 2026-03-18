@@ -14,6 +14,7 @@ import type { Book } from '@/types'
 import { useNavigationStore, type TabId } from '@/stores/navigationStore'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { StoreView } from '@/components/store/StoreView'
+import { SettingsView } from '@/components/settings/SettingsView'
 import './App.css'
 
 // Lazy-load heavy components — epub.js & pdfjs only download when needed
@@ -285,24 +286,7 @@ function App() {
                     <StoreView />
                 )}
                 {activeTab === 'settings' && (
-                    <div style={{ padding: '80px 20px', textAlign: 'center' }}>
-                        <h2>Settings</h2>
-                        <p style={{ color: 'var(--text-muted)' }}>Coming soon...</p>
-                        <button 
-                            onClick={handleLogout}
-                            style={{ 
-                                marginTop: '20px', 
-                                padding: '10px 20px', 
-                                background: 'var(--surface-light)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '8px',
-                                color: 'var(--text-primary)',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Log Out
-                        </button>
-                    </div>
+                    <SettingsView onLogout={handleLogout} />
                 )}
                 <BottomNav />
             </div>
