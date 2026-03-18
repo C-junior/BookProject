@@ -266,62 +266,73 @@ gantt
     Reading Stats                 :p3a, after p2d, 5d
     TTS Implementation            :p3b, after p3a, 5d
 ```
-# Estratégia de Monetização e Integração com Stripe (Codex)
+---
 
-Este documento descreve a estratégia de monetização do Codex e o plano de integração passo a passo com o Stripe, garantindo que o aplicativo seja totalmente funcional.
+## Catálogo Stripe — Configurado via MCP ✅
 
-## Produtos e Preços Criados via MCP
+Todos os produtos e preços abaixo foram criados diretamente no seu Stripe via MCP. Preços em **BRL** por enquanto. Para adicionar USD, basta criar um novo `Price` para o mesmo `Product`.
 
-Já configurei os recursos no Stripe para você. A estratégia inicial focará em **assinaturas em Reais (BRL)**. Posteriormente, você pode adicionar preços em Dólar (USD) criando um novo `Price` para o mesmo `Product`.
+> Os produtos antigos (placeholders) — *Synthwave Skin*, *Midnight Skin*, *Cyberpunk Skin*, e o *Codex Pro* duplicado (`prod_U7RIus2ENAkJot`) — podem ser arquivados no painel do Stripe (Product → Archive).
 
-- **Produto (Subscription):** Codex Pro
-  - **Stripe Product ID:** `prod_UASo5X6vxlvFF6`
-  - **Descrição:** Acesso ilimitado a livros e skins premium.
-- **Preço (Mensal):** R$ 19,90 / mês
-  - **Stripe Price ID:** `price_1TC7tPRjV64R8pPEUAkzpDm9`
-  - **Moeda:** BRL
+### Assinaturas (Recurring)
+
+| Produto | Product ID | Preço/mês | Price ID |
+| :--- | :--- | ---: | :--- |
+| **Codex Plus** | `prod_UAT16Twekq7WPV` | R$ 14,90 | `price_1TC860RjV64R8pPE4rsoSDyE` |
+| **Codex Pro** | `prod_UASo5X6vxlvFF6` | R$ 19,90 | `price_1TC7tPRjV64R8pPEUAkzpDm9` |
+
+### Conteúdo Avulso (One-Time)
+
+| Produto | Product ID | Preço | Price ID |
+| :--- | :--- | ---: | :--- |
+| **Chronicles of Synthborne (E-Book)** | `prod_UAT1ZsvQbXiSoj` | R$ 14,90 | `price_1TC861RjV64R8pPEjb2U2rDG` |
+
+### Skins (One-Time)
+
+| Skin | Categoria | Product ID | Preço | Price ID |
+| :--- | :--- | :--- | ---: | :--- |
+| **Magic** | Premium | `prod_UAT1M9kTFnRagj` | R$ 9,90 | `price_1TC862RjV64R8pPEGvJDakU4` |
+| **Sakura** | Básica | `prod_UAT1q0ddQvsQRz` | R$ 4,90 | `price_1TC863RjV64R8pPEvTc6zar6` |
+| **Metal Solid** | Premium | `prod_UAT1VHa6VHB81L` | R$ 9,90 | `price_1TC864RjV64R8pPE66wsVmmJ` |
+| **Synthborne** | Signature | `prod_UAT1hLnL1Kmsye` | R$ 9,90 | `price_1TC864RjV64R8pPEAHZ96GHf` |
+| **Samurai** | Premium | `prod_UAT1UiETep0c9d` | R$ 9,90 | `price_1TC865RjV64R8pPEsR1PBqUU` |
+
+> **Default** é grátis e não precisa de SKU no Stripe.
 
 ---
 
-## O que Falta para o App Ficar Totalmente Conectado ao Stripe?
+## Integração Backend — O que falta para funcionar
 
-Atualmente, o app possui no front-end um botão (`CheckoutButton.tsx`) que faz uma chamada para `/api/create-checkout-session`. Para fechar o ciclo e deixar tudo 100% funcional, você precisa implementar as seguintes camadas do lado do back-end (ex: Next.js API Routes, Firebase Cloud Functions ou Supabase Edge Functions):
+O front-end já tem o `CheckoutButton.tsx` que chama `/api/create-checkout-session`. Falta criar as rotas do backend:
 
-### 1. Criar a Rota de Checkout Session (`/api/create-checkout-session`)
-Quando o usuário clicar em "Subscribe to Pro", o backend deve criar uma *Stripe Checkout Session*.
-- **O que fazer:**
-  - Instale a biblioteca do Stripe no backend (`npm install stripe`).
-  - Receba no corpo da requisição o `userId` (do Firebase ou Supabase) e possivelmente o `targetUrl`.
-  - Chame `stripe.checkout.sessions.create()` passando:
-    - `payment_method_types: ['card']`
-    - `line_items`: com o `price` configurado para `price_1TC7tPRjV64R8pPEUAkzpDm9` e `quantity: 1`.
-    - `mode: 'subscription'`
-    - `success_url`: a URL de redirecionamento em caso de sucesso (ex: `http://localhost:5173/store?session_id={CHECKOUT_SESSION_ID}`).
-    - `cancel_url`: a URL de redirecionamento se o usuário cancelar.
-    - **IMPORTANTE:** Passe o `userId` no campo `client_reference_id` e também como `metadata: { firebaseUserId: userId }`. Isso garante que o Stripe devolverá essa informação no webhook após o pagamento.
-  - Devolva o `session.url` para o frontend redirecionar o usuário.
+### 1. `/api/create-checkout-session`
+- Recebe `userId`, `priceId`, e `mode` (`subscription` ou `payment`).
+- Chama `stripe.checkout.sessions.create()` passando:
+  - `line_items: [{ price: priceId, quantity: 1 }]`
+  - `mode`: `subscription` para Plus/Pro, `payment` para skins e livro.
+  - `client_reference_id: userId`
+  - `metadata: { firebaseUserId: userId, productType: 'subscription' | 'skin' | 'book' }`
+  - `success_url` / `cancel_url`
+- Retorna `session.url` para redirect.
 
-### 2. Configurar o Stripe Webhook (`/api/stripe-webhook`)
-Saber que o usuário foi para a tela de checkout não é suficiente. O Stripe precisa avisar o seu servidor quando o pagamento realmente for concluído.
-- **O que fazer:**
-  - Crie um endpoint POST chamado `/api/stripe-webhook`.
-  - Use a chave secreta de webhooks do Stripe (`STRIPE_WEBHOOK_SECRET`) para verificar a assinatura (`stripe.webhooks.constructEvent`).
-  - Escute os seguintes eventos principais:
-    - `checkout.session.completed`: Ocorre quando o usuário assina com sucesso. Pegue o `metadata.firebaseUserId`, ou o `client_reference_id`, e atualize o perfil do usuário no banco de dados, marcando `isPro: true` e salvando o `stripe_customer_id` e `stripe_subscription_id`.
-    - `customer.subscription.updated` / `customer.subscription.deleted`: Ocorre se o usuário renovou, cancelou ou teve falha no pagamento. Atualize o banco de dados (por exemplo, se deletado, `isPro: false`).
+### 2. `/api/stripe-webhook`
+- Verifica assinatura com `STRIPE_WEBHOOK_SECRET`.
+- Escuta:
+  - `checkout.session.completed` → Atualiza Firestore:
+    - Se `productType === 'subscription'`: marca `isPro: true` ou `isPlus: true`, salva `stripe_customer_id` e `stripe_subscription_id`.
+    - Se `productType === 'skin'`: adiciona o skin ID ao array `purchasedSkins` do usuário.
+    - Se `productType === 'book'`: adiciona flag `purchasedBook: true`.
+  - `customer.subscription.updated` / `deleted` → Atualiza tier do usuário.
 
-### 3. Configurar o Customer Portal (Opcional, mas Recomendado)
-Para que o usuário consiga cancelar a assinatura a qualquer momento, mudar cartão de crédito ou ver faturas passadas.
-- **O que fazer:**
-  - Crie um endpoint `/api/create-portal-session`.
-  - Receba o `userId`, busque no banco de dados o `stripe_customer_id` associado.
-  - Chame `stripe.billingPortal.sessions.create({ customer: customerId, return_url: '...' })`.
-  - Redirecione o usuário para a URL do portal retornada.
+### 3. `/api/create-portal-session` (opcional)
+- Recebe `userId`, busca `stripe_customer_id`, cria portal session, retorna URL.
 
-## Resumo dos Passos Seguintes
-1. Atualizar o arquivo `.env` com as chaves do Stripe (`STRIPE_SECRET_KEY`, `VITE_STRIPE_PUBLIC_KEY`, `STRIPE_WEBHOOK_SECRET`).
-2. Escrever a API para criar a Sessão de Checkout usando os IDs `prod_UASo5X6vxlvFF6` e `price_1TC7tPRjV64R8pPEUAkzpDm9`.
-3. Escrever e testar a função de Webhook para escutar `checkout.session.completed` e atualizar o estado do usuário local/Firebase/Supabase (`isPro = true`).
-4. Testar o fluxo usando os números de cartão de teste do Stripe (`4242 4242 4242 4242`).
+### Variáveis de Ambiente Necessárias
+```env
+STRIPE_SECRET_KEY=sk_live_...
+VITE_STRIPE_PUBLIC_KEY=pk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
 
-Quando você terminar de testar em BRL e quiser adicionar USD, basta criar no painel do Stripe (ou pedir para a IA criar via MCP) um novo Price para o mesmo Produto `prod_UASo5X6vxlvFF6`, mudando apenas a moeda (Currency) e o valor. Na hora de criar a Checkout Session, se o usuário for internacional, você passa o ID do price em USD; se for BR, passa o ID do price em BRL.
+### Teste
+Use o cartão `4242 4242 4242 4242` com qualquer data futura e CVC.
