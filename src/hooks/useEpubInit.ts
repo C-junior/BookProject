@@ -366,8 +366,21 @@ export function useEpubInit(book: Book, preferences: ReaderPreferences): UseEpub
 
         return () => {
             isMounted = false
-            renditionRef.current?.destroy()
-            bookRef.current?.destroy()
+            
+            // Delay destruction slightly to allow the browser to remove the iframe from the DOM first.
+            // This prevents "GET blob:... net::ERR_FILE_NOT_FOUND" console errors when React Strict Mode
+            // or HMR immediately unmounts the component while the iframe is still trying to fetch assets.
+            const rendition = renditionRef.current
+            const bookInstance = bookRef.current
+            
+            setTimeout(() => {
+                try {
+                    rendition?.destroy()
+                    bookInstance?.destroy()
+                } catch (e) {
+                    console.error('Error cleaning up EPUB instance:', e)
+                }
+            }, 250)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [book.id, isVerticalScrollMode, getProgressPercentageFromCfi])
