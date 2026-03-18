@@ -19,18 +19,16 @@ import {
     Plus,
     BookOpen,
     Loader2,
-    LogOut,
     FolderOpen,
     Link2,
     Clock,
     ChevronRight,
     ChartColumnBig,
     Sparkles,
-    Globe,
     X
 } from 'lucide-react'
 import { parseBookFile } from '@/services/parsers'
-import { signOut, auth } from '@/services/firebase'
+import { auth } from '@/services/firebase'
 import { useTranslation } from 'react-i18next'
 import { getActiveUserId } from '@/services/auth/session'
 import { uploadBookFile, uploadCoverImage } from '@/services/storage/storageService'
@@ -61,7 +59,7 @@ interface LibraryReadingStats {
     weeklyActivity: { day: string; minutes: number }[]
 }
 
-export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
+export function LibraryView({ onOpenBook }: LibraryViewProps) {
     const {
         books,
         isLoading,
@@ -83,7 +81,7 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
     const { currentUser } = useUserStore()
     const { setActiveTab } = useNavigationStore()
     const activeUserId = getActiveUserId(currentUser?.id)
-    const { t, i18n } = useTranslation()
+    const { t } = useTranslation()
 
     const [showImportModal, setShowImportModal] = useState(false)
     const [showCollectionsManager, setShowCollectionsManager] = useState(false)
@@ -302,14 +300,6 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
         }
     }
 
-    const handleLogout = async () => {
-        try {
-            await signOut()
-            onLogout?.()
-        } catch (err) {
-            console.error('Failed to sign out:', err)
-        }
-    }
 
     const handleCreateCollection = async (name: string, color: string) => {
         try {
@@ -448,16 +438,6 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                     <div className="library-header-actions">
                         <Button
                             variant="secondary"
-                            leftIcon={<Globe size={18} />}
-                            className="library-action-btn library-action-btn-icon"
-                            onClick={() => i18n.changeLanguage(i18n.language === 'pt' ? 'en' : 'pt')}
-                            aria-label={t('library.toggleLanguage')}
-                            title={t('library.toggleLanguage')}
-                        >
-                            {i18n.language === 'pt' ? 'EN' : 'PT'}
-                        </Button>
-                        <Button
-                            variant="secondary"
                             leftIcon={<ChartColumnBig size={18} />}
                             className="library-action-btn library-action-btn-icon"
                             onClick={() => setShowStatsModal(true)}
@@ -481,13 +461,6 @@ export function LibraryView({ onOpenBook, onLogout }: LibraryViewProps) {
                             {t('library.addBook')}
                         </Button>
                         <SyncIndicator />
-                        <button
-                            className="library-logout-btn"
-                            onClick={handleLogout}
-                            title={t('library.signOut')}
-                        >
-                            <LogOut size={20} />
-                        </button>
                     </div>
                 </div>
 
