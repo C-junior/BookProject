@@ -15,6 +15,7 @@ import { useNavigationStore, type TabId } from '@/stores/navigationStore'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { StoreView } from '@/components/store/StoreView'
 import { SettingsView } from '@/components/settings/SettingsView'
+import { SkinsView } from '@/components/skins/SkinsView'
 import './App.css'
 
 // Lazy-load heavy components — epub.js & pdfjs only download when needed
@@ -285,8 +286,11 @@ function App() {
                 {activeTab === 'library' && (
                     <LibraryView onOpenBook={handleOpenBook} onLogout={handleLogout} />
                 )}
-                {(activeTab === 'store' || activeTab === 'skins') && (
+                {activeTab === 'store' && (
                     <StoreView />
+                )}
+                {activeTab === 'skins' && (
+                    <SkinsView />
                 )}
                 {activeTab === 'settings' && (
                     <SettingsView onLogout={handleLogout} />

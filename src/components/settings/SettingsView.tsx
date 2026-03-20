@@ -85,13 +85,15 @@ export function SettingsView({ onLogout }: SettingsViewProps) {
         await setKeepScreenAwake(false)
         await updateCurrentUserPreferences({
             theme: 'light',
+            skin: 'default',
             fontFamily: 'Literata',
             fontSize: 18,
             lineHeight: 1.6,
             margins: 40,
             textAlign: 'left',
             brightness: 100,
-            readingMode: 'paginated'
+            readingMode: 'paginated',
+            enableSkinBackground: true
         })
         setConfirmAction(null)
         showToast(t('appSettings.resetAllSettingsSuccess'))
@@ -104,6 +106,12 @@ export function SettingsView({ onLogout }: SettingsViewProps) {
 
     const handleToggleScreenAwake = async () => {
         await setKeepScreenAwake(!keepScreenAwake)
+    }
+
+    const handleToggleSkinBackground = async () => {
+        await updateCurrentUserPreferences({
+            enableSkinBackground: !(currentUser?.preferences?.enableSkinBackground ?? true)
+        })
     }
 
     const formatSyncTime = (date: Date | null) => {
@@ -251,7 +259,7 @@ export function SettingsView({ onLogout }: SettingsViewProps) {
                         </button>
 
                         {/* App theme skin bg */}
-                        <div className="settings-row" onClick={() => updateCurrentUserPreferences({ enableSkinBackground: !(currentUser?.preferences?.enableSkinBackground ?? true) })}>
+                        <div className="settings-row" onClick={() => void handleToggleSkinBackground()}>
                             <div className="settings-row-icon">
                                 <ImageIcon size={18} />
                             </div>
@@ -261,7 +269,7 @@ export function SettingsView({ onLogout }: SettingsViewProps) {
                             </div>
                             <button
                                 className={`settings-toggle ${(currentUser?.preferences?.enableSkinBackground ?? true) ? 'active' : ''}`}
-                                onClick={(e) => { e.stopPropagation(); updateCurrentUserPreferences({ enableSkinBackground: !(currentUser?.preferences?.enableSkinBackground ?? true) }) }}
+                                onClick={(e) => { e.stopPropagation(); void handleToggleSkinBackground() }}
                                 aria-label={t('appSettings.appThemeSkinBg')}
                             >
                                 <span className="settings-toggle-knob" />
