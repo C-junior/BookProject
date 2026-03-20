@@ -136,12 +136,15 @@ function App() {
     useEffect(() => {
         const appliedPreferences = currentUser?.preferences ?? preferences
         const activeSkin = appliedPreferences.skin
+        const enableSkinBg = appliedPreferences.enableSkinBackground ?? true
 
         document.documentElement.setAttribute('data-theme', appliedPreferences.theme)
         if (activeSkin && activeSkin !== 'default') {
              document.documentElement.setAttribute('data-skin', activeSkin)
+             document.documentElement.setAttribute('data-skin-bg', enableSkinBg.toString())
         } else {
              document.documentElement.removeAttribute('data-skin')
+             document.documentElement.removeAttribute('data-skin-bg')
         }
     }, [currentUser?.preferences, preferences])
 

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
     Crown, LogOut, Globe, RotateCcw, Palette, BarChart3,
     LayoutGrid, List, FolderOpen, Cloud, HardDrive, Trash2,
-    Monitor, Info, RefreshCw, ChevronRight
+    Monitor, Info, RefreshCw, ChevronRight, Image as ImageIcon
 } from 'lucide-react'
 import { useUserStore } from '@/stores/userStore'
 import { useLibraryStore } from '@/stores/libraryStore'
@@ -249,6 +249,24 @@ export function SettingsView({ onLogout }: SettingsViewProps) {
                             </div>
                             <ChevronRight size={16} className="settings-row-chevron" />
                         </button>
+
+                        {/* App theme skin bg */}
+                        <div className="settings-row" onClick={() => updateCurrentUserPreferences({ enableSkinBackground: !(currentUser?.preferences?.enableSkinBackground ?? true) })}>
+                            <div className="settings-row-icon">
+                                <ImageIcon size={18} />
+                            </div>
+                            <div className="settings-row-text">
+                                <p className="settings-row-title">{t('appSettings.appThemeSkinBg')}</p>
+                                <p className="settings-row-desc">{t('appSettings.appThemeSkinBgDesc')}</p>
+                            </div>
+                            <button
+                                className={`settings-toggle ${(currentUser?.preferences?.enableSkinBackground ?? true) ? 'active' : ''}`}
+                                onClick={(e) => { e.stopPropagation(); updateCurrentUserPreferences({ enableSkinBackground: !(currentUser?.preferences?.enableSkinBackground ?? true) }) }}
+                                aria-label={t('appSettings.appThemeSkinBg')}
+                            >
+                                <span className="settings-toggle-knob" />
+                            </button>
+                        </div>
 
                         {/* Reading statistics (disabled) */}
                         <div className="settings-row disabled">

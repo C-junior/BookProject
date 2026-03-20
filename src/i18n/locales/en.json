@@ -104,6 +104,8 @@
         "onboardingReset": "Onboarding will replay on next visit",
         "appThemeSkin": "App Theme Skin",
         "appThemeSkinDesc": "Customize your app appearance",
+        "appThemeSkinBg": "Skin Background Image",
+        "appThemeSkinBgDesc": "Show immersive background images",
         "readingStatistics": "Reading Statistics",
         "readingStatisticsDesc": "Coming soon",
         "library": "Library",

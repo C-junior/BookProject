@@ -137,6 +137,8 @@ export interface ReaderPreferences {
     autoSavePosition: boolean
     /** Has user completed onboarding tour (default: false) */
     hasCompletedOnboarding?: boolean
+    /** Whether to show the background image for skins (default: true) */
+    enableSkinBackground?: boolean
 }
 
 export interface CustomTheme {
