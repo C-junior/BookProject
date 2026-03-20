@@ -1126,3 +1126,150 @@
 [data-skin="samurai"] .book-card-download-text {
     color: #fff1df;
 }
+
+/* === FIORA SKIN === */
+[data-skin="fiora"] .book-card {
+    border-radius: 22px;
+    border: 1px solid rgba(212, 190, 133, 0.26);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 248, 252, 0.99) 62%, rgba(246, 237, 255, 0.9) 100%);
+    box-shadow:
+        0 16px 24px rgba(82, 97, 143, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        inset 0 0 0 1px rgba(255, 244, 214, 0.24);
+}
+
+[data-skin="fiora"] .book-card::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 18px;
+    pointer-events: none;
+    opacity: 0.5;
+    background:
+        radial-gradient(circle at 0 0, rgba(214, 190, 131, 0.48) 0 5px, transparent 6px),
+        radial-gradient(circle at 100% 0, rgba(214, 190, 131, 0.48) 0 5px, transparent 6px),
+        radial-gradient(circle at 0 100%, rgba(214, 190, 131, 0.48) 0 5px, transparent 6px),
+        radial-gradient(circle at 100% 100%, rgba(214, 190, 131, 0.48) 0 5px, transparent 6px);
+}
+
+[data-skin="fiora"] .book-card-cover {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.99) 0%, rgba(244, 247, 252, 0.99) 64%, rgba(244, 236, 255, 0.88) 100%);
+    border-bottom: 1px solid rgba(212, 190, 133, 0.18);
+}
+
+[data-skin="fiora"] .book-card-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.34;
+    background:
+        radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.62), transparent 12%),
+        radial-gradient(circle at 82% 84%, rgba(201, 164, 83, 0.22), transparent 12%),
+        radial-gradient(circle at 58% 26%, rgba(228, 201, 255, 0.18), transparent 11%),
+        linear-gradient(135deg, transparent 0 54%, rgba(191, 201, 223, 0.16) 54% 55%, transparent 55%);
+}
+
+[data-skin="fiora"] .book-card-cover-image {
+    filter: saturate(0.78) brightness(1.04);
+}
+
+[data-skin="fiora"] .book-card-cover-placeholder {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(242, 246, 252, 0.98) 100%);
+    color: #1d4db4;
+}
+
+[data-skin="fiora"] .book-card-cover-format {
+    color: #ba9340;
+}
+
+[data-skin="fiora"] .book-card-info {
+    gap: 10px;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 248, 252, 0.99) 62%, rgba(246, 237, 255, 0.9) 100%);
+}
+
+[data-skin="fiora"] .book-card-title {
+    color: #1e2233;
+}
+
+[data-skin="fiora"] .book-card-author {
+    color: #5a5f77;
+}
+
+[data-skin="fiora"] .book-card-format {
+    border: 1px solid rgba(191, 157, 81, 0.22);
+    background: linear-gradient(135deg, #b08a34 0%, #d9b765 100%);
+    color: #483217;
+}
+
+[data-skin="fiora"] .book-card-size,
+[data-skin="fiora"] .book-card-cloud-label {
+    color: #6b7189;
+}
+
+[data-skin="fiora"] .book-card-progress-container {
+    background:
+        linear-gradient(to top, rgba(29, 77, 180, 0.12) 0%, rgba(29, 77, 180, 0) 100%);
+}
+
+[data-skin="fiora"] .book-card-progress-bar {
+    height: 5px;
+    background: linear-gradient(90deg, #cba658 0%, #f0dfbc 100%);
+    box-shadow: 0 0 10px rgba(201, 164, 83, 0.14);
+}
+
+[data-skin="fiora"] .book-card-progress-text {
+    color: #a88436;
+    text-shadow: none;
+}
+
+[data-skin="fiora"] .book-card-menu-button {
+    border-color: rgba(212, 190, 133, 0.22);
+    background:
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.99), rgba(240, 243, 249, 0.99)),
+        linear-gradient(135deg, transparent 0 54%, rgba(243, 226, 184, 0.22) 54% 55%, transparent 55%);
+    color: #b99340;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        0 8px 12px rgba(82, 97, 143, 0.08);
+}
+
+[data-skin="fiora"] .book-card-dropdown {
+    border-color: rgba(212, 190, 133, 0.24);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 247, 251, 0.98) 100%);
+}
+
+[data-skin="fiora"] .book-card-dropdown-item {
+    color: #1f2233;
+}
+
+[data-skin="fiora"] .book-card-dropdown-item:hover {
+    background: rgba(29, 77, 180, 0.06);
+}
+
+[data-skin="fiora"] .book-card-dropdown-item-danger {
+    color: #c2554f;
+}
+
+[data-skin="fiora"] .book-card-cloud-badge {
+    background:
+        linear-gradient(135deg, #c9a453 0%, #e7c677 100%);
+    color: #fffefb;
+}
+
+[data-skin="fiora"] .book-card-download-overlay {
+    background: rgba(247, 249, 253, 0.82);
+}
+
+[data-skin="fiora"] .book-card-spinner {
+    color: #b58f39;
+}
+
+[data-skin="fiora"] .book-card-download-text {
+    color: #2a3152;
+}

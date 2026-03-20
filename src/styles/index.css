@@ -498,6 +498,45 @@ h6 {
   --shadow-gold: 0 0 16px var(--color-warm-glow);
 }
 
+[data-skin="fiora"] {
+  background-image:
+    radial-gradient(circle at 18% 20%, rgba(255, 232, 248, 0.24), transparent 18%),
+    radial-gradient(circle at 82% 14%, rgba(210, 228, 255, 0.26), transparent 16%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56) 0%, rgba(243, 247, 255, 0.76) 100%),
+    url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/fiora-bg-skin.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+
+  --color-bg-primary: rgba(248, 249, 252, 0.94);
+  --color-bg-secondary: rgba(255, 255, 255, 0.96);
+  --color-bg-tertiary: rgba(226, 231, 241, 0.97);
+  --color-bg-elevated: rgba(255, 255, 255, 0.99);
+  --color-bg-glass: rgba(255, 255, 255, 0.78);
+
+  --color-text-primary: #1d2031;
+  --color-text-secondary: #50566f;
+  --color-text-tertiary: #8a90a6;
+  --color-text-inverse: #fcfcfd;
+
+  --color-accent-primary: #1d4db4;
+  --color-accent-secondary: #2d63d1;
+  --color-accent-tertiary: #153785;
+  --color-accent-muted: rgba(29, 77, 180, 0.12);
+  --color-accent-glow: rgba(29, 77, 180, 0.22);
+
+  --color-warm: #c9a453;
+  --color-warm-muted: rgba(201, 164, 83, 0.14);
+  --color-warm-glow: rgba(201, 164, 83, 0.2);
+
+  --color-border: rgba(194, 176, 130, 0.26);
+  --color-border-strong: rgba(210, 185, 119, 0.4);
+  --color-border-accent: rgba(29, 77, 180, 0.22);
+
+  --shadow-glow: 0 0 20px var(--color-accent-glow);
+  --shadow-gold: 0 0 16px var(--color-warm-glow);
+}
+
 [data-skin="magic"] body {
   background-color: transparent; /* Let the html overlay show */
 }
@@ -515,6 +554,10 @@ h6 {
 }
 
 [data-skin="samurai"] body {
+  background-color: transparent;
+}
+
+[data-skin="fiora"] body {
   background-color: transparent;
 }
 
@@ -549,6 +592,12 @@ h6 {
   border: 1px solid rgba(170, 123, 73, 0.24);
 }
 
+[data-skin="fiora"] .glass {
+  backdrop-filter: blur(16px) saturate(155%);
+  -webkit-backdrop-filter: blur(16px) saturate(155%);
+  border: 1px solid rgba(214, 193, 141, 0.24);
+}
+
 /* Restyle bottom nav to match the skin better */
 [data-skin="magic"] .bottom-nav {
   background: rgba(15, 20, 35, 0.85);
@@ -578,6 +627,12 @@ h6 {
   background: rgba(53, 24, 13, 0.86);
   border-top: 1px solid rgba(208, 165, 77, 0.16);
   box-shadow: 0 -10px 24px rgba(24, 10, 6, 0.34);
+}
+
+[data-skin="fiora"] .bottom-nav {
+  background: rgba(250, 251, 255, 0.84);
+  border-top: 1px solid rgba(212, 186, 124, 0.18);
+  box-shadow: 0 -10px 24px rgba(62, 79, 130, 0.08);
 }
 
 [data-skin="magic"] .bottom-nav-item.active {
@@ -623,6 +678,15 @@ h6 {
 
 [data-skin="samurai"] .bottom-nav-item.active svg {
   filter: drop-shadow(0 0 8px rgba(208, 165, 77, 0.24));
+}
+
+[data-skin="fiora"] .bottom-nav-item.active {
+  color: var(--color-accent-primary);
+  background: rgba(29, 77, 180, 0.1);
+}
+
+[data-skin="fiora"] .bottom-nav-item.active svg {
+  filter: drop-shadow(0 0 8px rgba(29, 77, 180, 0.18));
 }
 
 /* ---------- Base Styles ---------- */

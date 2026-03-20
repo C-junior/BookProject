@@ -220,6 +220,16 @@
     color: #f0cf8e;
 }
 
+.fiora-preview {
+    background-image:
+        radial-gradient(circle at 18% 20%, rgba(255, 246, 226, 0.42), transparent 18%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(35, 55, 122, 0.18)),
+        url('https://yzdfpjwmtjyzmraifdlh.supabase.co/storage/v1/object/public/books/skins-bg/fiora-bg-skin.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #fff3c6;
+}
+
 /* ─── Responsive ──────────────────────────────────── */
 
 @media (max-width: 480px) {

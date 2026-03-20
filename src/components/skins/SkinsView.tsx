@@ -1,5 +1,5 @@
 import { useUserStore } from '@/stores/userStore'
-import { Check, Sparkles, Monitor, Flower2, Cpu, Cross, Shield } from 'lucide-react'
+import { Check, Sparkles, Monitor, Flower2, Cpu, Cross, Shield, Gem } from 'lucide-react'
 import type { ReaderPreferences } from '@/types'
 import './SkinsView.css'
 
@@ -62,6 +62,14 @@ const SKIN_OPTIONS: SkinOption[] = [
         accent: 'Grounded',
         previewClassName: 'samurai-preview',
         Icon: Shield
+    },
+    {
+        id: 'fiora',
+        name: 'Fiora',
+        blurb: 'Pearl marble, gilt detailing, and royal blue focus.',
+        accent: 'Pearl',
+        previewClassName: 'fiora-preview',
+        Icon: Gem
     }
 ]
 

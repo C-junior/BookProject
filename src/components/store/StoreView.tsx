@@ -7,6 +7,7 @@ import {
     Crown,
     ExternalLink,
     Flower2,
+    Gem,
     Monitor,
     Shield,
     Sparkles,
@@ -109,6 +110,14 @@ const SKIN_OPTIONS: SkinOption[] = [
         accent: 'Grounded',
         previewClassName: 'samurai-preview',
         Icon: Shield
+    },
+    {
+        id: 'fiora',
+        name: 'Fiora',
+        blurb: 'Pearl marble, gilt detailing, and royal blue focus.',
+        accent: 'Pearl',
+        previewClassName: 'fiora-preview',
+        Icon: Gem
     }
 ]
 
