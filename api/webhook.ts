@@ -166,5 +166,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
     }
 
+    // Handle subscription updates (plan changes, payment method updates via portal)
+    if (event.type === 'customer.subscription.updated') {
+        const subscription = event.data.object as Stripe.Subscription;
+        const status = subscription.status;
+        console.log(`customer.subscription.updated — subscription: ${subscription.id}, status: ${status}`);
+
+        try {
+            const snapshot = await db.collection('users')
+                .where('stripeSubscriptionId', '==', subscription.id)
+                .get();
+
+            if (!snapshot.empty) {
+                const isPro = status === 'active' || status === 'trialing';
+                const batch = db.batch();
+                snapshot.docs.forEach((doc) => {
+                    batch.update(doc.ref, {
+                        isPro,
+                        stripeSubscriptionStatus: status,
+                    });
+                });
+                await batch.commit();
+                console.log(`Updated user subscription status to ${status} (isPro: ${isPro})`);
+            } else {
+                console.warn(`No user found with stripeSubscriptionId: ${subscription.id}`);
+            }
+        } catch (dbError: any) {
+            console.error('Error updating subscription in Firestore:', dbError.message || dbError);
+        }
+    }
+
     return res.status(200).json({ received: true });
 }

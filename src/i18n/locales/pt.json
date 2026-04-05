@@ -93,6 +93,8 @@
         "subscription": "Assinatura",
         "upgradeToPro": "Assinar Pro",
         "managePro": "Gerenciar Assinatura",
+        "manageProDesc": "Alterar plano, pagamento ou cancelar",
+        "portalError": "Erro ao abrir portal. Tente novamente.",
         "signOut": "Sair",
         "signOutConfirm": "Tem certeza que deseja sair?",
         "general": "Geral",

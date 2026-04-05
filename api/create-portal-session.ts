@@ -6,7 +6,7 @@ import admin from 'firebase-admin';
 function initFirebase() {
     try {
         if (admin.apps?.length) {
-            return; // already initialized
+            return;
         }
     } catch {
         // Not initialized yet, proceed
@@ -32,13 +32,12 @@ function initFirebase() {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
         });
-        console.log('Firebase Admin initialized successfully in create-checkout-session');
+        console.log('Firebase Admin initialized successfully in create-portal-session');
     } catch (error: any) {
         console.error('Firebase admin initialization error:', error?.message || error);
     }
 }
 
-// Initialize at module load
 initFirebase();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -49,25 +48,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) {
         console.error('STRIPE_SECRET_KEY is not configured');
-        return res.status(500).json({ error: 'Payment service is not configured. Please contact support.' });
+        return res.status(500).json({ error: 'Payment service is not configured.' });
     }
 
     try {
         const stripe = new Stripe(secretKey.trim());
 
-        const { userId, targetUrl, priceId } = req.body;
+        const { userId } = req.body;
 
         if (!userId) {
             return res.status(400).json({ error: 'User ID is required' });
         }
 
+        // Verify Firebase token
         const authHeader = req.headers.authorization;
         if (!authHeader?.startsWith('Bearer ')) {
             return res.status(401).json({ error: 'Unauthorized: Missing or invalid Authorization header' });
         }
         const idToken = authHeader.split('Bearer ')[1];
 
-        // Guard: check Firebase is initialized
         const apps = admin.apps || [];
         if (!apps.length) {
             initFirebase();
@@ -81,48 +80,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(403).json({ error: 'Forbidden: UID mismatch' });
         }
 
-        // Allowed subscription prices (Codex Pro and Codex Plus)
-        const ALLOWED_PRICES = [
-            'price_1TC7tPRjV64R8pPEUAkzpDm9', // Codex Pro  — R$19.90/mês
-            'price_1TC860RjV64R8pPE4rsoSDyE', // Codex Plus — R$14.90/mês
-        ];
-        const DEFAULT_PRICE = ALLOWED_PRICES[0]; // Codex Pro
+        // Get stripeCustomerId from Firestore
+        const db = admin.firestore();
+        const userDoc = await db.collection('users').doc(userId).get();
+        const userData = userDoc.data();
 
-        const selectedPrice = priceId && ALLOWED_PRICES.includes(priceId) ? priceId : DEFAULT_PRICE;
-
-        // Try to get user email for pre-fill
-        let customerEmail: string | undefined;
-        try {
-            const firebaseUser = await admin.auth().getUser(userId);
-            customerEmail = firebaseUser.email || undefined;
-        } catch {
-            // Not critical — checkout works without email pre-fill
+        if (!userData?.stripeCustomerId) {
+            return res.status(404).json({
+                error: 'Nenhuma assinatura encontrada. Assine um plano primeiro.'
+            });
         }
 
-        let successUrl = 'https://codex-two-teal.vercel.app/';
-        if (targetUrl) {
-            successUrl = `https://codex-two-teal.vercel.app/?url=${encodeURIComponent(targetUrl)}`;
-        }
-
-        const session = await stripe.checkout.sessions.create({
-            mode: 'subscription',
-            line_items: [{ price: selectedPrice, quantity: 1 }],
-            success_url: successUrl,
-            cancel_url: 'https://codex-two-teal.vercel.app/',
-            client_reference_id: userId,
+        // Create Stripe Customer Portal session
+        const session = await stripe.billingPortal.sessions.create({
+            customer: userData.stripeCustomerId,
+            return_url: 'https://codex-two-teal.vercel.app/',
             locale: 'pt-BR',
-            customer_email: customerEmail,
-            metadata: {
-                userId,
-            }
         });
 
         res.status(200).json({ url: session.url });
     } catch (error: any) {
-        console.error('Stripe Checkout Error:', error.message);
+        console.error('Portal session error:', error.message);
         const safeMessage = error.type === 'StripeAuthenticationError'
-            ? 'Payment service authentication failed. Please contact support.'
-            : 'Failed to create checkout session. Please try again.';
+            ? 'Erro de autenticação no serviço de pagamento.'
+            : 'Não foi possível abrir o portal de assinatura. Tente novamente.';
         res.status(500).json({ error: safeMessage });
     }
 }

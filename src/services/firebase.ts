@@ -442,6 +442,14 @@ export async function deleteBookMetadata(userId: string, bookId: string): Promis
     await deleteDoc(bookRef)
 }
 
+/**
+ * Get the Stripe customer ID for a user (if they have subscribed before)
+ */
+export async function getStripeCustomerId(uid: string): Promise<string | null> {
+    const profile = await getUserProfile(uid)
+    return (profile as any)?.stripeCustomerId || null
+}
+
 export { auth, app, db }
 export type { User, Firestore, UserProfileData, SyncedProgress, SyncedCollection, SyncedAnnotation }
 

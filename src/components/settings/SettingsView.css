@@ -344,6 +344,17 @@
     50% { opacity: 0.4; }
 }
 
+/* === SPINNER (Portal loading) === */
+.settings-row-chevron.spinning {
+    animation: spin 1s linear infinite;
+    color: var(--color-accent-primary);
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 /* === INLINE CONFIRM === */
 .settings-confirm-bar {
     display: flex;

@@ -93,6 +93,8 @@
         "subscription": "Subscription",
         "upgradeToPro": "Upgrade to Pro",
         "managePro": "Manage Subscription",
+        "manageProDesc": "Change plan, payment method, or cancel",
+        "portalError": "Failed to open portal. Try again.",
         "signOut": "Sign Out",
         "signOutConfirm": "Are you sure you want to sign out?",
         "general": "General",

@@ -1,9 +1,10 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Crown, LogOut, Globe, RotateCcw, Palette, BarChart3,
     LayoutGrid, List, FolderOpen, Cloud, HardDrive, Trash2,
-    Monitor, Info, RefreshCw, ChevronRight, Image as ImageIcon
+    Monitor, Info, RefreshCw, ChevronRight, Image as ImageIcon,
+    Loader2, ExternalLink
 } from 'lucide-react'
 import { useUserStore } from '@/stores/userStore'
 import { useLibraryStore } from '@/stores/libraryStore'
@@ -11,6 +12,7 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { useSyncStore } from '@/stores/syncStore'
 import { useNavigationStore } from '@/stores/navigationStore'
 import { updateBook } from '@/services/storage/db'
+import { auth, getStripeCustomerId } from '@/services/firebase'
 import './SettingsView.css'
 
 interface SettingsViewProps {
@@ -31,10 +33,20 @@ export function SettingsView({ onLogout }: SettingsViewProps) {
 
     const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null)
     const [toast, setToast] = useState<string | null>(null)
+    const [portalLoading, setPortalLoading] = useState(false)
+    const [hasStripeCustomer, setHasStripeCustomer] = useState(false)
 
     const isPro = currentUser?.isPro ?? false
     const userName = currentUser?.name || 'Reader'
     const userInitial = userName.charAt(0).toUpperCase()
+
+    // Check if user has a Stripe customer ID (for showing Manage vs Upgrade)
+    useEffect(() => {
+        const uid = auth.currentUser?.uid
+        if (uid && isPro) {
+            getStripeCustomerId(uid).then(id => setHasStripeCustomer(!!id))
+        }
+    }, [isPro])
 
     const downloadedCount = useMemo(
         () => books.filter(b => b.fileBlob && !b.isCloudOnly).length,
@@ -167,21 +179,70 @@ export function SettingsView({ onLogout }: SettingsViewProps) {
                         </div>
 
                         {/* Subscription */}
-                        <button
-                            className="settings-row"
-                            onClick={() => setActiveTab('store')}
-                        >
-                            <div className="settings-row-icon">
-                                <Crown size={18} />
-                            </div>
-                            <div className="settings-row-text">
-                                <p className="settings-row-title">{t('appSettings.subscription')}</p>
-                            </div>
-                            <span className="settings-row-value">
-                                {isPro ? t('appSettings.managePro') : t('appSettings.upgradeToPro')}
-                            </span>
-                            <ChevronRight size={16} className="settings-row-chevron" />
-                        </button>
+                        {isPro && hasStripeCustomer ? (
+                            <button
+                                className="settings-row"
+                                disabled={portalLoading}
+                                onClick={async () => {
+                                    setPortalLoading(true)
+                                    try {
+                                        const user = auth.currentUser
+                                        if (!user) throw new Error('Not authenticated')
+                                        const token = await user.getIdToken()
+                                        const res = await fetch('/api/create-portal-session', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'Authorization': `Bearer ${token}`
+                                            },
+                                            body: JSON.stringify({ userId: user.uid })
+                                        })
+                                        const data = await res.json()
+                                        if (data.url) {
+                                            window.location.href = data.url
+                                        } else {
+                                            showToast(data.error || t('appSettings.portalError'))
+                                        }
+                                    } catch {
+                                        showToast(t('appSettings.portalError'))
+                                    } finally {
+                                        setPortalLoading(false)
+                                    }
+                                }}
+                            >
+                                <div className="settings-row-icon">
+                                    <Crown size={18} />
+                                </div>
+                                <div className="settings-row-text">
+                                    <p className="settings-row-title">{t('appSettings.subscription')}</p>
+                                    <p className="settings-row-desc">{t('appSettings.manageProDesc')}</p>
+                                </div>
+                                {portalLoading ? (
+                                    <Loader2 size={16} className="settings-row-chevron spinning" />
+                                ) : (
+                                    <>
+                                        <span className="settings-row-value">{t('appSettings.managePro')}</span>
+                                        <ExternalLink size={14} className="settings-row-chevron" />
+                                    </>
+                                )}
+                            </button>
+                        ) : (
+                            <button
+                                className="settings-row"
+                                onClick={() => setActiveTab('store')}
+                            >
+                                <div className="settings-row-icon">
+                                    <Crown size={18} />
+                                </div>
+                                <div className="settings-row-text">
+                                    <p className="settings-row-title">{t('appSettings.subscription')}</p>
+                                </div>
+                                <span className="settings-row-value">
+                                    {t('appSettings.upgradeToPro')}
+                                </span>
+                                <ChevronRight size={16} className="settings-row-chevron" />
+                            </button>
+                        )}
 
                         {/* Sign out */}
                         {confirmAction === 'signout' ? (
